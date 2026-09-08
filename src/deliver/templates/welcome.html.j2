@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Welcome to LaunchTrace Food</title></head>
+<body style="margin:0;background:#f5f5f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1917;">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+  <p style="margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#78716c;">LaunchTrace Food</p>
+  <h1 style="margin:0 0 16px;font-size:20px;font-weight:600;">You're subscribed</h1>
+  <p style="font-size:15px;line-height:1.6;">Hello{% if contact_name %} {{ contact_name }}{% endif %},</p>
+  <p style="font-size:15px;line-height:1.6;">
+    {{ company }} is now subscribed to the LaunchTrace Food weekly feed on the {{ plan_name }} plan
+    (£{{ '%.2f'|format(price_pence/100) }} per month). Your first feed arrives on the next Friday run.
+  </p>
+  <p style="font-size:15px;line-height:1.6;">Each Friday you'll get:</p>
+  <ul style="font-size:14px;line-height:1.7;">
+    <li>Newly published UK food-brand trade mark filings, filtered to packaged consumer products</li>
+    <li>Companies House verification and company age for each brand</li>
+    <li>A LaunchTrace Score with the reasons behind it</li>
+    <li>Inferred supplier relevance for packaging, manufacturing, distribution and fulfilment</li>
+    <li>A CSV your sales team can work from directly</li>
+  </ul>
+  <p style="font-size:15px;line-height:1.6;">
+    You can add up to {{ max_recipients }} recipients from {{ company }}. Reply to this email with the
+    addresses and we'll add them.
+  </p>
+  <p style="font-size:15px;line-height:1.6;">Cancel any time — <a href="{{ manage_url }}" style="color:#0369a1;">manage your subscription</a>.</p>
+  <p style="margin-top:24px;font-size:12px;color:#78716c;">
+    Source: UK Intellectual Property Office and Companies House data under the Open Government Licence v3.0.
+  </p>
+</div></body></html>

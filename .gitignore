@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.local
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local working data — never commit large source dumps or caches.
+var/
+data/cache/
+data/companies_house/*.zip
+data/companies_house/*.csv
+data/companies_house/*.sqlite
+data/raw/
+*.sqlite
+*.sqlite3
+*.db
+reports/local/

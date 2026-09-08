@@ -1,0 +1,101 @@
+{
+  "run_id": "run_20260908T104435_b39794",
+  "generated_on": "2026-09-08",
+  "journal_number": "2018-004",
+  "publication_date": "2018-01-26",
+  "source": "ipo_open_data",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 1502,
+    "food_class_candidates": 176,
+    "packaged_food_candidates": 71,
+    "uk_corporate_applicants": 51,
+    "company_matched": 53,
+    "emerging_candidates": 53,
+    "web_enriched": 0,
+    "scored": 53,
+    "high": 3,
+    "medium": 11,
+    "suppressed": 39,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "rejection_reasons": {
+      "no_food_class": 1277,
+      "supporting_class_only": 71,
+      "no_brand_name": 54,
+      "raw_agricultural_only": 5,
+      "major_brand_owner": 16,
+      "non_uk_applicant": 8,
+      "company_too_established": 18,
+      "score_below_band": 39
+    }
+  },
+  "score_summary": {
+    "delivered": 14,
+    "high": 3,
+    "medium": 11,
+    "suppressed": 39,
+    "min_score": 62,
+    "max_score": 90,
+    "mean_score": 76.4
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      1277
+    ],
+    [
+      "supporting_class_only",
+      71
+    ],
+    [
+      "no_brand_name",
+      54
+    ],
+    [
+      "score_below_band",
+      39
+    ],
+    [
+      "company_too_established",
+      18
+    ],
+    [
+      "major_brand_owner",
+      16
+    ],
+    [
+      "non_uk_applicant",
+      8
+    ],
+    [
+      "raw_agricultural_only",
+      5
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00003269824 — Yeo Valley Farms Production LTD (yeo valley)",
+    "UK00003274247 — ABF Grain Products Limited (abf)",
+    "UK00003277101 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277110 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277118 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277128 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277148 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277161 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277166 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277169 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277173 — McCain Foods (GB) Limited (mccain)",
+    "UK00003280232 — Wm Morrison Supermarkets Plc (wm morrison)",
+    "UK00003280489 — Haribo Holding GmbH & Co. KG (haribo)",
+    "UK00003280769 — KP Snacks Limited (kp snacks)",
+    "UK00003281003 — Aldi Stores Limited (aldi)",
+    "UK00003281011 — Aldi Stores Limited (aldi)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

@@ -1,0 +1,467 @@
+{
+  "$schema_version": "1.0",
+  "description": "LaunchTrace Food product taxonomy. Controls which trade mark records are treated as packaged-food candidates. Edit this file to tune the product filter without changing code.",
+  "primary_nice_classes": [
+    29,
+    30
+  ],
+  "supporting_nice_classes": [
+    31,
+    32,
+    33
+  ],
+  "context_only_nice_classes": [
+    5,
+    35,
+    39,
+    40,
+    43
+  ],
+  "notes": {
+    "primary_nice_classes": "Classes that on their own make a record a food candidate (29 = meat/dairy/preserved foods, 30 = staple foods, snacks, confectionery, bakery).",
+    "supporting_nice_classes": "Only counted when combined with a primary class or a strong packaged-food keyword. 31 is largely raw agricultural produce, 32/33 are drinks (out of scope for v1 but retained as supporting evidence of an FMCG brand).",
+    "context_only_nice_classes": "Never qualify a record on their own. Used as context (for example class 43 alone means restaurant/catering services, not a packaged product)."
+  },
+  "product_groups": [
+    {
+      "key": "snacks",
+      "label": "Snacks",
+      "keywords": [
+        "snack",
+        "snacks",
+        "snack food",
+        "savoury snack",
+        "savory snack",
+        "crisps",
+        "potato crisps",
+        "tortilla chips",
+        "corn chips",
+        "pretzel",
+        "popcorn",
+        "puffed",
+        "extruded snack",
+        "rice cake",
+        "vegetable crisps",
+        "plantain chips",
+        "nut butter",
+        "trail mix",
+        "nuts, prepared",
+        "roasted nuts",
+        "seeds, prepared"
+      ],
+      "default_packaging_format": "flexible"
+    },
+    {
+      "key": "cereal_bars",
+      "label": "Cereal, protein and energy bars",
+      "keywords": [
+        "cereal bar",
+        "cereal bars",
+        "energy bar",
+        "protein bar",
+        "snack bar",
+        "granola bar",
+        "oat bar",
+        "flapjack",
+        "fruit bar",
+        "nut bar"
+      ],
+      "default_packaging_format": "flexible"
+    },
+    {
+      "key": "biscuits_bakery",
+      "label": "Biscuits, cookies, crackers and bakery",
+      "keywords": [
+        "biscuit",
+        "biscuits",
+        "cookie",
+        "cookies",
+        "cracker",
+        "crackers",
+        "cake",
+        "cakes",
+        "brownie",
+        "pastry",
+        "pastries",
+        "bread",
+        "sourdough",
+        "doughnut",
+        "donut",
+        "muffin",
+        "wafer",
+        "shortbread",
+        "oatcake",
+        "crumpet",
+        "bakery goods",
+        "bakery products"
+      ],
+      "default_packaging_format": "flexible_or_carton"
+    },
+    {
+      "key": "confectionery",
+      "label": "Confectionery, chocolate and sweets",
+      "keywords": [
+        "confectionery",
+        "chocolate",
+        "chocolates",
+        "sweets",
+        "candy",
+        "candies",
+        "gummy",
+        "gummies",
+        "toffee",
+        "fudge",
+        "marshmallow",
+        "liquorice",
+        "licorice",
+        "lollipop",
+        "caramel",
+        "praline",
+        "nougat",
+        "mints",
+        "chewing gum"
+      ],
+      "default_packaging_format": "flexible_or_carton"
+    },
+    {
+      "key": "cereal_granola",
+      "label": "Breakfast cereal, granola and porridge",
+      "keywords": [
+        "breakfast cereal",
+        "cereals",
+        "granola",
+        "muesli",
+        "porridge",
+        "oats",
+        "oatmeal",
+        "cereal preparations",
+        "processed cereals",
+        "puffed rice",
+        "corn flakes"
+      ],
+      "default_packaging_format": "carton_or_flexible"
+    },
+    {
+      "key": "sauces_condiments",
+      "label": "Sauces, condiments, spreads and seasonings",
+      "keywords": [
+        "sauce",
+        "sauces",
+        "ketchup",
+        "mayonnaise",
+        "condiment",
+        "condiments",
+        "chutney",
+        "relish",
+        "marinade",
+        "dressing",
+        "salad dressing",
+        "seasoning",
+        "seasonings",
+        "spice",
+        "spices",
+        "spice mix",
+        "curry paste",
+        "harissa",
+        "pesto",
+        "hot sauce",
+        "chilli sauce",
+        "chili sauce",
+        "syrup",
+        "honey",
+        "jam",
+        "jams",
+        "marmalade",
+        "preserves",
+        "spread",
+        "spreads",
+        "peanut butter",
+        "tahini"
+      ],
+      "default_packaging_format": "rigid_with_label"
+    },
+    {
+      "key": "ambient_meals",
+      "label": "Ambient and shelf-stable prepared foods",
+      "keywords": [
+        "ready meal",
+        "ready meals",
+        "prepared meals",
+        "soup",
+        "soups",
+        "noodles",
+        "instant noodles",
+        "pasta",
+        "rice dishes",
+        "meal kit",
+        "cooking kit",
+        "tinned",
+        "canned food",
+        "shelf stable",
+        "shelf-stable",
+        "freeze dried",
+        "freeze-dried",
+        "dehydrated food"
+      ],
+      "default_packaging_format": "mixed"
+    },
+    {
+      "key": "chilled_frozen",
+      "label": "Chilled and frozen packaged food",
+      "keywords": [
+        "frozen food",
+        "frozen meals",
+        "ice cream",
+        "gelato",
+        "sorbet",
+        "frozen yoghurt",
+        "frozen yogurt",
+        "chilled food",
+        "yoghurt",
+        "yogurt",
+        "cheese",
+        "dairy products",
+        "plant-based milk",
+        "plant based milk",
+        "oat milk",
+        "vegan cheese",
+        "meat substitute",
+        "meat alternative",
+        "plant-based burger",
+        "tofu",
+        "tempeh"
+      ],
+      "default_packaging_format": "mixed"
+    },
+    {
+      "key": "baby_food",
+      "label": "Baby and toddler food",
+      "keywords": [
+        "baby food",
+        "infant food",
+        "toddler snack",
+        "weaning",
+        "baby puree"
+      ],
+      "default_packaging_format": "flexible"
+    },
+    {
+      "key": "health_nutrition_food",
+      "label": "Nutrition and functional food (food-first)",
+      "keywords": [
+        "protein powder",
+        "meal replacement",
+        "nutritional shake",
+        "superfood",
+        "functional food",
+        "electrolyte powder",
+        "greens powder"
+      ],
+      "default_packaging_format": "flexible_or_rigid"
+    },
+    {
+      "key": "coffee_tea",
+      "label": "Coffee, tea and hot drinks",
+      "keywords": [
+        "coffee",
+        "coffee beans",
+        "ground coffee",
+        "instant coffee",
+        "espresso",
+        "tea",
+        "teas",
+        "herbal tea",
+        "infusion",
+        "infusions",
+        "matcha",
+        "chai",
+        "hot chocolate",
+        "drinking chocolate",
+        "coffee pods",
+        "tea bags"
+      ],
+      "default_packaging_format": "flexible"
+    }
+  ],
+  "packaged_product_keywords": [
+    "packaged",
+    "pre-packed",
+    "prepacked",
+    "retail",
+    "supermarket",
+    "grocery",
+    "for consumption",
+    "foodstuffs",
+    "food products",
+    "prepared",
+    "processed"
+  ],
+  "minimum_matched_keyword_score": 1,
+  "allow_class_only_candidates": true,
+  "class_only_candidate_note": "When goods/services text is unavailable (for example in the IPO Open Data release, which does not publish goods text), a record in a primary class is still admitted as a candidate but is flagged goods_text_available=false and cannot reach the top confidence band on product category alone.",
+  "sic_code_product_groups": {
+    "_note": "Companies House SIC codes mapped to LaunchTrace product groups. Used as a secondary categorisation signal when the source has no goods/services text, and as corroborating evidence when it does.",
+    "10710": "biscuits_bakery",
+    "10720": "biscuits_bakery",
+    "10611": "cereal_granola",
+    "10612": "cereal_granola",
+    "10730": "ambient_meals",
+    "10820": "confectionery",
+    "10310": "ambient_meals",
+    "10320": "ambient_meals",
+    "10390": null,
+    "10410": "sauces_condiments",
+    "10420": "sauces_condiments",
+    "10831": "coffee_tea",
+    "10832": "coffee_tea",
+    "10840": "sauces_condiments",
+    "10850": "ambient_meals",
+    "10860": "health_nutrition_food",
+    "10890": null,
+    "10511": "chilled_frozen",
+    "10512": "chilled_frozen",
+    "10519": "chilled_frozen",
+    "10520": "chilled_frozen",
+    "10130": "chilled_frozen",
+    "10110": "chilled_frozen",
+    "10120": "chilled_frozen",
+    "10200": "chilled_frozen",
+    "10611_alt": "cereal_granola",
+    "10620": "ambient_meals",
+    "10910": null,
+    "10920": null,
+    "46370": "coffee_tea",
+    "56103": null
+  },
+  "food_sic_prefixes": {
+    "_note": "SIC prefixes that indicate a food business at Companies House. '10' = manufacture of food products, '11' = beverages, '4631'-'4639' = food wholesale, '4711'/'4721'-'4729' = food retail.",
+    "manufacturing": [
+      "10"
+    ],
+    "beverages": [
+      "11"
+    ],
+    "wholesale": [
+      "4631",
+      "4632",
+      "4633",
+      "4634",
+      "4635",
+      "4636",
+      "4637",
+      "4638",
+      "4639"
+    ],
+    "retail": [
+      "4711",
+      "4721",
+      "4722",
+      "4723",
+      "4724",
+      "4725",
+      "4726",
+      "4729",
+      "4781"
+    ],
+    "support": [
+      "4617",
+      "5610",
+      "5621",
+      "5629"
+    ]
+  },
+  "brand_name_category_hints": {
+    "_note": "Weak signals taken from the brand name itself. Only used when no goods text and no SIC evidence is available, and they never on their own lift a record into the HIGH band.",
+    "snacks": [
+      "snack",
+      "crisps",
+      "chips",
+      "bites",
+      "puffs",
+      "crunch",
+      "popcorn",
+      "nuts",
+      "nut"
+    ],
+    "cereal_bars": [
+      "bar",
+      "bars",
+      "protein",
+      "energy",
+      "fuel",
+      "flapjack"
+    ],
+    "biscuits_bakery": [
+      "bake",
+      "bakery",
+      "biscuit",
+      "cookie",
+      "brownie",
+      "bread",
+      "dough",
+      "patisserie",
+      "cake"
+    ],
+    "confectionery": [
+      "choc",
+      "chocolate",
+      "sweet",
+      "candy",
+      "cocoa",
+      "truffle",
+      "fudge",
+      "gummy"
+    ],
+    "cereal_granola": [
+      "granola",
+      "oat",
+      "oats",
+      "muesli",
+      "porridge",
+      "cereal"
+    ],
+    "sauces_condiments": [
+      "sauce",
+      "sauces",
+      "spice",
+      "spices",
+      "chilli",
+      "chili",
+      "hot",
+      "jam",
+      "honey",
+      "syrup",
+      "condiment",
+      "pesto",
+      "curry",
+      "masala"
+    ],
+    "chilled_frozen": [
+      "dairy",
+      "cheese",
+      "yoghurt",
+      "yogurt",
+      "gelato",
+      "ice cream",
+      "creamery",
+      "milk"
+    ],
+    "health_nutrition_food": [
+      "nutrition",
+      "wellness",
+      "superfood",
+      "vitality",
+      "protein"
+    ],
+    "coffee_tea": [
+      "coffee",
+      "espresso",
+      "roast",
+      "roastery",
+      "tea",
+      "brew",
+      "matcha",
+      "chai"
+    ]
+  }
+}

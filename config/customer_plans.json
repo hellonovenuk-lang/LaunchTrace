@@ -1,0 +1,50 @@
+{
+  "$schema_version": "1.0",
+  "currency": "GBP",
+  "plans": [
+    {
+      "key": "founding_monthly",
+      "name": "LaunchTrace Food — Founding access",
+      "price_pence": 7900,
+      "interval": "month",
+      "active": true,
+      "offered_publicly": true,
+      "max_recipients": 3,
+      "stripe_price_id_env": "STRIPE_FOUNDING_PRICE_ID",
+      "features": [
+        "Full weekly UK LaunchTrace Food feed",
+        "CSV export every Friday",
+        "Up to 3 recipient email addresses from the same organisation",
+        "Cancel any time"
+      ]
+    },
+    {
+      "key": "standard_monthly",
+      "name": "LaunchTrace Food — Standard",
+      "price_pence": 12900,
+      "interval": "month",
+      "active": true,
+      "offered_publicly": false,
+      "max_recipients": 5,
+      "stripe_price_id_env": "STRIPE_STANDARD_PRICE_ID",
+      "features": [
+        "Full weekly UK LaunchTrace Food feed",
+        "CSV export every Friday",
+        "Up to 5 recipient email addresses from the same organisation",
+        "Cancel any time"
+      ]
+    }
+  ],
+  "supplier_types": [
+    {"key": "flexible_packaging", "label": "Flexible packaging manufacturer"},
+    {"key": "labels", "label": "Label or print supplier"},
+    {"key": "cartons", "label": "Carton / secondary packaging supplier"},
+    {"key": "contract_manufacturing", "label": "Food contract manufacturer"},
+    {"key": "copacking", "label": "Co-packer"},
+    {"key": "distribution", "label": "Food distributor or wholesaler"},
+    {"key": "brokerage", "label": "Broker / sales agency"},
+    {"key": "fulfilment", "label": "3PL / ecommerce fulfilment"},
+    {"key": "marketing", "label": "Food & FMCG marketing agency"},
+    {"key": "other", "label": "Other supplier to food brands"}
+  ]
+}

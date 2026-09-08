@@ -1,0 +1,234 @@
+{
+  "$schema_version": "1.0",
+  "description": "Supplier buying-intent taxonomy. Maps an assessed product to the supplier categories a brand at this stage is likely to need. These are INFERRED RELEVANCE bands, not statements that the company is buying now.",
+  "relevance_bands": [
+    "HIGH",
+    "MEDIUM",
+    "LOW",
+    "NONE"
+  ],
+  "phrasing_note": "Always render as '<category> relevance: HIGH'. Never render as 'needs <category> now'.",
+  "supplier_categories": [
+    {
+      "key": "flexible_packaging",
+      "label": "Flexible packaging",
+      "description": "Films, laminates, pouches, bags, wrappers."
+    },
+    {
+      "key": "labels",
+      "label": "Labels and print",
+      "description": "Pressure-sensitive labels, sleeves, printed film."
+    },
+    {
+      "key": "cartons",
+      "label": "Cartons and secondary packaging",
+      "description": "Folding cartons, shelf-ready packaging, outer cases."
+    },
+    {
+      "key": "contract_manufacturing",
+      "label": "Contract manufacturing",
+      "description": "Recipe scale-up and manufacture under the brand's name."
+    },
+    {
+      "key": "copacking",
+      "label": "Co-packing",
+      "description": "Filling, sealing, multipacking and finishing."
+    },
+    {
+      "key": "distribution",
+      "label": "Food distribution",
+      "description": "Wholesale and retail distribution into UK trade."
+    },
+    {
+      "key": "brokerage",
+      "label": "Brokerage and sales representation",
+      "description": "Retail buyer access and account management."
+    },
+    {
+      "key": "fulfilment",
+      "label": "3PL, warehousing and ecommerce fulfilment",
+      "description": "Storage, pick and pack, direct-to-consumer despatch."
+    },
+    {
+      "key": "marketing",
+      "label": "Food and FMCG marketing",
+      "description": "Brand, design, shopper and digital marketing."
+    }
+  ],
+  "default_relevance": {
+    "flexible_packaging": "MEDIUM",
+    "labels": "MEDIUM",
+    "cartons": "LOW",
+    "contract_manufacturing": "MEDIUM",
+    "copacking": "MEDIUM",
+    "distribution": "MEDIUM",
+    "brokerage": "LOW",
+    "fulfilment": "LOW",
+    "marketing": "LOW"
+  },
+  "product_group_relevance": {
+    "snacks": {
+      "flexible_packaging": "HIGH",
+      "labels": "MEDIUM",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "cereal_bars": {
+      "flexible_packaging": "HIGH",
+      "labels": "MEDIUM",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "HIGH",
+      "marketing": "MEDIUM"
+    },
+    "biscuits_bakery": {
+      "flexible_packaging": "HIGH",
+      "labels": "MEDIUM",
+      "cartons": "HIGH",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "confectionery": {
+      "flexible_packaging": "HIGH",
+      "labels": "MEDIUM",
+      "cartons": "HIGH",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "cereal_granola": {
+      "flexible_packaging": "HIGH",
+      "labels": "MEDIUM",
+      "cartons": "HIGH",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "sauces_condiments": {
+      "flexible_packaging": "LOW",
+      "labels": "HIGH",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "ambient_meals": {
+      "flexible_packaging": "MEDIUM",
+      "labels": "HIGH",
+      "cartons": "HIGH",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "LOW"
+    },
+    "chilled_frozen": {
+      "flexible_packaging": "HIGH",
+      "labels": "HIGH",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "HIGH",
+      "brokerage": "MEDIUM",
+      "fulfilment": "LOW",
+      "marketing": "MEDIUM"
+    },
+    "baby_food": {
+      "flexible_packaging": "HIGH",
+      "labels": "HIGH",
+      "cartons": "HIGH",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "MEDIUM",
+      "brokerage": "MEDIUM",
+      "fulfilment": "MEDIUM",
+      "marketing": "MEDIUM"
+    },
+    "health_nutrition_food": {
+      "flexible_packaging": "HIGH",
+      "labels": "HIGH",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "MEDIUM",
+      "brokerage": "LOW",
+      "fulfilment": "HIGH",
+      "marketing": "MEDIUM"
+    },
+    "coffee_tea": {
+      "flexible_packaging": "HIGH",
+      "labels": "HIGH",
+      "cartons": "MEDIUM",
+      "contract_manufacturing": "HIGH",
+      "copacking": "HIGH",
+      "distribution": "MEDIUM",
+      "brokerage": "LOW",
+      "fulfilment": "HIGH",
+      "marketing": "MEDIUM"
+    }
+  },
+  "stage_modifiers": {
+    "description": "Adjusts relevance by assessed launch stage. 'up' promotes one band, 'down' demotes one band.",
+    "pre_launch": {
+      "flexible_packaging": "up",
+      "labels": "up",
+      "contract_manufacturing": "up",
+      "copacking": "up",
+      "distribution": "down",
+      "brokerage": "down",
+      "fulfilment": "down"
+    },
+    "early_launch": {
+      "distribution": "up",
+      "fulfilment": "up",
+      "marketing": "up"
+    },
+    "scaling": {
+      "flexible_packaging": "down",
+      "contract_manufacturing": "down",
+      "distribution": "up",
+      "brokerage": "up",
+      "fulfilment": "up"
+    },
+    "established": {
+      "flexible_packaging": "down",
+      "labels": "down",
+      "cartons": "down",
+      "contract_manufacturing": "down",
+      "copacking": "down",
+      "distribution": "down",
+      "brokerage": "down",
+      "fulfilment": "down",
+      "marketing": "down"
+    },
+    "unknown": {}
+  },
+  "band_order": [
+    "NONE",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ]
+}
