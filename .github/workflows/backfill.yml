@@ -1,0 +1,79 @@
+name: Historical backfill and validation
+
+# Manually triggered. Processes several past journal weeks and rebuilds the
+# validation evidence in reports/validation/. Never sends customer email.
+
+on:
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: "How many journal weeks to process"
+        required: true
+        default: "4"
+      source:
+        description: "Journal source: ukipo_http, open_data or local"
+        required: true
+        default: "open_data"
+        type: choice
+        options: [open_data, ukipo_http, local]
+      mode:
+        description: "backfill (store to the database) or validate (write validation reports)"
+        required: true
+        default: "validate"
+        type: choice
+        options: [validate, backfill]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch the IPO Open Data weeks if that source was chosen
+        if: github.event.inputs.source == 'open_data'
+        run: python -m src.pipeline fetch-open-data --weeks ${{ github.event.inputs.weeks }}
+        continue-on-error: true
+
+      - name: Run
+        env:
+          ENVIRONMENT: production
+          # Backfill must never send, whatever the repository variable says.
+          SEND_MODE: review
+          LOG_FORMAT: json
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          COMPANIES_HOUSE_API_KEY: ${{ secrets.COMPANIES_HOUSE_API_KEY }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'none' }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'claude-haiku-4-5-20251001' }}
+          SEARCH_PROVIDER: ${{ vars.SEARCH_PROVIDER || 'none' }}
+          SEARCH_API_KEY: ${{ secrets.SEARCH_API_KEY }}
+          JOURNAL_SOURCE: ${{ github.event.inputs.source }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "validate" ]; then
+            python -m src.pipeline validate --weeks ${{ github.event.inputs.weeks }} --source ${{ github.event.inputs.source }}
+          else
+            python -m src.pipeline backfill --weeks ${{ github.event.inputs.weeks }} --source ${{ github.event.inputs.source }}
+          fi
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backfill-${{ github.run_number }}
+          path: |
+            reports/validation/**
+            reports/runs/**
+          retention-days: 90
+          if-no-files-found: warn

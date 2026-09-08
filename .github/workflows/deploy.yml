@@ -1,0 +1,75 @@
+name: Deploy website
+
+# The LaunchTrace site is one small FastAPI application. This workflow builds
+# and checks it on every push to the default branch, then optionally deploys.
+#
+# Deployment is opt-in: it only runs when the repository variable DEPLOY_TARGET
+# is set. Until then this is a build check, so nothing is published by accident.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start the site and check it responds
+        run: |
+          python -m uvicorn src.web.app:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/healthz
+          curl -sf http://127.0.0.1:8000/ | grep -q "Find emerging food brands"
+          echo "Site builds and serves."
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: vars.DEPLOY_TARGET != ''
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Fly.io
+        if: vars.DEPLOY_TARGET == 'fly'
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Run the Fly deployment
+        if: vars.DEPLOY_TARGET == 'fly'
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy to Render
+        if: vars.DEPLOY_TARGET == 'render'
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            "https://api.render.com/v1/services/${{ vars.RENDER_SERVICE_ID }}/deploys"
+
+      - name: Unsupported target
+        if: vars.DEPLOY_TARGET != 'fly' && vars.DEPLOY_TARGET != 'render'
+        run: |
+          echo "::error::DEPLOY_TARGET is '${{ vars.DEPLOY_TARGET }}', which this workflow does not know how to deploy."
+          echo "Supported values: fly, render. See README.md 'How to deploy the website'."
+          exit 1
