@@ -32,7 +32,9 @@ class LLMProductClassification(BaseModel):
     distribution_relevance: str
     reasoning_summary: str = Field(max_length=600)
 
-    @field_validator("packaging_relevance", "contract_manufacturing_relevance", "distribution_relevance")
+    @field_validator(
+        "packaging_relevance", "contract_manufacturing_relevance", "distribution_relevance"
+    )
     @classmethod
     def _valid_relevance(cls, v: str) -> str:
         u = (v or "").strip().upper()
@@ -48,7 +50,9 @@ class LLMProductClassification(BaseModel):
         v = v.strip().lower().replace(" ", "_").replace("-", "_")
         return v or None
 
-    def apply_to(self, assessment: ProductAssessment, allowed_categories: set[str]) -> ProductAssessment:
+    def apply_to(
+        self, assessment: ProductAssessment, allowed_categories: set[str]
+    ) -> ProductAssessment:
         """Merge LLM judgement into the deterministic assessment."""
         updated = assessment.model_copy(deep=True)
         updated.consumer_product = self.consumer_product

@@ -7,7 +7,7 @@ change never requires re-fetching a journal.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     JSON,
@@ -26,7 +26,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -257,7 +257,9 @@ class SuppressionRule(Base):
     __tablename__ = "suppression_rules"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    rule_type: Mapped[str] = mapped_column(String(32), index=True)  # company | applicant | mark | email
+    rule_type: Mapped[str] = mapped_column(
+        String(32), index=True
+    )  # company | applicant | mark | email
     value: Mapped[str] = mapped_column(String(512), index=True)
     reason: Mapped[str | None] = mapped_column(String(512))
     created_by: Mapped[str | None] = mapped_column(String(128))

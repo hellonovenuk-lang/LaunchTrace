@@ -57,7 +57,11 @@ def score_candidate(applicant_name: str, candidate: CandidateCompany) -> tuple[i
     a_raw = normalise_text(applicant_name)
     c_raw = normalise_text(candidate.company_name)
     if a_raw and a_raw == c_raw:
-        return EXACT_CONFIDENCE, "exact_name", ["Applicant name matches the registered name exactly"]
+        return (
+            EXACT_CONFIDENCE,
+            "exact_name",
+            ["Applicant name matches the registered name exactly"],
+        )
 
     a_key, c_key = company_name_key(applicant_name), company_name_key(candidate.company_name)
     if a_key and a_key == c_key:
@@ -67,7 +71,10 @@ def score_candidate(applicant_name: str, candidate: CandidateCompany) -> tuple[i
             ["Names match once legal suffixes and punctuation are removed"],
         )
 
-    a_tokens, c_tokens = distinctive_tokens(applicant_name), distinctive_tokens(candidate.company_name)
+    a_tokens, c_tokens = (
+        distinctive_tokens(applicant_name),
+        distinctive_tokens(candidate.company_name),
+    )
     if not a_tokens or not c_tokens:
         return 0, "no_signal", ["Applicant name has no distinctive tokens to match on"]
 
@@ -97,12 +104,16 @@ def best_match(
     """Pick the best candidate, or return an explicit no-match."""
     if not applicant_name:
         return CompanyMatch(
-            matched=False, match_method="no_applicant_name", provider=provider,
+            matched=False,
+            match_method="no_applicant_name",
+            provider=provider,
             match_evidence=["Record has no applicant name"],
         )
     if not candidates:
         return CompanyMatch(
-            matched=False, match_method="no_candidates", provider=provider,
+            matched=False,
+            match_method="no_candidates",
+            provider=provider,
             candidates_considered=0,
             match_evidence=["No Companies House candidates returned for this applicant name"],
         )
@@ -128,7 +139,9 @@ def best_match(
             candidates_considered=len(candidates),
             provider=provider,
             match_evidence=evidence
-            + [f"Best candidate '{best.company_name}' scored {confidence}, below the {min_confidence} threshold"],
+            + [
+                f"Best candidate '{best.company_name}' scored {confidence}, below the {min_confidence} threshold"
+            ],
         )
 
     return CompanyMatch(

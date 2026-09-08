@@ -11,7 +11,7 @@ of a failed search, and we never assert a fact we did not see a URL for.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from src.enrich.providers import (
@@ -31,33 +31,93 @@ from src.settings import Settings, get_settings
 log = get_logger(__name__)
 
 MAJOR_RETAILER_DOMAINS = {
-    "tesco.com", "sainsburys.co.uk", "asda.com", "morrisons.com", "waitrose.com",
-    "ocado.com", "aldi.co.uk", "lidl.co.uk", "coop.co.uk", "iceland.co.uk",
-    "marksandspencer.com", "boots.com", "hollandandbarrett.com", "wholefoodsmarket.com",
-    "costco.co.uk", "bmstores.co.uk", "poundland.co.uk", "spar.co.uk", "budgens.co.uk",
+    "tesco.com",
+    "sainsburys.co.uk",
+    "asda.com",
+    "morrisons.com",
+    "waitrose.com",
+    "ocado.com",
+    "aldi.co.uk",
+    "lidl.co.uk",
+    "coop.co.uk",
+    "iceland.co.uk",
+    "marksandspencer.com",
+    "boots.com",
+    "hollandandbarrett.com",
+    "wholefoodsmarket.com",
+    "costco.co.uk",
+    "bmstores.co.uk",
+    "poundland.co.uk",
+    "spar.co.uk",
+    "budgens.co.uk",
 }
 MARKETPLACE_DOMAINS = {
-    "amazon.co.uk", "amazon.com", "ebay.co.uk", "etsy.com", "notonthehighstreet.com",
-    "ocadoretail.com", "thewhiskyexchange.com", "faire.com", "ankorstore.com",
+    "amazon.co.uk",
+    "amazon.com",
+    "ebay.co.uk",
+    "etsy.com",
+    "notonthehighstreet.com",
+    "ocadoretail.com",
+    "thewhiskyexchange.com",
+    "faire.com",
+    "ankorstore.com",
 }
 SOCIAL_DOMAINS = {
-    "instagram.com", "facebook.com", "linkedin.com", "tiktok.com", "x.com", "twitter.com",
+    "instagram.com",
+    "facebook.com",
+    "linkedin.com",
+    "tiktok.com",
+    "x.com",
+    "twitter.com",
     "youtube.com",
 }
 DIRECTORY_DOMAINS = {
-    "companieshouse.gov.uk", "find-and-update.company-information.service.gov.uk",
-    "endole.co.uk", "companycheck.co.uk", "opencorporates.com", "bizdb.co.uk",
-    "ipo.gov.uk", "trademarks.ipo.gov.uk", "tmdn.org", "wipo.int", "crunchbase.com",
-    "bloomberg.com", "dnb.com", "yell.com", "192.com", "wikipedia.org",
+    "companieshouse.gov.uk",
+    "find-and-update.company-information.service.gov.uk",
+    "endole.co.uk",
+    "companycheck.co.uk",
+    "opencorporates.com",
+    "bizdb.co.uk",
+    "ipo.gov.uk",
+    "trademarks.ipo.gov.uk",
+    "tmdn.org",
+    "wipo.int",
+    "crunchbase.com",
+    "bloomberg.com",
+    "dnb.com",
+    "yell.com",
+    "192.com",
+    "wikipedia.org",
 }
 LAUNCH_PHRASES = (
-    "coming soon", "launching soon", "pre-order", "preorder", "new brand", "we launched",
-    "founded in", "our story", "crowdfunding", "crowdfunder", "kickstarter", "seedrs",
-    "stockists", "wholesale enquiries", "trade enquiries", "sample pack",
+    "coming soon",
+    "launching soon",
+    "pre-order",
+    "preorder",
+    "new brand",
+    "we launched",
+    "founded in",
+    "our story",
+    "crowdfunding",
+    "crowdfunder",
+    "kickstarter",
+    "seedrs",
+    "stockists",
+    "wholesale enquiries",
+    "trade enquiries",
+    "sample pack",
 )
 ESTABLISHED_PHRASES = (
-    "since 18", "since 19", "nationwide", "available in over", "our factories",
-    "global brand", "worldwide", "annual revenue", "plc", "distributors in",
+    "since 18",
+    "since 19",
+    "nationwide",
+    "available in over",
+    "our factories",
+    "global brand",
+    "worldwide",
+    "annual revenue",
+    "plc",
+    "distributors in",
 )
 SHOP_PHRASES = ("add to basket", "add to cart", "shop now", "buy now", "our shop", "£")
 CONTACT_PATHS = ("/contact", "/contact-us", "/get-in-touch", "/wholesale", "/trade", "/stockists")
@@ -80,7 +140,9 @@ def get_search_provider(settings: Settings | None = None) -> SearchProvider:
 
 
 class WebEnricher:
-    def __init__(self, provider: SearchProvider | None = None, settings: Settings | None = None) -> None:
+    def __init__(
+        self, provider: SearchProvider | None = None, settings: Settings | None = None
+    ) -> None:
         self.settings = settings or get_settings()
         self.provider = provider or get_search_provider(self.settings)
         self.calls = 0
@@ -98,7 +160,9 @@ class WebEnricher:
             )
         query_name = brand_name or company_name
         if not query_name:
-            return WebEnrichment(attempted=False, provider=self.provider.name, error="no_brand_name")
+            return WebEnrichment(
+                attempted=False, provider=self.provider.name, error="no_brand_name"
+            )
 
         self.calls += 1
         try:
@@ -108,17 +172,17 @@ class WebEnricher:
         except Exception as exc:
             log.warning("web.search_failed", brand=query_name[:80], error=str(exc)[:200])
             return WebEnrichment(
-                attempted=True, provider=self.provider.name, error=str(exc)[:400],
-                enriched_at=datetime.now(timezone.utc),
+                attempted=True,
+                provider=self.provider.name,
+                error=str(exc)[:400],
+                enriched_at=datetime.now(UTC),
             )
         return self.assess(query_name, results, provider=self.provider.name)
 
     # -- assessment --------------------------------------------------------
     @staticmethod
     def assess(brand_name: str, results: list[SearchResult], provider: str) -> WebEnrichment:
-        enrichment = WebEnrichment(
-            attempted=True, provider=provider, enriched_at=datetime.now(timezone.utc)
-        )
+        enrichment = WebEnrichment(attempted=True, provider=provider, enriched_at=datetime.now(UTC))
         if not results:
             enrichment.retail_presence = RetailPresence.NONE_FOUND
             enrichment.website_maturity = "unknown"
@@ -143,20 +207,30 @@ class WebEnricher:
         if official is None:
             for r in results:
                 d = r.domain
-                if d and d not in DIRECTORY_DOMAINS and d not in SOCIAL_DOMAINS and d not in MAJOR_RETAILER_DOMAINS and d not in MARKETPLACE_DOMAINS:
+                if (
+                    d
+                    and d not in DIRECTORY_DOMAINS
+                    and d not in SOCIAL_DOMAINS
+                    and d not in MAJOR_RETAILER_DOMAINS
+                    and d not in MARKETPLACE_DOMAINS
+                ):
                     official = r
                     break
 
         if official:
             parsed = urlparse(official.url)
-            enrichment.website = f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else official.url
+            enrichment.website = (
+                f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else official.url
+            )
             enrichment.brand_description = (official.snippet or "").strip()[:400] or None
             for r in results:
                 if r.domain == official.domain and any(p in r.url.lower() for p in CONTACT_PATHS):
                     enrichment.contact_page = r.url
                     break
 
-        enrichment.major_retailer_presence = any(r.domain in MAJOR_RETAILER_DOMAINS for r in results)
+        enrichment.major_retailer_presence = any(
+            r.domain in MAJOR_RETAILER_DOMAINS for r in results
+        )
         enrichment.marketplace_presence = any(r.domain in MARKETPLACE_DOMAINS for r in results)
         enrichment.social_presence = any(r.domain in SOCIAL_DOMAINS for r in results)
         enrichment.products_on_sale = (

@@ -82,7 +82,7 @@ class LaunchTraceScorer:
                 total += weight
         return total + age_best
 
-    def _evidence_scale(self, ctx: "ScoringContext") -> tuple[float, list[str]]:
+    def _evidence_scale(self, ctx: ScoringContext) -> tuple[float, list[str]]:
         """Scale factor that redistributes the weight of enrichment we did not run.
 
         A record researched with fewer sources should not be scored as if it had
@@ -131,7 +131,9 @@ class LaunchTraceScorer:
         thresholds = self.exclusions["portfolio_filing_thresholds"]
         if ctx.applicant_journal_mark_count == 1:
             positives.append("single_mark_this_journal")
-        elif ctx.applicant_journal_mark_count >= thresholds["applicant_marks_in_single_journal_warn"]:
+        elif (
+            ctx.applicant_journal_mark_count >= thresholds["applicant_marks_in_single_journal_warn"]
+        ):
             negatives.append("portfolio_filing")
 
         class_count = len(ctx.record.nice_classes)
@@ -160,7 +162,10 @@ class LaunchTraceScorer:
             elif ctx.company.match_confidence < 70:
                 negatives.append("weak_company_match")
             if (ctx.company.accounts_category or "").upper() in {
-                "MICRO ENTITY", "TOTAL EXEMPTION SMALL", "SMALL", "ACCOUNTS TYPE NOT AVAILABLE",
+                "MICRO ENTITY",
+                "TOTAL EXEMPTION SMALL",
+                "SMALL",
+                "ACCOUNTS TYPE NOT AVAILABLE",
                 "TOTAL EXEMPTION FULL",
             }:
                 positives.append("small_company_accounts")
@@ -234,7 +239,9 @@ class LaunchTraceScorer:
             weight = int(round(int(ind["weight"]) * scale))
             value += weight
             reasons.append(
-                ScoreReason(key=key, text=self._render(ind["reason_template"], facts), weight=weight)
+                ScoreReason(
+                    key=key, text=self._render(ind["reason_template"], facts), weight=weight
+                )
             )
         for key in negatives:
             ind = self.negative.get(key)
@@ -242,7 +249,11 @@ class LaunchTraceScorer:
                 continue
             value += int(ind["weight"])
             negative_reasons.append(
-                ScoreReason(key=key, text=self._render(ind["reason_template"], facts), weight=int(ind["weight"]))
+                ScoreReason(
+                    key=key,
+                    text=self._render(ind["reason_template"], facts),
+                    weight=int(ind["weight"]),
+                )
             )
 
         value = max(int(self.cfg["min_score"]), min(int(self.cfg["max_score"]), value))
@@ -258,17 +269,17 @@ class LaunchTraceScorer:
             if not confident and value > cap:
                 value = cap
                 capped = True
-                cap_reason = (
-                    "Capped below the HIGH band: no Companies House match we are confident enough in"
-                )
-        if req.get("high_band_requires_product_category") and not ctx.product.product_category:
-            if value > cap:
-                value = cap
-                capped = True
-                cap_reason = (
-                    "Capped below the HIGH band: the source did not give enough detail to "
-                    "identify a specific product category"
-                )
+                cap_reason = "Capped below the HIGH band: no Companies House match we are confident enough in"
+        needs_category = (
+            req.get("high_band_requires_product_category") and not ctx.product.product_category
+        )
+        if needs_category and value > cap:
+            value = cap
+            capped = True
+            cap_reason = (
+                "Capped below the HIGH band: the source did not give enough detail to "
+                "identify a specific product category"
+            )
 
         web_cap = self.cfg.get("score_cap_without_web_evidence")
         if web_cap is not None and not ctx.web.attempted and value > int(web_cap):
@@ -286,8 +297,9 @@ class LaunchTraceScorer:
             value=value,
             band=band,
             band_label=label,
-            reasons=reasons[: int(self.cfg["max_reasons_shown"])],
+            reasons=reasons,
             negative_reasons=negative_reasons,
+            max_reasons_shown=int(self.cfg["max_reasons_shown"]),
             capped=capped,
             cap_reason=cap_reason,
         )

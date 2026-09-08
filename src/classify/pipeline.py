@@ -8,8 +8,7 @@ predictable.
 from __future__ import annotations
 
 from src.classify.food_filter import FilterOutcome, FoodFilter
-from src.classify.llm import build_user_prompt, get_llm_provider
-from src.classify.llm import SYSTEM_PROMPT
+from src.classify.llm import SYSTEM_PROMPT, build_user_prompt, get_llm_provider
 from src.classify.schema import parse_llm_response
 from src.errors import LLMSchemaError, ProviderError
 from src.logging_setup import get_logger
@@ -20,8 +19,12 @@ log = get_logger(__name__)
 
 
 class ProductClassifier:
-    def __init__(self, settings: Settings | None = None, food_filter: FoodFilter | None = None,
-                 llm_provider=None) -> None:  # type: ignore[no-untyped-def]
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        food_filter: FoodFilter | None = None,
+        llm_provider=None,
+    ) -> None:  # type: ignore[no-untyped-def]
         self.settings = settings or get_settings()
         self.filter = food_filter or FoodFilter()
         self.llm = llm_provider if llm_provider is not None else get_llm_provider(self.settings)
@@ -58,7 +61,9 @@ class ProductClassifier:
             return outcome
         except Exception as exc:  # never let a provider bug kill the run
             self.llm_failures += 1
-            log.warning("classify.llm_error", trademark=record.trademark_number, error=str(exc)[:200])
+            log.warning(
+                "classify.llm_error", trademark=record.trademark_number, error=str(exc)[:200]
+            )
             outcome.warnings.append("llm_error")
             return outcome
 

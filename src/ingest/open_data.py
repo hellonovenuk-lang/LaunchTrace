@@ -139,43 +139,47 @@ class IpoOpenDataSource(JournalSource):
             return dest
         return self.client.download(OPEN_DATA_ZIP, dest)
 
-    def extract_weeks(self, publication_dates: list[date], snapshot: Path | None = None) -> list[Path]:
+    def extract_weeks(
+        self, publication_dates: list[date], snapshot: Path | None = None
+    ) -> list[Path]:
         """Cut the requested publication weeks out of the snapshot."""
         import io
         import zipfile
+        from contextlib import ExitStack
 
         snapshot = snapshot or self.download_snapshot()
         wanted = {d.isoformat() for d in publication_dates}
-        written: dict[str, gzip.GzipFile] = {}
-        header: str | None = None
+        kept = 0
 
-        with zipfile.ZipFile(snapshot) as zf:
-            inner = zf.namelist()[0]
-            with zf.open(inner) as raw:
-                text = io.TextIOWrapper(raw, encoding="utf-16", errors="replace", newline="")
-                header = text.readline().rstrip("\r\n")
-                columns = header.split("|")
-                pub_idx = columns.index("Published")
-                for iso in sorted(wanted):
-                    p = self.journal_dir / f"opendata_week_{iso}.txt.gz"
-                    fh = gzip.open(p, "wt", encoding="utf-8", newline="\n")
-                    fh.write(header + "\n")
-                    written[iso] = fh  # type: ignore[assignment]
-                kept = 0
-                for line in text:
-                    parts = line.split("|")
-                    if len(parts) <= pub_idx:
-                        continue
-                    pub = parts[pub_idx].strip()
-                    if pub in wanted:
-                        written[pub].write(line.rstrip("\r\n") + "\n")  # type: ignore[arg-type]
-                        kept += 1
-        for fh in written.values():
-            fh.close()  # type: ignore[union-attr]
+        with ExitStack() as stack:
+            zf = stack.enter_context(zipfile.ZipFile(snapshot))
+            raw = stack.enter_context(zf.open(zf.namelist()[0]))
+            text = io.TextIOWrapper(raw, encoding="utf-16", errors="replace", newline="")
+            header = text.readline().rstrip("\r\n")
+            pub_idx = header.split("|").index("Published")
+
+            writers = {}
+            for iso in sorted(wanted):
+                path = self.journal_dir / f"opendata_week_{iso}.txt.gz"
+                handle = stack.enter_context(gzip.open(path, "wt", encoding="utf-8", newline="\n"))
+                handle.write(header + "\n")
+                writers[iso] = handle
+
+            for line in text:
+                parts = line.split("|")
+                if len(parts) <= pub_idx:
+                    continue
+                pub = parts[pub_idx].strip()
+                if pub in wanted:
+                    writers[pub].write(line.rstrip("\r\n") + "\n")
+                    kept += 1
+
         log.info("opendata.weeks.extracted", weeks=len(wanted), records=kept)
         return [self.journal_dir / f"opendata_week_{iso}.txt.gz" for iso in sorted(wanted)]
 
-    def discover_recent_publication_dates(self, weeks: int, snapshot: Path | None = None) -> list[date]:
+    def discover_recent_publication_dates(
+        self, weeks: int, snapshot: Path | None = None
+    ) -> list[date]:
         """The most recent complete publication weeks present in the snapshot."""
         import io
         import zipfile

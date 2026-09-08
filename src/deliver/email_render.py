@@ -8,7 +8,6 @@ configured at all.
 from __future__ import annotations
 
 from dataclasses import dataclass
-
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
@@ -43,7 +42,9 @@ def _top_intents(labels: dict[str, str], limit: int = 3):  # type: ignore[no-unt
 
     def _fn(opp: Opportunity) -> list[tuple[str, str]]:
         pairs = [
-            (labels.get(k, k), v) for k, v in opp.buying_intent.as_dict().items() if v in {"HIGH", "MEDIUM"}
+            (labels.get(k, k), v)
+            for k, v in opp.buying_intent.as_dict().items()
+            if v in {"HIGH", "MEDIUM"}
         ]
         pairs.sort(key=lambda p: order.get(p[1], 0), reverse=True)
         return pairs[:limit]
@@ -133,13 +134,17 @@ def render_welcome_email(
     settings = settings or get_settings()
     plans = load_config("customer_plans.json")["plans"]
     plan = next((p for p in plans if p["key"] == plan_key), plans[0])
-    html = _env().get_template("welcome.html.j2").render(
-        company=company,
-        contact_name=contact_name,
-        plan_name=plan["name"],
-        price_pence=plan["price_pence"],
-        max_recipients=plan["max_recipients"],
-        manage_url=f"{settings.site_url.rstrip('/')}/billing/manage",
+    html = (
+        _env()
+        .get_template("welcome.html.j2")
+        .render(
+            company=company,
+            contact_name=contact_name,
+            plan_name=plan["name"],
+            price_pence=plan["price_pence"],
+            max_recipients=plan["max_recipients"],
+            manage_url=f"{settings.site_url.rstrip('/')}/billing/manage",
+        )
     )
     return RenderedEmail(
         subject="You're subscribed to LaunchTrace Food",
@@ -152,8 +157,12 @@ def render_welcome_email(
 def render_alert_email(
     title: str, run_id: str, journal_number: str, status: str, detail: str
 ) -> RenderedEmail:
-    html = _env().get_template("alert.html.j2").render(
-        title=title, run_id=run_id, journal_number=journal_number, status=status, detail=detail
+    html = (
+        _env()
+        .get_template("alert.html.j2")
+        .render(
+            title=title, run_id=run_id, journal_number=journal_number, status=status, detail=detail
+        )
     )
     return RenderedEmail(
         subject=f"[LaunchTrace] {title}",
@@ -173,15 +182,19 @@ def render_sample_email(
     plans = load_config("customer_plans.json")["plans"]
     founding = next(p for p in plans if p["key"] == "founding_monthly")
     base = settings.site_url.rstrip("/")
-    html = _env().get_template("sample.html.j2").render(
-        company=company,
-        contact_name=contact_name,
-        total=total,
-        supplier_type_label=supplier_type_label,
-        price_pence=founding["price_pence"],
-        subscribe_url=f"{base}/billing/checkout?plan=founding_monthly",
-        unsubscribe_url=f"{base}/unsubscribe",
-        site_url=base,
+    html = (
+        _env()
+        .get_template("sample.html.j2")
+        .render(
+            company=company,
+            contact_name=contact_name,
+            total=total,
+            supplier_type_label=supplier_type_label,
+            price_pence=founding["price_pence"],
+            subscribe_url=f"{base}/billing/checkout?plan=founding_monthly",
+            unsubscribe_url=f"{base}/unsubscribe",
+            site_url=base,
+        )
     )
     return RenderedEmail(
         subject="Your LaunchTrace Food sample",
@@ -195,5 +208,3 @@ def write_email_html(rendered: RenderedEmail, path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(rendered.html, encoding="utf-8")
     return path
-
-

@@ -28,7 +28,9 @@ class JournalSource(ABC):
         """The most recent journal this source can supply."""
 
     @abstractmethod
-    def ref_for(self, journal_number: str | None = None, publication_date: date | None = None) -> JournalRef:
+    def ref_for(
+        self, journal_number: str | None = None, publication_date: date | None = None
+    ) -> JournalRef:
         """Resolve an explicit journal identifier or publication date to a ref."""
 
     @abstractmethod

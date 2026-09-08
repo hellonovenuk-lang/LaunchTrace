@@ -36,7 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    weekly = sub.add_parser("weekly", help="Process the latest journal and produce the weekly report")
+    weekly = sub.add_parser(
+        "weekly", help="Process the latest journal and produce the weekly report"
+    )
     _add_common(weekly)
     weekly.add_argument("--send", action="store_true", help="Attempt delivery after the run")
 
@@ -81,14 +83,17 @@ def build_parser() -> argparse.ArgumentParser:
     add_customer.add_argument("--status", default="trialing")
 
     suppress = sub.add_parser("suppress", help="Suppress a company, applicant, mark or email")
-    suppress.add_argument("--type", required=True, choices=["company", "applicant", "mark", "email"])
+    suppress.add_argument(
+        "--type", required=True, choices=["company", "applicant", "mark", "email"]
+    )
     suppress.add_argument("--value", required=True)
     suppress.add_argument("--reason")
 
     sub.add_parser("errors", help="Show recent pipeline errors")
 
     fetch_od = sub.add_parser(
-        "fetch-open-data", help="Download the official IPO Open Data release and slice it into weeks"
+        "fetch-open-data",
+        help="Download the official IPO Open Data release and slice it into weeks",
     )
     fetch_od.add_argument("--weeks", type=int, default=4)
 

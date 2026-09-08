@@ -20,9 +20,18 @@ from src.settings import get_settings
 log = get_logger(__name__)
 
 
-@lru_cache(maxsize=8)
 def get_engine(database_url: str | None = None) -> Engine:
-    url = database_url or get_settings().database_url
+    """Engine for a database URL, created once per URL.
+
+    The URL is resolved from settings *before* the cache is consulted: caching
+    on the literal ``None`` argument would pin the first engine created and
+    silently ignore a later configuration change.
+    """
+    return _engine_for(database_url or get_settings().database_url)
+
+
+@lru_cache(maxsize=8)
+def _engine_for(url: str) -> Engine:
     kwargs: dict = {"future": True, "pool_pre_ping": True}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
@@ -40,9 +49,13 @@ def get_engine(database_url: str | None = None) -> Engine:
     return engine
 
 
-@lru_cache(maxsize=8)
 def _session_factory(database_url: str | None = None) -> sessionmaker[Session]:
-    return sessionmaker(bind=get_engine(database_url), expire_on_commit=False, future=True)
+    return _factory_for(database_url or get_settings().database_url)
+
+
+@lru_cache(maxsize=8)
+def _factory_for(url: str) -> sessionmaker[Session]:
+    return sessionmaker(bind=get_engine(url), expire_on_commit=False, future=True)
 
 
 def get_session(database_url: str | None = None) -> Session:

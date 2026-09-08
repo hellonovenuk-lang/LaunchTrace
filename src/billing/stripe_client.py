@@ -111,18 +111,21 @@ class StripeBilling:
         import stripe
 
         stripe.api_key = self.settings.stripe_secret_key
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{base}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{base}/billing/cancelled",
-            customer_email=email or None,
-            allow_promotion_codes=True,
-            metadata={"plan_key": plan_key, "company": company or ""},
-            subscription_data={"metadata": {"plan_key": plan_key, "company": company or ""}},
-        )
-        log.info("stripe.checkout_created", plan=plan_key, session=session.get("id"))
-        return CheckoutSession(url=session["url"], session_id=session["id"], live=True)
+        metadata = {"plan_key": plan_key, "company": company or ""}
+        params: dict[str, Any] = {
+            "mode": "subscription",
+            "line_items": [{"price": price_id, "quantity": 1}],
+            "success_url": f"{base}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": f"{base}/billing/cancelled",
+            "allow_promotion_codes": True,
+            "metadata": metadata,
+            "subscription_data": {"metadata": metadata},
+        }
+        if email:
+            params["customer_email"] = email
+        session = stripe.checkout.Session.create(**params)
+        log.info("stripe.checkout_created", plan=plan_key, session=session.id)
+        return CheckoutSession(url=str(session.url), session_id=str(session.id), live=True)
 
     def create_billing_portal_session(self, stripe_customer_id: str) -> str | None:
         if not self.live:
@@ -142,7 +145,8 @@ class StripeBilling:
         import stripe
 
         stripe.api_key = self.settings.stripe_secret_key
-        return dict(stripe.Subscription.cancel(subscription_id))
+        cancelled = stripe.Subscription.cancel(subscription_id)
+        return {"id": cancelled.id, "status": cancelled.status, "live": True}
 
     def verify_webhook(self, payload: bytes, signature: str) -> dict[str, Any]:
         """Verify the Stripe signature. Never trust an unverified webhook body."""
@@ -151,9 +155,7 @@ class StripeBilling:
         if not self.settings.stripe_webhook_secret:
             raise ValueError("STRIPE_WEBHOOK_SECRET is not set; refusing to process the webhook")
         return dict(
-            stripe.Webhook.construct_event(
-                payload, signature, self.settings.stripe_webhook_secret
-            )
+            stripe.Webhook.construct_event(payload, signature, self.settings.stripe_webhook_secret)
         )
 
 

@@ -15,12 +15,11 @@ whole-stage failures fail closed (the run is blocked and nothing is sent).
 from __future__ import annotations
 
 import uuid
-from collections import Counter, defaultdict
-from datetime import date, datetime, timezone
+from collections import Counter
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from src.classify.food_filter import FoodFilter
 from src.classify.pipeline import ProductClassifier
 from src.deliver.csv_export import write_opportunities_csv
 from src.deliver.email_render import render_weekly_email, write_email_html
@@ -41,9 +40,7 @@ from src.logging_setup import get_logger
 from src.models import (
     ApplicantType,
     CompanyMatch,
-    FunnelCounts,
     JournalRef,
-    LaunchStage,
     Opportunity,
     PipelineResult,
     RejectedRecord,
@@ -96,10 +93,12 @@ class Pipeline:
         history: list[dict[str, Any]] | None = None,
         write_outputs: bool = True,
     ) -> PipelineResult:
-        run_id = f"run_{datetime.now(timezone.utc):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
+        run_id = f"run_{datetime.now(UTC):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
         ref = self.source.ref_for(journal_number=journal_number, publication_date=publication_date)
         result = PipelineResult(run_id=run_id, journal=ref)
-        log.info("pipeline.start", run_id=run_id, journal=ref.journal_number, source=self.source.name)
+        log.info(
+            "pipeline.start", run_id=run_id, journal=ref.journal_number, source=self.source.name
+        )
 
         try:
             records = self._ingest(ref, max_records)
@@ -111,13 +110,15 @@ class Pipeline:
             result.status = RunStatus.BLOCKED
             result.blocked_reason = f"{exc.reason_code}: {exc}"
             result.errors.append(str(exc))
-            log.error("pipeline.blocked", run_id=run_id, reason=exc.reason_code, error=str(exc)[:300])
+            log.error(
+                "pipeline.blocked", run_id=run_id, reason=exc.reason_code, error=str(exc)[:300]
+            )
         except Exception as exc:  # pragma: no cover - unexpected
             result.status = RunStatus.FAILED
             result.errors.append(f"{type(exc).__name__}: {exc}")
             log.error("pipeline.failed", run_id=run_id, error=str(exc)[:400])
 
-        result.finished_at = datetime.now(timezone.utc)
+        result.finished_at = datetime.now(UTC)
         if write_outputs:
             self._write_outputs(result, history)
         log.info(
@@ -149,7 +150,9 @@ class Pipeline:
         guard = load_config("validation_bands.json")["volume_guardrails"]
         raw = result.counts.raw_records
         by_source = guard.get("min_expected_records_per_journal_by_source", {})
-        minimum = int(by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"]))
+        minimum = int(
+            by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"])
+        )
         if raw < minimum:
             raise VolumeAnomalyError(
                 f"Only {raw} records parsed from journal {result.journal.journal_number}; "
@@ -299,7 +302,9 @@ class Pipeline:
                         error=str(exc)[:200],
                     )
                     match = CompanyMatch(
-                        matched=False, match_method="error", provider=self.registry.name,
+                        matched=False,
+                        match_method="error",
+                        provider=self.registry.name,
                         error=str(exc)[:300],
                     )
                 company_cache[key] = match
@@ -327,22 +332,28 @@ class Pipeline:
                 # Incorporated after filing but within the allowed window: treat as
                 # brand new rather than as a negative age.
                 age = 0.0
-            if match.matched and (match.company_status or "").lower() in dead_statuses:
-                # Dissolved *now* does not disqualify a historical filing; only a
-                # company already dissolved when it filed is a genuine rejection.
-                if match.dissolution_date and record.filing_date and match.dissolution_date <= record.filing_date:
-                    counts.add_rejection("company_dissolved")
-                    result.rejected.append(
-                        RejectedRecord(
-                            trademark_number=record.trademark_number,
-                            mark_text=record.mark_text,
-                            applicant_name=record.applicant_name,
-                            stage="company",
-                            reason="company_dissolved",
-                            detail=match.company_status,
-                        )
+            # Dissolved *now* does not disqualify a historical filing; only a
+            # company already dissolved when it filed is a genuine rejection.
+            already_dead_at_filing = (
+                match.matched
+                and (match.company_status or "").lower() in dead_statuses
+                and match.dissolution_date is not None
+                and record.filing_date is not None
+                and match.dissolution_date <= record.filing_date
+            )
+            if already_dead_at_filing:
+                counts.add_rejection("company_dissolved")
+                result.rejected.append(
+                    RejectedRecord(
+                        trademark_number=record.trademark_number,
+                        mark_text=record.mark_text,
+                        applicant_name=record.applicant_name,
+                        stage="company",
+                        reason="company_dissolved",
+                        detail=match.company_status,
                     )
-                    continue
+                )
+                continue
             if age is not None and age > age_limit:
                 counts.add_rejection("company_too_established")
                 result.rejected.append(
@@ -395,12 +406,15 @@ class Pipeline:
                     applicant_journal_mark_count=applicant_counts.get(
                         (record.applicant_name or "").strip().lower(), 1
                     ),
-                    first_trademark=(record.applicant_name or "").strip().lower() not in known_applicants,
+                    first_trademark=(record.applicant_name or "").strip().lower()
+                    not in known_applicants,
                 )
             except Exception as exc:
                 scoring_failures += 1
                 log.warning(
-                    "pipeline.scoring_failed", trademark=record.trademark_number, error=str(exc)[:200]
+                    "pipeline.scoring_failed",
+                    trademark=record.trademark_number,
+                    error=str(exc)[:200],
                 )
                 continue
             if opportunity.dedupe_key in seen:
@@ -423,7 +437,6 @@ class Pipeline:
             raise ScoringFailureError(
                 f"Scoring failed for {scoring_failures} of {len(with_web)} records."
             )
-
 
     def _reject_post_dated_match(
         self, record: TrademarkRecord, match: CompanyMatch, max_after_months: int
@@ -530,7 +543,7 @@ class Pipeline:
             company_age_years_at_filing=age,
             source_url=record.source_url,
             evidence_urls=(web.evidence_urls or [])[:8],
-            enriched_at=datetime.now(timezone.utc),
+            enriched_at=datetime.now(UTC),
         )
 
     def _infer_category(
@@ -543,7 +556,8 @@ class Pipeline:
         into the HIGH band on its own -- the scorer's cap handles that.
         """
         sic_map: dict[str, str] = {
-            k: v for k, v in self.taxonomy.get("sic_code_product_groups", {}).items()
+            k: v
+            for k, v in self.taxonomy.get("sic_code_product_groups", {}).items()
             if not k.startswith("_") and v
         }
         for code in match.sic_codes:
@@ -551,7 +565,8 @@ class Pipeline:
             if group:
                 return group, f"Companies House SIC code {code}"
         hints: dict[str, list[str]] = {
-            k: v for k, v in self.taxonomy.get("brand_name_category_hints", {}).items()
+            k: v
+            for k, v in self.taxonomy.get("brand_name_category_hints", {}).items()
             if not k.startswith("_")
         }
         from src.parse.normalise import normalise_text

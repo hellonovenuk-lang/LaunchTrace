@@ -13,7 +13,7 @@ double-send.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -90,9 +90,8 @@ def deliver_weekly(
     sender = sender or EmailSender(settings)
 
     if result.status != RunStatus.COMPLETED:
-        summary.blocked_reason = (
-            f"Run status is {result.status.value}"
-            + (f" ({result.blocked_reason})" if result.blocked_reason else "")
+        summary.blocked_reason = f"Run status is {result.status.value}" + (
+            f" ({result.blocked_reason})" if result.blocked_reason else ""
         )
         log.warning("delivery.blocked", reason=summary.blocked_reason)
         return summary
@@ -139,7 +138,7 @@ def deliver_weekly(
             delivery.provider_message_id = send_result.message_id
             delivery.error = send_result.error
             if send_result.status == "sent":
-                delivery.sent_at = datetime.now(timezone.utc)
+                delivery.sent_at = datetime.now(UTC)
                 summary.sent += 1
             elif send_result.status == "rendered_not_sent":
                 summary.rendered_not_sent += 1
@@ -154,7 +153,11 @@ def deliver_weekly(
 
     if run_row is not None:
         run_row.delivery_status = (
-            "sent" if summary.sent else "rendered_not_sent" if summary.rendered_not_sent else "not_sent"
+            "sent"
+            if summary.sent
+            else "rendered_not_sent"
+            if summary.rendered_not_sent
+            else "not_sent"
         )
     session.flush()
     log.info(

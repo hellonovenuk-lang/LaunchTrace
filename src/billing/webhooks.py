@@ -8,7 +8,7 @@ subscription.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -95,7 +95,9 @@ class WebhookProcessor:
         return outcome
 
 
-def _customer_for(session: Session, stripe_customer_id: str | None, email: str | None) -> Customer | None:
+def _customer_for(
+    session: Session, stripe_customer_id: str | None, email: str | None
+) -> Customer | None:
     if stripe_customer_id:
         found = session.execute(
             select(Customer).where(Customer.stripe_customer_id == stripe_customer_id)
@@ -143,9 +145,7 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
                 )
             ).scalar_one_or_none()
             if existing is None:
-                session.add(
-                    CustomerPreference(customer_id=customer.id, recipient_email=email)
-                )
+                session.add(CustomerPreference(customer_id=customer.id, recipient_email=email))
         session.flush()
         log.info("stripe.subscription_started", customer_id=customer.id, plan=plan_key)
         return WebhookOutcome(handled=True, action="subscription_started", customer_id=customer.id)
@@ -164,15 +164,13 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
         customer.stripe_subscription_id = obj.get("id") or customer.stripe_subscription_id
         if status == "cancelled":
             customer.delivery_enabled = False
-            customer.cancelled_at = datetime.now(timezone.utc)
+            customer.cancelled_at = datetime.now(UTC)
         elif status in {"active", "trialing"}:
             customer.delivery_enabled = True
             customer.cancelled_at = None
         session.flush()
         log.info("stripe.subscription_updated", customer_id=customer.id, status=status)
-        return WebhookOutcome(
-            handled=True, action=f"status_{status}", customer_id=customer.id
-        )
+        return WebhookOutcome(handled=True, action=f"status_{status}", customer_id=customer.id)
 
     if event_type == "invoice.payment_failed":
         customer = _customer_for(session, obj.get("customer"), None)

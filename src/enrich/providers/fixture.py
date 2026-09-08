@@ -33,6 +33,8 @@ class FixtureSearchProvider(SearchProvider):
                 hits = results
                 break
         return [
-            SearchResult(title=r.get("title", ""), url=r.get("url", ""), snippet=r.get("snippet", ""))
+            SearchResult(
+                title=r.get("title", ""), url=r.get("url", ""), snippet=r.get("snippet", "")
+            )
             for r in hits[:limit]
         ]

@@ -67,8 +67,7 @@ class CompanyRegistry(ABC):
     name = "none"
 
     @abstractmethod
-    def find_candidates(self, applicant_name: str) -> list[CandidateCompany]:
-        ...
+    def find_candidates(self, applicant_name: str) -> list[CandidateCompany]: ...
 
     def match(self, applicant_name: str | None) -> CompanyMatch:
         if not applicant_name:
@@ -78,7 +77,10 @@ class CompanyRegistry(ABC):
         except (ProviderError, httpx.HTTPError) as exc:
             log.warning("ch.lookup_failed", applicant=applicant_name[:80], error=str(exc)[:200])
             return CompanyMatch(
-                matched=False, match_method="provider_error", provider=self.name, error=str(exc)[:400]
+                matched=False,
+                match_method="provider_error",
+                provider=self.name,
+                error=str(exc)[:400],
             )
         return best_match(applicant_name, candidates, provider=self.name)
 
@@ -283,8 +285,7 @@ def build_bulk_index(
             if not name or not number:
                 continue
             sic = [
-                (row.get(f"SICCode.SicText_{i}") or "").split(" - ")[0].strip()
-                for i in range(1, 5)
+                (row.get(f"SICCode.SicText_{i}") or "").split(" - ")[0].strip() for i in range(1, 5)
             ]
             yield (
                 company_name_key(name),
@@ -292,8 +293,10 @@ def build_bulk_index(
                 number,
                 (row.get("CompanyStatus") or "").strip() or None,
                 (row.get("CompanyCategory") or "").strip() or None,
-                (_parse_ch_date(row.get("IncorporationDate")) or "") and _parse_ch_date(row.get("IncorporationDate")).isoformat(),  # type: ignore[union-attr]
-                (_parse_ch_date(row.get("DissolutionDate")) or "") and _parse_ch_date(row.get("DissolutionDate")).isoformat(),  # type: ignore[union-attr]
+                (_parse_ch_date(row.get("IncorporationDate")) or "")
+                and _parse_ch_date(row.get("IncorporationDate")).isoformat(),  # type: ignore[union-attr]
+                (_parse_ch_date(row.get("DissolutionDate")) or "")
+                and _parse_ch_date(row.get("DissolutionDate")).isoformat(),  # type: ignore[union-attr]
                 json.dumps([s for s in sic if s]),
                 (row.get("RegAddress.County") or "").strip() or None,
                 (row.get("RegAddress.PostTown") or "").strip() or None,
@@ -359,7 +362,9 @@ def latest_bulk_download_url(http_get_text) -> str | None:  # type: ignore[no-un
 class FixtureCompanyRegistry(CompanyRegistry):
     name = "fixture"
 
-    def __init__(self, path: Path | None = None, records: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self, path: Path | None = None, records: list[dict[str, Any]] | None = None
+    ) -> None:
         if records is None:
             path = path or FIXTURES_DIR / "companies_house" / "companies.json"
             records = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
@@ -369,7 +374,9 @@ class FixtureCompanyRegistry(CompanyRegistry):
         key = company_name_key(applicant_name)
         out = []
         for r in self.records:
-            if company_name_key(r["company_name"]) == key or key in company_name_key(r["company_name"]):
+            if company_name_key(r["company_name"]) == key or key in company_name_key(
+                r["company_name"]
+            ):
                 out.append(
                     CandidateCompany(
                         company_name=r["company_name"],

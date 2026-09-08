@@ -8,7 +8,7 @@ and derived data stay distinguishable.
 from __future__ import annotations
 
 import hashlib
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import Any
 
@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class LaunchStage(str, Enum):
@@ -218,6 +218,12 @@ class ScoreReason(BaseModel):
 
 
 class Score(BaseModel):
+    """A LaunchTrace Score with the full reasoning behind it.
+
+    ``reasons`` holds every indicator that fired, so the stored record is a
+    complete audit trail. Customer-facing output shows ``top_reasons``.
+    """
+
     value: int = 0
     band: ScoreBand = ScoreBand.SUPPRESS
     band_label: str = ""
@@ -225,9 +231,18 @@ class Score(BaseModel):
     negative_reasons: list[ScoreReason] = Field(default_factory=list)
     capped: bool = False
     cap_reason: str | None = None
+    max_reasons_shown: int = 6
+
+    @property
+    def top_reasons(self) -> list[ScoreReason]:
+        return self.reasons[: self.max_reasons_shown]
 
     @property
     def reason_texts(self) -> list[str]:
+        return [r.text for r in self.top_reasons]
+
+    @property
+    def all_reason_texts(self) -> list[str]:
         return [r.text for r in self.reasons]
 
 

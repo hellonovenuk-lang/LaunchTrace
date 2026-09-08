@@ -11,8 +11,9 @@ from __future__ import annotations
 import base64
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -58,7 +59,7 @@ class EmailSender:
     ) -> SendResult:
         if not to:
             return SendResult(status="failed", error="no recipients")
-        payload = {
+        payload: dict[str, Any] = {
             "from": self.settings.email_from,
             "to": to,
             "subject": rendered.subject,
@@ -119,7 +120,7 @@ class EmailSender:
         self, to: list[str], rendered: RenderedEmail, payload: dict, attachments: list[Path] | None
     ) -> SendResult:
         self.outbox.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         safe_to = to[0].replace("@", "_at_").replace("/", "_")
         base = self.outbox / f"{stamp}_{safe_to}"
         html_path = base.with_suffix(".html")

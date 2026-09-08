@@ -6,7 +6,7 @@ scheduled job is always safe to re-run.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -60,7 +60,7 @@ def upsert_journal(
     row.byte_size = artifact.byte_size
     row.record_count = record_count
     row.retrieved_at = artifact.retrieved_at
-    row.processed_at = datetime.now(timezone.utc)
+    row.processed_at = datetime.now(UTC)
     row.processing_status = status
     session.flush()
     return row

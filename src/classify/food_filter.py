@@ -29,9 +29,7 @@ class FilterOutcome:
 
 
 class FoodFilter:
-    def __init__(
-        self, taxonomy: dict | None = None, exclusions: dict | None = None
-    ) -> None:
+    def __init__(self, taxonomy: dict | None = None, exclusions: dict | None = None) -> None:
         self.taxonomy = taxonomy or load_config("food_taxonomy.json")
         self.exclusions = exclusions or load_config("exclusions.json")
         self.primary = set(self.taxonomy["primary_nice_classes"])
@@ -39,7 +37,9 @@ class FoodFilter:
         self.context_only = set(self.taxonomy["context_only_nice_classes"])
         self.groups = self.taxonomy["product_groups"]
         self.major_brands = [b.lower() for b in self.exclusions["major_brand_owners"]]
-        self.goods_exclusions = [k.lower() for k in self.exclusions["goods_text_exclusion_keywords"]]
+        self.goods_exclusions = [
+            k.lower() for k in self.exclusions["goods_text_exclusion_keywords"]
+        ]
         self.uk_values = {v.lower() for v in self.exclusions["uk_country_values"]}
         self.person_cfg = self.exclusions["natural_person_applicant"]
 
@@ -91,16 +91,17 @@ class FoodFilter:
         classes = set(record.nice_classes)
         assessment = ProductAssessment(classifier="rules")
 
-        if not classes & (self.primary | self.supporting):
-            assessment.rejection_reasons.append("no_food_class")
-            return FilterOutcome(False, assessment, "no_food_class", f"classes={sorted(classes)}")
-
-        # Class-only exclusions (e.g. class 43 alone = restaurant services).
+        # Class-only exclusions run first so the rejection reason is specific:
+        # "restaurant services" is more useful evidence than "no food class".
         for rule in self.exclusions["excluded_nice_class_only"]:
             rule_classes = set(rule["classes"])
             if classes and classes <= rule_classes:
                 assessment.rejection_reasons.append(rule["reason"])
                 return FilterOutcome(False, assessment, rule["reason"], rule.get("note"))
+
+        if not classes & (self.primary | self.supporting):
+            assessment.rejection_reasons.append("no_food_class")
+            return FilterOutcome(False, assessment, "no_food_class", f"classes={sorted(classes)}")
 
         # Supporting classes alone are not enough without a primary class.
         if not classes & self.primary:
@@ -124,11 +125,11 @@ class FoodFilter:
             assessment.rejection_reasons.append("major_brand_owner")
             return FilterOutcome(False, assessment, "major_brand_owner", major)
 
-        if self.exclusions.get("require_uk_or_unknown_applicant_country") and not self.is_uk_applicant(record):
+        if self.exclusions.get(
+            "require_uk_or_unknown_applicant_country"
+        ) and not self.is_uk_applicant(record):
             assessment.rejection_reasons.append("non_uk_applicant")
-            return FilterOutcome(
-                False, assessment, "non_uk_applicant", record.applicant_country
-            )
+            return FilterOutcome(False, assessment, "non_uk_applicant", record.applicant_country)
 
         group_key, group_label, hits = self.match_product_group(search_text)
 
@@ -148,7 +149,11 @@ class FoodFilter:
         assessment.packaged_product_probability = packaged_prob
         assessment.matched_keywords = hits[:12]
         assessment.packaging_relevance = (
-            Relevance.HIGH if packaged_prob >= 0.7 else Relevance.MEDIUM if packaged_prob >= 0.4 else Relevance.LOW
+            Relevance.HIGH
+            if packaged_prob >= 0.7
+            else Relevance.MEDIUM
+            if packaged_prob >= 0.4
+            else Relevance.LOW
         )
         assessment.contract_manufacturing_relevance = assessment.packaging_relevance
         assessment.distribution_relevance = (

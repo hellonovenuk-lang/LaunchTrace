@@ -48,7 +48,6 @@ from src.web.security import (
 
 log = get_logger(__name__)
 BASE_DIR = Path(__file__).parent
-SAMPLE_LIMITER = RateLimiter(limit=5, window_seconds=3600)
 
 
 def db_session() -> Any:
@@ -73,6 +72,8 @@ def create_app() -> FastAPI:
     templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
     plans = load_plans()
     billing = get_billing(settings)
+    # Per-application, so each instance (and each test) starts with a clean window.
+    sample_limiter = RateLimiter(limit=5, window_seconds=3600)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
@@ -105,7 +106,9 @@ def create_app() -> FastAPI:
                 "product_category": (r.product_category or "").replace("_", " ").title() or None,
                 "launchtrace_score": r.launchtrace_score,
                 "score_band": r.score_band,
-                "first_reason": (r.score_reasons or ["Scored from public trade mark and company data"])[0],
+                "first_reason": (
+                    r.score_reasons or ["Scored from public trade mark and company data"]
+                )[0],
             }
             for r in rows
         ]
@@ -155,15 +158,20 @@ def create_app() -> FastAPI:
             log.info("sample.honeypot_triggered")
             return _render_index(request, session, "Thanks — we'll be in touch shortly.", True)
 
-        if not SAMPLE_LIMITER.allow(client_ip or "unknown"):
+        if not sample_limiter.allow(client_ip or "unknown"):
             return _render_index(
-                request, session, "Too many requests from this address. Please try again later.", False
+                request,
+                session,
+                "Too many requests from this address. Please try again later.",
+                False,
             )
 
         email = clean_text(work_email, 254).lower()
         valid, error = is_valid_work_email(email)
         if not valid:
-            return _render_index(request, session, error or "Please check your email address.", False)
+            return _render_index(
+                request, session, error or "Please check your email address.", False
+            )
 
         company_clean = clean_text(company, 200)
         if not company_clean:
@@ -426,7 +434,9 @@ def _markdown_to_html(text: str) -> str:
             if in_list:
                 out.append("</ul>")
                 in_list = False
-            out.append(f"<h2 style='font-size:18px;color:var(--ink);margin-top:24px'>{escaped[3:]}</h2>")
+            out.append(
+                f"<h2 style='font-size:18px;color:var(--ink);margin-top:24px'>{escaped[3:]}</h2>"
+            )
         elif line.startswith("# "):
             continue  # the page heading already carries the title
         elif line.startswith(("- ", "* ")):

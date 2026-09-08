@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 
 _CLASS_TOKEN = re.compile(r"\b(?:class\s*)?(\d{1,2})\b", re.IGNORECASE)
 VALID_CLASSES = set(range(1, 46))
@@ -17,11 +18,10 @@ def normalise_classes(values: object) -> list[int]:
         candidates: list[str] = [str(values)]
     elif isinstance(values, str):
         candidates = re.split(r"[,;/\s]+", values)
-    else:
-        try:
-            candidates = [str(v) for v in values]  # type: ignore[union-attr]
-        except TypeError:  # pragma: no cover - defensive
-            return []
+    elif isinstance(values, Iterable):
+        candidates = [str(v) for v in values]
+    else:  # pragma: no cover - defensive
+        return []
     for token in candidates:
         token = token.strip()
         if not token:

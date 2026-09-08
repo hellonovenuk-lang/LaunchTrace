@@ -21,11 +21,11 @@ def _volume_flags(result: PipelineResult, history: list[dict[str, Any]] | None) 
     flags: list[str] = []
     raw = result.counts.raw_records
     by_source = guard.get("min_expected_records_per_journal_by_source", {})
-    minimum = int(by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"]))
+    minimum = int(
+        by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"])
+    )
     if raw < minimum:
-        flags.append(
-            f"Record volume is unusually LOW: {raw} parsed, expected at least {minimum}."
-        )
+        flags.append(f"Record volume is unusually LOW: {raw} parsed, expected at least {minimum}.")
     if raw > guard["max_expected_records_per_journal"]:
         flags.append(
             f"Record volume is unusually HIGH: {raw} parsed, expected at most "
@@ -35,7 +35,10 @@ def _volume_flags(result: PipelineResult, history: list[dict[str, Any]] | None) 
         previous = [h["raw_records"] for h in history if h.get("raw_records")]
         if previous:
             avg = sum(previous) / len(previous)
-            if avg and (raw / avg > guard["max_week_on_week_change_ratio"] or avg / max(raw, 1) > guard["max_week_on_week_change_ratio"]):
+            if avg and (
+                raw / avg > guard["max_week_on_week_change_ratio"]
+                or avg / max(raw, 1) > guard["max_week_on_week_change_ratio"]
+            ):
                 flags.append(
                     f"Record volume changed sharply: {raw} this week against a {avg:.0f} average "
                     f"over the previous {len(previous)} week(s)."
@@ -67,7 +70,9 @@ def _suspicious_opportunities(opportunities: list[Opportunity]) -> list[str]:
     notes: list[str] = []
     for o in opportunities:
         if o.score.band.value == "HIGH" and not o.company.matched:
-            notes.append(f"{o.trademark_number} scored HIGH with no company match (should be capped)")
+            notes.append(
+                f"{o.trademark_number} scored HIGH with no company match (should be capped)"
+            )
         if o.score.band.value == "HIGH" and o.company.match_confidence < 70:
             notes.append(
                 f"{o.trademark_number} scored HIGH on a {o.company.match_confidence}% company match"
@@ -112,7 +117,9 @@ def build_qa_report(
     if counts.llm_failures:
         concerns.append(f"{counts.llm_failures} LLM responses failed schema validation.")
     if counts.enrichment_failures:
-        concerns.append(f"{counts.enrichment_failures} records failed enrichment and were downranked.")
+        concerns.append(
+            f"{counts.enrichment_failures} records failed enrichment and were downranked."
+        )
 
     return {
         "run_id": result.run_id,

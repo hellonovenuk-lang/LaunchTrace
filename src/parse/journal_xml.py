@@ -36,14 +36,20 @@ RECORD_TAGS = {"TradeMark", "TradeMarkRecord", "Trademark", "MarkRecord"}
 # local-name aliases for each field we care about, in priority order.
 FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "trademark_number": (
-        "ApplicationNumber", "RegistrationNumber", "MarkNumber", "TradeMarkNumber",
+        "ApplicationNumber",
+        "RegistrationNumber",
+        "MarkNumber",
+        "TradeMarkNumber",
         "ApplicationNumberText",
     ),
     "filing_date": ("ApplicationDate", "FilingDate", "ApplicationFilingDate"),
     "publication_date": ("PublicationDate", "MarkEventDate", "JournalDate"),
     "mark_text": (
-        "MarkVerbalElementText", "MarkSignificantVerbalElementText", "WordMarkSpecification",
-        "MarkVerbalElement", "MarkText",
+        "MarkVerbalElementText",
+        "MarkSignificantVerbalElementText",
+        "WordMarkSpecification",
+        "MarkVerbalElement",
+        "MarkText",
     ),
     "mark_type": ("MarkFeature", "MarkKind", "MarkType"),
     "mark_category": ("MarkCategory", "MarkCurrentStatusCode", "KindMark"),
@@ -53,14 +59,23 @@ FIELD_ALIASES: dict[str, tuple[str, ...]] = {
 
 APPLICANT_TAGS = ("ApplicantDetails", "Applicant", "ApplicantAddressBook")
 APPLICANT_NAME_TAGS = (
-    "FreeFormatNameDetails", "FreeFormatNameLine", "FreeFormatName", "OrganizationName",
-    "EntityName", "Name", "FirstName", "LastName", "ApplicantName",
+    "FreeFormatNameDetails",
+    "FreeFormatNameLine",
+    "FreeFormatName",
+    "OrganizationName",
+    "EntityName",
+    "Name",
+    "FirstName",
+    "LastName",
+    "ApplicantName",
 )
 COUNTRY_TAGS = ("CountryCode", "Country", "ApplicantCountryCode")
 POSTCODE_TAGS = ("PostcodeText", "PostalCode", "Postcode")
 CLASS_NUMBER_TAGS = ("ClassNumber", "NiceClassNumber", "ClassDescriptionNumber")
 GOODS_TEXT_TAGS = (
-    "GoodsServicesDescription", "GoodsServicesDescriptionText", "ClassificationTermText",
+    "GoodsServicesDescription",
+    "GoodsServicesDescriptionText",
+    "ClassificationTermText",
     "GoodsServicesText",
 )
 
@@ -152,7 +167,7 @@ def element_to_record(
         journal_number=journal_number,
         source_url=source_url,
         source_name=source_name,
-        **{k: v for k, v in applicant.items()},  # type: ignore[arg-type]
+        **applicant,  # type: ignore[arg-type]
     )
 
 

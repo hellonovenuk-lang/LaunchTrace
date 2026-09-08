@@ -8,7 +8,7 @@ safe defaults.
 from __future__ import annotations
 
 import json
-from functools import lru_cache
+from functools import cache, lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -181,7 +181,7 @@ def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_config(name: str) -> dict[str, Any]:
     """Load a JSON business-rules file from config/."""
     path = CONFIG_DIR / name

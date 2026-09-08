@@ -7,7 +7,7 @@ commands can be exercised directly from tests.
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -77,7 +77,9 @@ def _run_one(
                 try:
                     artifact = source.fetch(result.journal)
                     journal_row = upsert_journal(session, artifact, result.counts.raw_records)
-                    records = list(pipeline._ingest(result.journal, getattr(args, "max_records", None)))
+                    records = list(
+                        pipeline._ingest(result.journal, getattr(args, "max_records", None))
+                    )
                     save_trademark_records(session, records, journal_row.id)
                 except Exception as exc:  # persistence must not lose the run record
                     log.warning("commands.persist_source_failed", error=str(exc)[:200])
@@ -146,7 +148,9 @@ def cmd_backfill(args) -> int:  # type: ignore[no-untyped-def]
         dates = previous_journal_dates(weeks)
 
     if not dates:
-        print("No journals available to backfill. Try: python -m src.pipeline fetch-open-data --weeks 4")
+        print(
+            "No journals available to backfill. Try: python -m src.pipeline fetch-open-data --weeks 4"
+        )
         return 1
 
     history: list[dict] = []
@@ -155,9 +159,9 @@ def cmd_backfill(args) -> int:  # type: ignore[no-untyped-def]
         print(f"\n=== Journal week {publication_date.isoformat()} ===")
         with session_scope() as session:
             ref = source.ref_for(publication_date=publication_date)
-            if journal_already_processed(session, ref.source_name, ref.journal_number) and not getattr(
-                args, "no_db", False
-            ):
+            if journal_already_processed(
+                session, ref.source_name, ref.journal_number
+            ) and not getattr(args, "no_db", False):
                 print(f"Already processed ({ref.journal_number}) — skipping.")
                 continue
         result = _run_one(
@@ -182,7 +186,9 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
     from src.ingest.fixture import FixtureJournalSource
 
     out = Path(getattr(args, "out", None) or (REPORTS_DIR / "smoke"))
-    settings = get_settings().model_copy(update={"journal_source": "fixture", "send_mode": "review"})
+    settings = get_settings().model_copy(
+        update={"journal_source": "fixture", "send_mode": "review"}
+    )
     source = FixtureJournalSource(settings)
     pipeline = Pipeline(
         settings=settings,
@@ -195,7 +201,7 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
     result = pipeline.run(write_outputs=True)
     _print_result(result)
 
-    validation = {
+    validation: dict[str, object] = {
         "status": result.status.value,
         "raw_records": result.counts.raw_records,
         "opportunities": len(result.opportunities),
@@ -212,11 +218,12 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
     summary_path.write_text(json.dumps(validation, indent=2), encoding="utf-8")
     print(f"\nSmoke validation summary: {summary_path}")
 
+    deliverable_count = len(result.deliverable)
     ok = (
         result.status == RunStatus.COMPLETED
-        and validation["csv_written"]
-        and validation["email_written"]
-        and validation["deliverable"] > 0
+        and bool(validation["csv_written"])
+        and bool(validation["email_written"])
+        and deliverable_count > 0
     )
     print("SMOKE TEST: " + ("PASS" if ok else "FAIL"))
     return 0 if ok else 1
@@ -225,7 +232,9 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
 def cmd_validate(args) -> int:  # type: ignore[no-untyped-def]
     from src.validation import run_validation
 
-    return run_validation(weeks=int(getattr(args, "weeks", 4)), source_name=getattr(args, "source", "open_data"))
+    return run_validation(
+        weeks=int(getattr(args, "weeks", 4)), source_name=getattr(args, "source", "open_data")
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -237,12 +246,16 @@ def cmd_status(args) -> int:  # type: ignore[no-untyped-def]
     init_db()
     with session_scope() as session:
         runs = list(
-            session.execute(select(PipelineRun).order_by(PipelineRun.started_at.desc()).limit(20)).scalars()
+            session.execute(
+                select(PipelineRun).order_by(PipelineRun.started_at.desc()).limit(20)
+            ).scalars()
         )
     if not runs:
         print("No pipeline runs recorded yet.")
         return 0
-    print(f"{'run_id':<32} {'journal':<10} {'status':<10} {'high':>5} {'med':>5} {'approved':<10} delivery")
+    print(
+        f"{'run_id':<32} {'journal':<10} {'status':<10} {'high':>5} {'med':>5} {'approved':<10} delivery"
+    )
     for r in runs:
         counts = r.counts or {}
         print(
@@ -265,9 +278,11 @@ def cmd_approve(args) -> int:  # type: ignore[no-untyped-def]
         if run.status != "completed":
             print(f"Run {args.run_id} is {run.status} and cannot be approved.")
             return 1
-        run.approved_at = datetime.now(timezone.utc)
+        run.approved_at = datetime.now(UTC)
         run.approved_by = args.by
-    print(f"Approved run {args.run_id}. Send it with: python -m src.pipeline send --run-id {args.run_id}")
+    print(
+        f"Approved run {args.run_id}. Send it with: python -m src.pipeline send --run-id {args.run_id}"
+    )
     return 0
 
 
@@ -346,7 +361,8 @@ def _rehydrate_result(session, run: PipelineRun) -> PipelineResult:  # type: ign
                     value=row.launchtrace_score,
                     band=ScoreBand(row.score_band),
                     reasons=[
-                        ScoreReason(key="stored", text=t, weight=0) for t in (row.score_reasons or [])
+                        ScoreReason(key="stored", text=t, weight=0)
+                        for t in (row.score_reasons or [])
                     ],
                 ),
                 buying_intent=BuyingIntent(
@@ -379,11 +395,15 @@ def _rehydrate_result(session, run: PipelineRun) -> PipelineResult:  # type: ign
 def cmd_regenerate_csv(args) -> int:  # type: ignore[no-untyped-def]
     init_db()
     with session_scope() as session:
-        run = session.execute(
-            select(PipelineRun)
-            .where(PipelineRun.journal_number == args.journal)
-            .order_by(PipelineRun.started_at.desc())
-        ).scalars().first()
+        run = (
+            session.execute(
+                select(PipelineRun)
+                .where(PipelineRun.journal_number == args.journal)
+                .order_by(PipelineRun.started_at.desc())
+            )
+            .scalars()
+            .first()
+        )
         if run is None:
             print(f"No run found for journal {args.journal}")
             return 1
@@ -426,7 +446,9 @@ def cmd_customers(args) -> int:  # type: ignore[no-untyped-def]
         for p in session.execute(select(CustomerPreference)).scalars():
             prefs.setdefault(p.customer_id, []).append(p.recipient_email)
     if not customers:
-        print("No customers configured. Add one with: python -m src.pipeline add-customer --company 'X' --email a@b.com")
+        print(
+            "No customers configured. Add one with: python -m src.pipeline add-customer --company 'X' --email a@b.com"
+        )
         return 0
     print(f"{'id':>4} {'company':<32} {'plan':<18} {'status':<12} {'delivery':<9} recipients")
     for c in customers:
@@ -478,13 +500,17 @@ def cmd_errors(args) -> int:  # type: ignore[no-untyped-def]
     init_db()
     with session_scope() as session:
         rows = list(
-            session.execute(select(ErrorLog).order_by(ErrorLog.created_at.desc()).limit(30)).scalars()
+            session.execute(
+                select(ErrorLog).order_by(ErrorLog.created_at.desc()).limit(30)
+            ).scalars()
         )
     if not rows:
         print("No errors recorded.")
         return 0
     for r in rows:
-        print(f"{r.created_at:%Y-%m-%d %H:%M} [{r.severity}] {r.stage} {r.run_id or ''}: {r.message[:160]}")
+        print(
+            f"{r.created_at:%Y-%m-%d %H:%M} [{r.severity}] {r.stage} {r.run_id or ''}: {r.message[:160]}"
+        )
     return 0
 
 
@@ -554,13 +580,27 @@ def cmd_check_config(args) -> int:  # type: ignore[no-untyped-def]
     registry = get_company_registry(settings)
     rows = [
         ("Environment", settings.environment),
-        ("Send mode", settings.send_mode + (" (nothing sends without approval)" if settings.send_mode == "review" else "")),
-        ("Database", "PostgreSQL" if not settings.is_sqlite else f"local SQLite ({settings.database_url.split('///')[-1]})"),
+        (
+            "Send mode",
+            settings.send_mode
+            + (" (nothing sends without approval)" if settings.send_mode == "review" else ""),
+        ),
+        (
+            "Database",
+            "PostgreSQL"
+            if not settings.is_sqlite
+            else f"local SQLite ({settings.database_url.split('///')[-1]})",
+        ),
         ("Journal source", settings.journal_source),
         ("Company registry", registry.name),
         ("LLM classifier", get_llm_provider(settings).name),
         ("Web enrichment", get_search_provider(settings).name),
-        ("Email", "Resend (live)" if settings.email_enabled else "not configured — emails render to reports/outbox/"),
+        (
+            "Email",
+            "Resend (live)"
+            if settings.email_enabled
+            else "not configured — emails render to reports/outbox/",
+        ),
         ("Stripe", "configured" if settings.stripe_enabled else "not configured"),
     ]
     width = max(len(k) for k, _ in rows)

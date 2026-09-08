@@ -19,13 +19,33 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s.]+\.[^@\s]{2,}$")
 # Free-mail domains are accepted but flagged: this is a B2B product and the
 # sample is a business document.
 FREEMAIL_DOMAINS = {
-    "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "hotmail.com", "hotmail.co.uk",
-    "outlook.com", "live.co.uk", "icloud.com", "aol.com", "msn.com", "protonmail.com",
-    "mail.com", "gmx.com", "yandex.com",
+    "gmail.com",
+    "googlemail.com",
+    "yahoo.com",
+    "yahoo.co.uk",
+    "hotmail.com",
+    "hotmail.co.uk",
+    "outlook.com",
+    "live.co.uk",
+    "icloud.com",
+    "aol.com",
+    "msn.com",
+    "protonmail.com",
+    "mail.com",
+    "gmx.com",
+    "yandex.com",
 }
 DISPOSABLE_DOMAINS = {
-    "mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com", "trashmail.com",
-    "yopmail.com", "sharklasers.com", "throwawaymail.com", "getnada.com", "dispostable.com",
+    "mailinator.com",
+    "guerrillamail.com",
+    "10minutemail.com",
+    "tempmail.com",
+    "trashmail.com",
+    "yopmail.com",
+    "sharklasers.com",
+    "throwawaymail.com",
+    "getnada.com",
+    "dispostable.com",
 }
 
 

@@ -28,5 +28,4 @@ class SearchProvider(ABC):
     available = False
 
     @abstractmethod
-    def search(self, query: str, limit: int = 8) -> list[SearchResult]:
-        ...
+    def search(self, query: str, limit: int = 8) -> list[SearchResult]: ...

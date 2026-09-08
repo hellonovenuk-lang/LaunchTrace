@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import csv
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -101,9 +101,7 @@ def run_validation(weeks: int = 4, source_name: str = "open_data") -> int:
     (VALIDATION_DIR / "4_week_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8"
     )
-    (VALIDATION_DIR / "4_week_summary.md").write_text(
-        _render_markdown(summary), encoding="utf-8"
-    )
+    (VALIDATION_DIR / "4_week_summary.md").write_text(_render_markdown(summary), encoding="utf-8")
     print(_render_markdown(summary))
     print(f"\nWritten to {VALIDATION_DIR}")
     return 0 if all(r.status == RunStatus.COMPLETED for r in results) else 1
@@ -128,7 +126,9 @@ def _write_top_opportunities(results: list[PipelineResult]) -> Path:
     everything.sort(key=lambda o: o.score.value, reverse=True)
     path = VALIDATION_DIR / "top_opportunities.csv"
     with path.open("w", encoding="utf-8-sig", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=[*CSV_COLUMNS, "journal_number"], extrasaction="ignore")
+        writer = csv.DictWriter(
+            fh, fieldnames=[*CSV_COLUMNS, "journal_number"], extrasaction="ignore"
+        )
         writer.writeheader()
         for opp in everything:
             row = opportunity_to_row(opp)
@@ -143,7 +143,15 @@ def _write_rejections(results: list[PipelineResult]) -> Path:
     with path.open("w", encoding="utf-8-sig", newline="") as fh:
         writer = csv.writer(fh)
         writer.writerow(
-            ["journal_number", "trademark_number", "mark_text", "applicant_name", "stage", "reason", "detail"]
+            [
+                "journal_number",
+                "trademark_number",
+                "mark_text",
+                "applicant_name",
+                "stage",
+                "reason",
+                "detail",
+            ]
         )
         for result in results:
             for rejected in result.rejected:
@@ -268,7 +276,7 @@ def _build_summary(
             "evidence than this validation did."
         )
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "weeks_processed": len(weeks),
         "weeks_completed": len(completed),
         "average_good_opportunities_per_week": average,
@@ -305,7 +313,9 @@ def _render_markdown(summary: dict[str, Any]) -> str:
     a("")
     a("## Headline")
     a("")
-    a(f"- Journal weeks processed: **{summary['weeks_processed']}** ({summary['weeks_completed']} completed)")
+    a(
+        f"- Journal weeks processed: **{summary['weeks_processed']}** ({summary['weeks_completed']} completed)"
+    )
     a(f"- Good opportunities (HIGH + MEDIUM) in total: **{summary['total_good_opportunities']}**")
     a(f"- Average per week: **{summary['average_good_opportunities_per_week']}**")
     a(f"- HIGH: **{summary['total_high']}** · MEDIUM: **{summary['total_medium']}**")
@@ -342,7 +352,9 @@ def _render_markdown(summary: dict[str, Any]) -> str:
         a("")
     a("## Week by week")
     a("")
-    a("| Week | Journal | Published | Parsed | Food class | Packaged food | UK corporate | CH matched | Emerging | HIGH | MEDIUM | Suppressed |")
+    a(
+        "| Week | Journal | Published | Parsed | Food class | Packaged food | UK corporate | CH matched | Emerging | HIGH | MEDIUM | Suppressed |"
+    )
     a("| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for w in summary["weeks"]:
         a(
