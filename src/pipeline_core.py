@@ -94,7 +94,29 @@ class Pipeline:
         write_outputs: bool = True,
     ) -> PipelineResult:
         run_id = f"run_{datetime.now(UTC):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
-        ref = self.source.ref_for(journal_number=journal_number, publication_date=publication_date)
+
+        # Resolving which journal to process can itself fail (no local file, an
+        # unrecognised journal number, an empty fixture directory). That has to
+        # fail closed like any other retrieval failure rather than raise out of
+        # the pipeline, or a scheduled run dies without recording why.
+        try:
+            ref = self.source.ref_for(
+                journal_number=journal_number, publication_date=publication_date
+            )
+        except FailClosedError as exc:
+            blocked = PipelineResult(
+                run_id=run_id,
+                journal=self._placeholder_ref(journal_number, publication_date),
+                status=RunStatus.BLOCKED,
+                blocked_reason=f"{exc.reason_code}: {exc}",
+                finished_at=datetime.now(UTC),
+            )
+            blocked.errors.append(str(exc))
+            log.error(
+                "pipeline.blocked", run_id=run_id, reason=exc.reason_code, error=str(exc)[:300]
+            )
+            return blocked
+
         result = PipelineResult(run_id=run_id, journal=ref)
         log.info(
             "pipeline.start", run_id=run_id, journal=ref.journal_number, source=self.source.name
@@ -129,6 +151,28 @@ class Pipeline:
             medium=result.counts.medium,
         )
         return result
+
+    def _placeholder_ref(
+        self, journal_number: str | None, publication_date: date | None
+    ) -> JournalRef:
+        """A ref to attach to a run that failed before a real one could be resolved."""
+        from src.ingest.discovery import date_for_journal_number, journal_number_for_date
+
+        if journal_number:
+            try:
+                return JournalRef(
+                    journal_number=journal_number,
+                    publication_date=date_for_journal_number(journal_number),
+                    source_name=self.source.name,
+                )
+            except ValueError:
+                pass
+        day = publication_date or date.today()
+        return JournalRef(
+            journal_number=journal_number_for_date(day),
+            publication_date=day,
+            source_name=self.source.name,
+        )
 
     # -- stages -----------------------------------------------------------
     def _ingest(self, ref: JournalRef, max_records: int | None) -> list[TrademarkRecord]:

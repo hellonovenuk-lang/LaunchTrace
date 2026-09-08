@@ -40,7 +40,11 @@ class FixtureJournalSource(JournalSource):
     def latest_ref(self) -> JournalRef:
         files = self._files()
         if not files:
-            raise JournalRetrievalError(f"No fixture journals in {self.dir}")
+            raise JournalRetrievalError(
+                f"No fixture journals in {self.dir}. The smoke test needs the "
+                "tests/fixtures/ directory, which is not shipped in the production "
+                "container image -- run it from a checkout of the repository."
+            )
         return self._ref(sorted(files)[-1])
 
     def ref_for(

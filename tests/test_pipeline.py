@@ -182,6 +182,73 @@ class TestFailClosed:
         assert result.warnings
 
 
+class TestRefResolutionFailure:
+    """Resolving which journal to run must fail closed, not raise."""
+
+    def test_missing_fixture_directory_blocks_rather_than_crashing(
+        self, settings, tmp_path, company_registry, web_enricher
+    ):
+        from src.classify.pipeline import ProductClassifier
+        from src.ingest.fixture import FixtureJournalSource
+
+        empty = tmp_path / "no-fixtures"
+        empty.mkdir()
+        pipeline = Pipeline(
+            settings=settings,
+            source=FixtureJournalSource(settings, directory=empty),
+            registry=company_registry,
+            classifier=ProductClassifier(settings, llm_provider=None),
+            web=web_enricher,
+            output_dir=tmp_path / "runs",
+        )
+        result = pipeline.run(write_outputs=False)
+        assert result.status == RunStatus.BLOCKED
+        assert "journal_retrieval_failed" in (result.blocked_reason or "")
+        assert result.errors
+        assert not result.deliverable
+
+    def test_a_blocked_run_still_has_a_usable_journal_reference(
+        self, settings, tmp_path, company_registry, web_enricher
+    ):
+        from src.classify.pipeline import ProductClassifier
+        from src.ingest.fixture import FixtureJournalSource
+
+        empty = tmp_path / "no-fixtures-2"
+        empty.mkdir()
+        pipeline = Pipeline(
+            settings=settings,
+            source=FixtureJournalSource(settings, directory=empty),
+            registry=company_registry,
+            classifier=ProductClassifier(settings, llm_provider=None),
+            web=web_enricher,
+            output_dir=tmp_path / "runs",
+        )
+        result = pipeline.run(journal_number="2025-050", write_outputs=False)
+        assert result.journal.journal_number == "2025-050"
+
+    def test_unknown_journal_number_blocks_with_a_placeholder(
+        self, settings, tmp_path, company_registry, web_enricher
+    ):
+        from src.classify.pipeline import ProductClassifier
+        from src.ingest.local_file import LocalJournalSource
+
+        empty = tmp_path / "no-journals"
+        empty.mkdir()
+        pipeline = Pipeline(
+            settings=settings.model_copy(update={"journal_local_dir": str(empty)}),
+            source=LocalJournalSource(
+                settings.model_copy(update={"journal_local_dir": str(empty)})
+            ),
+            registry=company_registry,
+            classifier=ProductClassifier(settings, llm_provider=None),
+            web=web_enricher,
+            output_dir=tmp_path / "runs",
+        )
+        result = pipeline.run(journal_number="2026-020", write_outputs=False)
+        assert result.status == RunStatus.BLOCKED
+        assert result.journal.journal_number == "2026-020"
+
+
 class TestPostDatedCompanyMatches:
     def test_a_company_incorporated_long_after_filing_is_discarded(self, pipeline):
         from datetime import date
