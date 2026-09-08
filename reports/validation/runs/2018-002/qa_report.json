@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260908T105538_b7f009",
+  "run_id": "run_20260908T144402_af197c",
   "generated_on": "2026-09-08",
   "journal_number": "2018-002",
   "publication_date": "2018-01-12",
@@ -24,10 +24,13 @@
     "llm_failures": 0,
     "rejection_reasons": {
       "no_brand_name": 45,
-      "no_food_class": 1131,
+      "no_food_class": 1025,
+      "service_only_retail": 53,
       "supporting_class_only": 68,
+      "service_only_hospitality": 29,
       "raw_agricultural_only": 4,
       "dead_or_withdrawn": 3,
+      "pharma_supplement_only": 24,
       "non_uk_applicant": 13,
       "major_brand_owner": 4,
       "company_too_established": 15,
@@ -46,11 +49,15 @@
   "top_rejection_reasons": [
     [
       "no_food_class",
-      1131
+      1025
     ],
     [
       "supporting_class_only",
       68
+    ],
+    [
+      "service_only_retail",
+      53
     ],
     [
       "no_brand_name",
@@ -59,6 +66,14 @@
     [
       "score_below_band",
       44
+    ],
+    [
+      "service_only_hospitality",
+      29
+    ],
+    [
+      "pharma_supplement_only",
+      24
     ],
     [
       "company_too_established",

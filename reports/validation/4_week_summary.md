@@ -1,6 +1,6 @@
 # LaunchTrace Food — four-week historical validation
 
-Generated 2026-09-08T10:56:21.737348+00:00.
+Generated 2026-09-08T14:44:38.327902+00:00.
 
 ## The question this answers
 
@@ -82,47 +82,47 @@ Opportunities per week at different delivery thresholds:
 
 **Week 1 — 2018-001**
 
-- `no_food_class`: 738
+- `no_food_class`: 676
 - `supporting_class_only`: 41
+- `service_only_retail`: 30
 - `score_below_band`: 26
 - `no_brand_name`: 21
+- `service_only_hospitality`: 17
+- `pharma_supplement_only`: 15
 - `non_uk_applicant`: 12
-- `company_too_established`: 12
-- `raw_agricultural_only`: 3
-- `major_brand_owner`: 1
 
 **Week 2 — 2018-002**
 
-- `no_food_class`: 1131
+- `no_food_class`: 1025
 - `supporting_class_only`: 68
+- `service_only_retail`: 53
 - `no_brand_name`: 45
 - `score_below_band`: 44
+- `service_only_hospitality`: 29
+- `pharma_supplement_only`: 24
 - `company_too_established`: 15
-- `non_uk_applicant`: 13
-- `raw_agricultural_only`: 4
-- `major_brand_owner`: 4
 
 **Week 3 — 2018-003**
 
-- `no_food_class`: 1412
+- `no_food_class`: 1302
 - `supporting_class_only`: 61
+- `service_only_retail`: 45
+- `service_only_hospitality`: 42
 - `no_brand_name`: 38
 - `score_below_band`: 34
 - `non_uk_applicant`: 28
-- `company_too_established`: 19
-- `major_brand_owner`: 17
-- `raw_agricultural_only`: 8
+- `pharma_supplement_only`: 23
 
 **Week 4 — 2018-004**
 
-- `no_food_class`: 1277
+- `no_food_class`: 1169
 - `supporting_class_only`: 71
 - `no_brand_name`: 54
+- `service_only_retail`: 49
 - `score_below_band`: 47
+- `pharma_supplement_only`: 30
+- `service_only_hospitality`: 29
 - `company_too_established`: 18
-- `major_brand_owner`: 16
-- `non_uk_applicant`: 8
-- `raw_agricultural_only`: 5
 
 ## Files
 

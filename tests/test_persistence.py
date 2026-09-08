@@ -122,6 +122,42 @@ class TestOpportunities:
         assert any(r.match_confidence > 0 for r in rows)
 
 
+class TestSourceReuse:
+    """The journal must be parsed once per run, not once per consumer."""
+
+    def test_run_retains_what_it_parsed(self, pipeline):
+        result = pipeline.run(write_outputs=False)
+        assert result.status.value == "completed"
+        assert pipeline.last_artifact is not None
+        assert len(pipeline.last_records) == result.counts.raw_records
+
+    def test_retained_records_can_be_persisted_without_reparsing(self, db_session, pipeline):
+        pipeline.run(write_outputs=False)
+        row = upsert_journal(db_session, pipeline.last_artifact, len(pipeline.last_records))
+        assert save_trademark_records(db_session, pipeline.last_records, row.id) == 8
+
+    def test_a_blocked_run_retains_nothing(
+        self, settings, tmp_path, company_registry, web_enricher
+    ):
+        from src.classify.pipeline import ProductClassifier
+        from src.ingest.fixture import FixtureJournalSource
+        from src.pipeline_core import Pipeline
+
+        empty = tmp_path / "empty-fixtures"
+        empty.mkdir()
+        pipeline = Pipeline(
+            settings=settings,
+            source=FixtureJournalSource(settings, directory=empty),
+            registry=company_registry,
+            classifier=ProductClassifier(settings, llm_provider=None),
+            web=web_enricher,
+            output_dir=tmp_path / "runs",
+        )
+        pipeline.run(write_outputs=False)
+        assert pipeline.last_artifact is None
+        assert pipeline.last_records == []
+
+
 class TestRuns:
     def test_run_is_recorded_with_its_funnel(self, db_session, pipeline):
         result = pipeline.run(write_outputs=False)

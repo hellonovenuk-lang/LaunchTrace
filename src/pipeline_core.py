@@ -40,6 +40,7 @@ from src.logging_setup import get_logger
 from src.models import (
     ApplicantType,
     CompanyMatch,
+    JournalArtifact,
     JournalRef,
     Opportunity,
     PipelineResult,
@@ -82,6 +83,10 @@ class Pipeline:
         self.exclusions = load_config("exclusions.json")
         self.output_dir = output_dir or (REPORTS_DIR / "runs")
         self._suppressions: set[str] = set()
+        # Retained from the last run so the caller can persist the source layer
+        # without downloading and parsing the journal a second time.
+        self.last_artifact: JournalArtifact | None = None
+        self.last_records: list[TrademarkRecord] = []
 
     # -- public -----------------------------------------------------------
     def run(
@@ -176,6 +181,8 @@ class Pipeline:
 
     # -- stages -----------------------------------------------------------
     def _ingest(self, ref: JournalRef, max_records: int | None) -> list[TrademarkRecord]:
+        self.last_artifact = None
+        self.last_records = []
         try:
             artifact = self.source.fetch(ref)
         except JournalRetrievalError:
@@ -188,6 +195,8 @@ class Pipeline:
             raise
         except Exception as exc:
             raise JournalParseError(str(exc)) from exc
+        self.last_artifact = artifact
+        self.last_records = records
         return records
 
     def _check_volume(self, result: PipelineResult, history: list[dict[str, Any]] | None) -> None:

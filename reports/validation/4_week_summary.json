@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T10:56:21.737348+00:00",
+  "generated_at": "2026-09-08T14:44:38.327902+00:00",
   "weeks_processed": 4,
   "weeks_completed": 4,
   "average_good_opportunities_per_week": 5.5,
@@ -130,11 +130,15 @@
       "top_rejection_reasons": [
         [
           "no_food_class",
-          738
+          676
         ],
         [
           "supporting_class_only",
           41
+        ],
+        [
+          "service_only_retail",
+          30
         ],
         [
           "score_below_band",
@@ -145,20 +149,16 @@
           21
         ],
         [
+          "service_only_hospitality",
+          17
+        ],
+        [
+          "pharma_supplement_only",
+          15
+        ],
+        [
           "non_uk_applicant",
           12
-        ],
-        [
-          "company_too_established",
-          12
-        ],
-        [
-          "raw_agricultural_only",
-          3
-        ],
-        [
-          "major_brand_owner",
-          1
         ]
       ],
       "csv": "week_1.csv"
@@ -186,11 +186,15 @@
       "top_rejection_reasons": [
         [
           "no_food_class",
-          1131
+          1025
         ],
         [
           "supporting_class_only",
           68
+        ],
+        [
+          "service_only_retail",
+          53
         ],
         [
           "no_brand_name",
@@ -201,20 +205,16 @@
           44
         ],
         [
+          "service_only_hospitality",
+          29
+        ],
+        [
+          "pharma_supplement_only",
+          24
+        ],
+        [
           "company_too_established",
           15
-        ],
-        [
-          "non_uk_applicant",
-          13
-        ],
-        [
-          "raw_agricultural_only",
-          4
-        ],
-        [
-          "major_brand_owner",
-          4
         ]
       ],
       "csv": "week_2.csv"
@@ -242,11 +242,19 @@
       "top_rejection_reasons": [
         [
           "no_food_class",
-          1412
+          1302
         ],
         [
           "supporting_class_only",
           61
+        ],
+        [
+          "service_only_retail",
+          45
+        ],
+        [
+          "service_only_hospitality",
+          42
         ],
         [
           "no_brand_name",
@@ -261,16 +269,8 @@
           28
         ],
         [
-          "company_too_established",
-          19
-        ],
-        [
-          "major_brand_owner",
-          17
-        ],
-        [
-          "raw_agricultural_only",
-          8
+          "pharma_supplement_only",
+          23
         ]
       ],
       "csv": "week_3.csv"
@@ -298,7 +298,7 @@
       "top_rejection_reasons": [
         [
           "no_food_class",
-          1277
+          1169
         ],
         [
           "supporting_class_only",
@@ -309,24 +309,24 @@
           54
         ],
         [
+          "service_only_retail",
+          49
+        ],
+        [
           "score_below_band",
           47
         ],
         [
+          "pharma_supplement_only",
+          30
+        ],
+        [
+          "service_only_hospitality",
+          29
+        ],
+        [
           "company_too_established",
           18
-        ],
-        [
-          "major_brand_owner",
-          16
-        ],
-        [
-          "non_uk_applicant",
-          8
-        ],
-        [
-          "raw_agricultural_only",
-          5
         ]
       ],
       "csv": "week_4.csv"

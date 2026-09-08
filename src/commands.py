@@ -75,12 +75,13 @@ def _run_one(
         with session_scope() as session:
             if result.status == RunStatus.COMPLETED:
                 try:
-                    artifact = source.fetch(result.journal)
-                    journal_row = upsert_journal(session, artifact, result.counts.raw_records)
-                    records = list(
-                        pipeline._ingest(result.journal, getattr(args, "max_records", None))
-                    )
-                    save_trademark_records(session, records, journal_row.id)
+                    # Reuse what the run already downloaded and parsed. Re-reading
+                    # a 150 MB journal purely to persist it would double the cost
+                    # of every run.
+                    artifact = pipeline.last_artifact
+                    if artifact is not None:
+                        journal_row = upsert_journal(session, artifact, result.counts.raw_records)
+                        save_trademark_records(session, pipeline.last_records, journal_row.id)
                 except Exception as exc:  # persistence must not lose the run record
                     log.warning("commands.persist_source_failed", error=str(exc)[:200])
                 save_opportunities(session, result)
