@@ -47,11 +47,61 @@ class ScoringContext:
 
 
 class LaunchTraceScorer:
+    # Age indicators are mutually exclusive, so only the largest counts towards
+    # the maximum a record could achieve.
+    _AGE_KEYS = (
+        "company_incorporated_within_12m",
+        "company_incorporated_within_24m",
+        "company_incorporated_within_48m",
+    )
+
     def __init__(self, config: dict | None = None, exclusions: dict | None = None) -> None:
         self.cfg = config or load_config("scoring.json")
         self.exclusions = exclusions or load_config("exclusions.json")
         self.positive = {i["key"]: i for i in self.cfg["positive_indicators"]}
         self.negative = {i["key"]: i for i in self.cfg["negative_indicators"]}
+        self.evidence_groups = {
+            k: v for k, v in self.cfg.get("evidence_groups", {}).items() if not k.startswith("_")
+        }
+
+    def _achievable_weight(self, excluded_keys: set[str]) -> int:
+        """The most a record could score from positive indicators.
+
+        Mutually exclusive age indicators count once, and any indicator whose
+        evidence was never gathered is excluded.
+        """
+        total = 0
+        age_best = 0
+        for key, ind in self.positive.items():
+            if key in excluded_keys:
+                continue
+            weight = int(ind["weight"])
+            if key in self._AGE_KEYS:
+                age_best = max(age_best, weight)
+            else:
+                total += weight
+        return total + age_best
+
+    def _evidence_scale(self, ctx: "ScoringContext") -> tuple[float, list[str]]:
+        """Scale factor that redistributes the weight of enrichment we did not run.
+
+        A record researched with fewer sources should not be scored as if it had
+        failed the checks we never made.
+        """
+        if not self.cfg.get("normalise_for_missing_evidence", True):
+            return 1.0, []
+        missing: set[str] = set()
+        notes: list[str] = []
+        if not ctx.web.attempted:
+            missing.update(self.evidence_groups.get("web", []))
+            notes.append("web enrichment did not run")
+        if not missing:
+            return 1.0, notes
+        full = self._achievable_weight(set())
+        available = self._achievable_weight(missing)
+        if available <= 0:
+            return 1.0, notes
+        return min(full / available, 2.0), notes
 
     # -- indicator detection ------------------------------------------------
     def _fired(self, ctx: ScoringContext) -> tuple[list[str], list[str], dict[str, object]]:
@@ -132,6 +182,8 @@ class LaunchTraceScorer:
                 negatives.append("mature_brand_footprint")
             if ctx.web.retail_presence == RetailPresence.MULTIPLE_RETAIL:
                 negatives.append("widely_distributed")
+            elif ctx.web.marketplace_presence:
+                negatives.append("already_on_marketplace")
 
         if self._distinctive_brand_name(ctx.record):
             positives.append("distinctive_consumer_brand_name")
@@ -174,13 +226,15 @@ class LaunchTraceScorer:
         reasons: list[ScoreReason] = []
         negative_reasons: list[ScoreReason] = []
 
+        scale, evidence_notes = self._evidence_scale(ctx)
         for key in positives:
             ind = self.positive.get(key)
             if not ind:
                 continue
-            value += int(ind["weight"])
+            weight = int(round(int(ind["weight"]) * scale))
+            value += weight
             reasons.append(
-                ScoreReason(key=key, text=self._render(ind["reason_template"], facts), weight=int(ind["weight"]))
+                ScoreReason(key=key, text=self._render(ind["reason_template"], facts), weight=weight)
             )
         for key in negatives:
             ind = self.negative.get(key)
@@ -221,8 +275,9 @@ class LaunchTraceScorer:
             value = int(web_cap)
             capped = True
             cap_reason = (
-                "Capped: no web evidence was gathered, so we have not verified whether this brand "
-                "is already established"
+                "Capped below the HIGH band: "
+                + (evidence_notes[0] if evidence_notes else "web enrichment did not run")
+                + ", so we have not verified whether this brand is already established"
             )
 
         band, label = self._band(value)

@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260908T104435_b39794",
+  "run_id": "run_20260908T105607_bdbcb0",
   "generated_on": "2026-09-08",
   "journal_number": "2018-004",
   "publication_date": "2018-01-26",
@@ -16,9 +16,9 @@
     "emerging_candidates": 53,
     "web_enriched": 0,
     "scored": 53,
-    "high": 3,
-    "medium": 11,
-    "suppressed": 39,
+    "high": 0,
+    "medium": 6,
+    "suppressed": 47,
     "duplicates_dropped": 0,
     "enrichment_failures": 0,
     "llm_failures": 0,
@@ -30,17 +30,17 @@
       "major_brand_owner": 16,
       "non_uk_applicant": 8,
       "company_too_established": 18,
-      "score_below_band": 39
+      "score_below_band": 47
     }
   },
   "score_summary": {
-    "delivered": 14,
-    "high": 3,
-    "medium": 11,
-    "suppressed": 39,
-    "min_score": 62,
-    "max_score": 90,
-    "mean_score": 76.4
+    "delivered": 6,
+    "high": 0,
+    "medium": 6,
+    "suppressed": 47,
+    "min_score": 61,
+    "max_score": 79,
+    "mean_score": 71.8
   },
   "top_rejection_reasons": [
     [
@@ -57,7 +57,7 @@
     ],
     [
       "score_below_band",
-      39
+      47
     ],
     [
       "company_too_established",

@@ -22,3 +22,6 @@ data/raw/
 *.sqlite3
 *.db
 reports/local/
+reports/runs/
+reports/smoke/
+reports/outbox/

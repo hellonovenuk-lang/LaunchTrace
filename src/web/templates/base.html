@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}LaunchTrace{% endblock %}</title>
+<meta name="description" content="{% block description %}LaunchTrace turns newly published UK trade mark activity into a weekly feed of sales opportunities for packaging, manufacturing and FMCG suppliers.{% endblock %}">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="/">Launch<span>Trace</span></a>
+    <nav>
+      <a href="/#how">How it works</a>
+      <a href="/#fields">Feed fields</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#sample">Get a sample</a>
+    </nav>
+  </div>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<footer class="site">
+  <div class="wrap">
+    <p><strong>Data sources.</strong> Trade mark data is taken from the UK Intellectual Property
+    Office and company data from Companies House, both used under the
+    <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
+    LaunchTrace is not affiliated with, endorsed by, or connected to the Intellectual Property Office
+    or Companies House.</p>
+    <p>LaunchTrace is a commercial sales-intelligence feed. It is not trade mark legal advice, not a
+    trade mark watching service, and not a trade mark database. Scores are our own opportunity
+    signal, not a prediction that any company will make a purchase.</p>
+    <p>
+      <a href="/privacy">Privacy</a> ·
+      <a href="/terms">Terms</a> ·
+      <a href="/attribution">Data &amp; licensing</a> ·
+      <a href="/unsubscribe">Opt out</a>
+    </p>
+  </div>
+</footer>
+</body>
+</html>

@@ -148,10 +148,12 @@ class Pipeline:
     def _check_volume(self, result: PipelineResult, history: list[dict[str, Any]] | None) -> None:
         guard = load_config("validation_bands.json")["volume_guardrails"]
         raw = result.counts.raw_records
-        if raw < guard["min_expected_records_per_journal"]:
+        by_source = guard.get("min_expected_records_per_journal_by_source", {})
+        minimum = int(by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"]))
+        if raw < minimum:
             raise VolumeAnomalyError(
                 f"Only {raw} records parsed from journal {result.journal.journal_number}; "
-                f"expected at least {guard['min_expected_records_per_journal']}. "
+                f"expected at least {minimum}. "
                 "The source may be truncated or the format may have changed."
             )
         if raw > guard["max_expected_records_per_journal"]:

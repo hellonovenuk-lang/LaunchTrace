@@ -4,15 +4,39 @@
   "metric": "average_good_opportunities_per_week",
   "good_opportunity_definition": "Opportunities in the HIGH or MEDIUM score band that were delivered (not suppressed).",
   "bands": [
-    {"key": "GREEN", "min": 15, "max": null, "verdict": "Average 15+ good opportunities per week — enough weekly volume to justify a paid weekly feed."},
-    {"key": "PROMISING", "min": 8, "max": 14.999, "verdict": "8-14 per week — commercially plausible, needs supplier feedback on quality before scaling."},
-    {"key": "QUESTIONABLE", "min": 4, "max": 7.999, "verdict": "4-7 per week — thin. Either widen the qualification rules or reconsider the weekly cadence."},
-    {"key": "FAIL_RETHINK", "min": 0, "max": 3.999, "verdict": "Fewer than 4 per week — trade mark activity alone does not surface enough emerging food brands. Rethink the signal or the product."}
+    {
+      "key": "GREEN",
+      "min": 15,
+      "max": null,
+      "verdict": "Average 15+ good opportunities per week — enough weekly volume to justify a paid weekly feed."
+    },
+    {
+      "key": "PROMISING",
+      "min": 8,
+      "max": 14.999,
+      "verdict": "8-14 per week — commercially plausible, needs supplier feedback on quality before scaling."
+    },
+    {
+      "key": "QUESTIONABLE",
+      "min": 4,
+      "max": 7.999,
+      "verdict": "4-7 per week — thin. Either widen the qualification rules or reconsider the weekly cadence."
+    },
+    {
+      "key": "FAIL_RETHINK",
+      "min": 0,
+      "max": 3.999,
+      "verdict": "Fewer than 4 per week — trade mark activity alone does not surface enough emerging food brands. Rethink the signal or the product."
+    }
   ],
   "volume_guardrails": {
     "min_expected_records_per_journal": 300,
     "max_expected_records_per_journal": 6000,
     "max_week_on_week_change_ratio": 3.0,
-    "note": "Used by the fail-closed safety checks. A journal outside these bounds blocks sending and raises an alert."
+    "note": "Used by the fail-closed safety checks. A journal outside these bounds blocks sending and raises an alert.",
+    "min_expected_records_per_journal_by_source": {
+      "fixture_journal_xml": 1,
+      "_note": "Fixture sources carry a handful of records by design; the guardrail floor applies to real journals."
+    }
   }
 }

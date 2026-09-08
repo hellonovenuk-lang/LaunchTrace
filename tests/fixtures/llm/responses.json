@@ -1,0 +1,10 @@
+{
+  "valid": "{\"consumer_product\": true, \"physical_product\": true, \"food_vertical\": true, \"product_category\": \"cereal_bars\", \"packaged_product_probability\": 0.88, \"packaging_relevance\": \"HIGH\", \"contract_manufacturing_relevance\": \"HIGH\", \"distribution_relevance\": \"MEDIUM\", \"reasoning_summary\": \"Oat and cereal bars described as packaged retail snack products.\"}",
+  "valid_with_prose": "Here is the classification:\n```json\n{\"consumer_product\": true, \"physical_product\": true, \"food_vertical\": true, \"product_category\": \"snacks\", \"packaged_product_probability\": 0.7, \"packaging_relevance\": \"HIGH\", \"contract_manufacturing_relevance\": \"MEDIUM\", \"distribution_relevance\": \"MEDIUM\", \"reasoning_summary\": \"Savoury snacks.\"}\n```",
+  "service_only": "{\"consumer_product\": true, \"physical_product\": false, \"food_vertical\": true, \"product_category\": null, \"packaged_product_probability\": 0.05, \"packaging_relevance\": \"NONE\", \"contract_manufacturing_relevance\": \"NONE\", \"distribution_relevance\": \"NONE\", \"reasoning_summary\": \"Restaurant services rather than a packaged product.\"}",
+  "invalid_relevance": "{\"consumer_product\": true, \"physical_product\": true, \"food_vertical\": true, \"product_category\": \"snacks\", \"packaged_product_probability\": 0.5, \"packaging_relevance\": \"VERY HIGH\", \"contract_manufacturing_relevance\": \"HIGH\", \"distribution_relevance\": \"HIGH\", \"reasoning_summary\": \"x\"}",
+  "missing_field": "{\"consumer_product\": true, \"physical_product\": true, \"food_vertical\": true}",
+  "out_of_range": "{\"consumer_product\": true, \"physical_product\": true, \"food_vertical\": true, \"product_category\": \"snacks\", \"packaged_product_probability\": 1.8, \"packaging_relevance\": \"HIGH\", \"contract_manufacturing_relevance\": \"HIGH\", \"distribution_relevance\": \"HIGH\", \"reasoning_summary\": \"x\"}",
+  "not_json": "I cannot classify this filing.",
+  "empty": ""
+}

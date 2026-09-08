@@ -1,0 +1,94 @@
+{
+  "run_id": "run_20260908T105538_b7f009",
+  "generated_on": "2026-09-08",
+  "journal_number": "2018-002",
+  "publication_date": "2018-01-12",
+  "source": "ipo_open_data",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 1333,
+    "food_class_candidates": 161,
+    "packaged_food_candidates": 65,
+    "uk_corporate_applicants": 47,
+    "company_matched": 40,
+    "emerging_candidates": 50,
+    "web_enriched": 0,
+    "scored": 50,
+    "high": 0,
+    "medium": 6,
+    "suppressed": 44,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "rejection_reasons": {
+      "no_brand_name": 45,
+      "no_food_class": 1131,
+      "supporting_class_only": 68,
+      "raw_agricultural_only": 4,
+      "dead_or_withdrawn": 3,
+      "non_uk_applicant": 13,
+      "major_brand_owner": 4,
+      "company_too_established": 15,
+      "score_below_band": 44
+    }
+  },
+  "score_summary": {
+    "delivered": 6,
+    "high": 0,
+    "medium": 6,
+    "suppressed": 44,
+    "min_score": 62,
+    "max_score": 79,
+    "mean_score": 71.2
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      1131
+    ],
+    [
+      "supporting_class_only",
+      68
+    ],
+    [
+      "no_brand_name",
+      45
+    ],
+    [
+      "score_below_band",
+      44
+    ],
+    [
+      "company_too_established",
+      15
+    ],
+    [
+      "non_uk_applicant",
+      13
+    ],
+    [
+      "raw_agricultural_only",
+      4
+    ],
+    [
+      "major_brand_owner",
+      4
+    ],
+    [
+      "dead_or_withdrawn",
+      3
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00003274469 — Müller UK & Ireland Group LLP (muller)",
+    "UK00003274481 — Müller UK & Ireland Group LLP (muller)",
+    "UK00003277106 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277916 — Asda Stores Limited (asda)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

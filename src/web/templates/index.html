@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}LaunchTrace Food — find emerging UK food brands while they're still building{% endblock %}
+{% block content %}
+
+<div class="wrap hero">
+  <p style="margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)">LaunchTrace Food</p>
+  <h1>Find emerging food brands while they're still building.</h1>
+  <p class="lede">
+    LaunchTrace turns newly published UK trade mark activity into a weekly feed of sales
+    opportunities for packaging, manufacturing and FMCG suppliers.
+  </p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="#sample">Get a sample</a>
+    <a class="btn btn-secondary" href="#pricing">Founding access — {{ founding.price_display }}/month</a>
+  </div>
+  <p class="note">Every Friday. Email plus CSV. No dashboard to log into.</p>
+</div>
+
+<section id="examples">
+  <div class="wrap">
+    <h2>Example opportunities</h2>
+    <p class="sub">
+      Real records from a processed UKIPO journal week, with the score reasons LaunchTrace produced.
+      {% if not examples %}Sample output is generated once the pipeline has run — see the README.{% endif %}
+    </p>
+    <div class="cards">
+      {% for e in examples %}
+      <div class="card">
+        <h3>{{ e.brand_name }}
+          <span class="badge {{ 'high' if e.score_band == 'HIGH' else 'med' }}">{{ e.launchtrace_score }} {{ e.score_band }}</span>
+        </h3>
+        <p style="margin:6px 0 8px">
+          {% if e.product_category %}{{ e.product_category }} · {% endif %}{{ e.company_name or e.applicant_name }}{% if e.company_region %} · {{ e.company_region }}{% endif %}
+        </p>
+        <p style="font-size:13px">{{ e.first_reason }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">Five stages, run once a week, with the whole funnel recorded so we can show our working.</p>
+    <div class="steps">
+      <div class="step"><b>1</b><span>Trade mark activity — the week's accepted UK filings from the IPO journal</span></div>
+      <div class="step"><b>2</b><span>Company verification — matched to Companies House, with a confidence score</span></div>
+      <div class="step"><b>3</b><span>Launch research — website, retail listings and how established the brand already is</span></div>
+      <div class="step"><b>4</b><span>Opportunity score — explainable 0–100 signal with the reasons behind it</span></div>
+      <div class="step"><b>5</b><span>Friday feed — email plus CSV, ready for your sales team</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="who">
+  <div class="wrap">
+    <h2>Who it's for</h2>
+    <p class="sub">UK suppliers who sell to food and FMCG brands, and who would rather reach them before the buying decisions are made.</p>
+    <div class="cards">
+      <div class="card"><h3>Packaging manufacturers</h3><p>Flexible packaging, films, pouches, wrappers and laminates.</p></div>
+      <div class="card"><h3>Label and print suppliers</h3><p>Pressure-sensitive labels, sleeves and printed film.</p></div>
+      <div class="card"><h3>Contract manufacturers</h3><p>Recipe scale-up and manufacture for brands without their own facility.</p></div>
+      <div class="card"><h3>Co-packers</h3><p>Filling, sealing, multipacking and finishing.</p></div>
+      <div class="card"><h3>Fulfilment and 3PL</h3><p>Storage, pick and pack, direct-to-consumer despatch.</p></div>
+      <div class="card"><h3>Distributors and brokers</h3><p>Route to UK retail and foodservice.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="fields">
+  <div class="wrap">
+    <h2>What's in the feed</h2>
+    <p class="sub">Every row of the CSV carries these columns.</p>
+    <div class="scroll">
+      <table class="fields">
+        <tr><th>Field</th><th>What it tells you</th></tr>
+        <tr><td class="mono">brand_name</td><td>The word mark being registered</td></tr>
+        <tr><td class="mono">trademark_number</td><td>The IPO application number, linked to the public record</td></tr>
+        <tr><td class="mono">filing_date · publication_date</td><td>When it was filed and when it appeared in the journal</td></tr>
+        <tr><td class="mono">product_category</td><td>Snacks, bars, bakery, confectionery, sauces, chilled, coffee and so on</td></tr>
+        <tr><td class="mono">company_name · company_number</td><td>The verified Companies House match</td></tr>
+        <tr><td class="mono">company_incorporation_date · company_region</td><td>How new the company is and roughly where it is</td></tr>
+        <tr><td class="mono">website · contact_page</td><td>Where to look, and a route in</td></tr>
+        <tr><td class="mono">launch_stage · retail_presence</td><td>How far along the brand appears to be</td></tr>
+        <tr><td class="mono">packaging_relevance … marketing_relevance</td><td>Inferred relevance per supplier category: HIGH, MEDIUM, LOW or NONE</td></tr>
+        <tr><td class="mono">launchtrace_score · score_band · score_reasons</td><td>The score and the plain-English reasons behind it</td></tr>
+        <tr><td class="mono">source_url · evidence_urls</td><td>Everything we looked at, so you can check our work</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <h2>Pricing</h2>
+    <p class="sub">One plan while we validate the feed with suppliers.</p>
+    <div class="price">
+      <p style="margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)">Founding access</p>
+      <div class="amount">{{ founding.price_display }}<small> / month</small></div>
+      <ul>
+        {% for f in founding.features %}<li>{{ f }}</li>{% endfor %}
+      </ul>
+      <a class="btn btn-primary" href="/billing/checkout?plan=founding_monthly">Start a subscription</a>
+      <p class="note">{% if stripe_live %}Secure checkout via Stripe.{% else %}Checkout opens once Stripe is connected — request a sample in the meantime.{% endif %}</p>
+    </div>
+  </div>
+</section>
+
+<section id="sample">
+  <div class="wrap">
+    <h2>Get a sample</h2>
+    <p class="sub">We'll send the most recent sample feed so you can judge it on real records.</p>
+    {% if message %}<div class="flash {{ 'ok' if success else 'err' }}">{{ message }}</div>{% endif %}
+    <form class="sample" method="post" action="/sample">
+      <label for="work_email">Work email</label>
+      <input id="work_email" name="work_email" type="email" required autocomplete="email" placeholder="you@yourcompany.co.uk">
+      <label for="company">Company</label>
+      <input id="company" name="company" type="text" required autocomplete="organization" placeholder="Your company name">
+      <label for="contact_name">Name (optional)</label>
+      <input id="contact_name" name="contact_name" type="text" autocomplete="name">
+      <label for="supplier_type">What do you supply?</label>
+      <select id="supplier_type" name="supplier_type">
+        <option value="">Select…</option>
+        {% for s in supplier_types %}<option value="{{ s.key }}">{{ s.label }}</option>{% endfor %}
+      </select>
+      <input class="hp" type="text" name="website_url" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="hidden" name="form_token" value="{{ form_token }}">
+      <button class="btn btn-primary" type="submit">Send me the sample</button>
+      <p class="note">Business contact details only. We use them to send the sample and to follow up
+      once about whether it was useful. Opt out at any time.</p>
+    </form>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <details class="faq"><summary>Where does the data come from?</summary>
+      <p>Trade mark records come from the UK Intellectual Property Office's weekly Trade Marks Journal
+      and the IPO's Open Data release. Company details come from Companies House. Both are published
+      under the Open Government Licence v3.0. Website and retail evidence comes from public web
+      search, and we keep the URLs so you can check anything yourself.</p></details>
+    <details class="faq"><summary>Is this a trade mark watching service?</summary>
+      <p>No. LaunchTrace is a sales-intelligence feed. We don't monitor for infringement, we don't
+      give legal advice, and we're not a trade mark database.</p></details>
+    <details class="faq"><summary>What does the LaunchTrace Score mean?</summary>
+      <p>It's our own 0–100 signal of how early-stage and how commercially relevant a filing looks.
+      It is not a probability that the company will buy anything. Every score comes with the reasons
+      behind it so you can disagree with it.</p></details>
+    <details class="faq"><summary>Does "packaging relevance: HIGH" mean they're buying packaging?</summary>
+      <p>No. It means a brand at this stage, in this category, typically needs that kind of supplier.
+      It is an inference about likely need, not an observation of current purchasing.</p></details>
+    <details class="faq"><summary>How many opportunities per week?</summary>
+      <p>It varies with what the IPO publishes. We ran the pipeline over historical journal weeks
+      before launch precisely so we could answer this with evidence rather than a guess — ask us for
+      the validation figures.</p></details>
+    <details class="faq"><summary>Can I cancel?</summary>
+      <p>Any time, from the link in every email. No contract and no notice period.</p></details>
+    <details class="faq"><summary>Do you email the brands on my behalf?</summary>
+      <p>No. LaunchTrace gives your team the signal. Any outreach is yours to make.</p></details>
+  </div>
+</section>
+
+{% endblock %}

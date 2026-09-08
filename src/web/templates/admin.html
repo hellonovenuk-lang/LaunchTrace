@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}LaunchTrace operator{% endblock %}
+{% block content %}
+<div class="wrap admin" style="padding:32px 0">
+  <h1 style="font-size:24px;margin:0 0 4px">Operator</h1>
+  <p style="color:var(--muted);font-size:14px;margin:0 0 24px">
+    Send mode: <strong>{{ send_mode }}</strong>
+    {% if send_mode == 'review' %}— nothing is delivered until a run is approved.{% endif %}
+  </p>
+
+  <h2 style="font-size:17px;margin:24px 0 8px">Pipeline runs</h2>
+  <div class="scroll"><table>
+    <tr><th>Run</th><th>Journal</th><th>Status</th><th>HIGH</th><th>MEDIUM</th><th>Approved</th><th>Delivery</th></tr>
+    {% for r in runs %}
+    <tr>
+      <td class="mono">{{ r.run_id }}</td>
+      <td>{{ r.journal_number }}</td>
+      <td>{{ r.status }}</td>
+      <td>{{ (r.counts or {}).get('high', 0) }}</td>
+      <td>{{ (r.counts or {}).get('medium', 0) }}</td>
+      <td>{{ 'yes' if r.approved_at else 'no' }}</td>
+      <td>{{ r.delivery_status }}</td>
+    </tr>
+    {% else %}<tr><td colspan="7">No runs yet.</td></tr>{% endfor %}
+  </table></div>
+
+  <h2 style="font-size:17px;margin:28px 0 8px">Customers</h2>
+  <div class="scroll"><table>
+    <tr><th>Company</th><th>Plan</th><th>Status</th><th>Delivery</th><th>Recipients</th></tr>
+    {% for c in customers %}
+    <tr><td>{{ c.company }}</td><td>{{ c.plan_key }}</td><td>{{ c.subscription_status }}</td>
+        <td>{{ 'on' if c.delivery_enabled else 'off' }}</td>
+        <td class="mono">{{ recipients.get(c.id, [])|join(', ') }}</td></tr>
+    {% else %}<tr><td colspan="5">No customers yet.</td></tr>{% endfor %}
+  </table></div>
+
+  <h2 style="font-size:17px;margin:28px 0 8px">Sample requests</h2>
+  <div class="scroll"><table>
+    <tr><th>Requested</th><th>Email</th><th>Company</th><th>Supplier type</th><th>Status</th></tr>
+    {% for s in sample_requests %}
+    <tr><td>{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td class="mono">{{ s.work_email }}</td>
+        <td>{{ s.company }}</td><td>{{ s.supplier_type or '-' }}</td><td>{{ s.status }}</td></tr>
+    {% else %}<tr><td colspan="5">None yet.</td></tr>{% endfor %}
+  </table></div>
+
+  <h2 style="font-size:17px;margin:28px 0 8px">Recent errors</h2>
+  <div class="scroll"><table>
+    <tr><th>When</th><th>Stage</th><th>Message</th></tr>
+    {% for e in errors %}
+    <tr><td>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ e.stage }}</td><td>{{ e.message[:160] }}</td></tr>
+    {% else %}<tr><td colspan="3">No errors recorded.</td></tr>{% endfor %}
+  </table></div>
+
+  <p style="margin-top:24px;color:var(--faint);font-size:13px">
+    Approving and sending runs is done from the command line:
+    <code class="mono">python -m src.pipeline approve --run-id …</code> then
+    <code class="mono">python -m src.pipeline send --run-id …</code>
+  </p>
+</div>
+{% endblock %}

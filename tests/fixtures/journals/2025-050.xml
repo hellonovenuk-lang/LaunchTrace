@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Structural fixture for the UKIPO Trade Marks Journal XML parser.
+
+  The element names and nesting follow the WIPO ST.66 trade mark schema family
+  that the IPO's journal uses. The records themselves are invented test data,
+  not real filings, and exist only to exercise the parser, the food filter and
+  the scoring rules. Real journal weeks used for validation live in
+  data/journals/ and come from the IPO's own Open Data release.
+-->
+<TradeMarkTransaction xmlns="http://www.wipo.int/standards/XMLSchema/trademarks">
+  <TradeMarkTransactionBody>
+    <TransactionContentDetails>
+      <TransactionCode>Trade Mark Journal</TransactionCode>
+      <TransactionData>
+        <TradeMarkDetails>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900001</ApplicationNumber>
+            <ApplicationDate>2025-09-15</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <MarkCategory>Standard</MarkCategory>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>CRUMBLEDGE</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>30</ClassNumber>
+                  <GoodsServicesDescription>Snack bars; cereal bars; oat bars; biscuits; cookies; packaged snack foods for retail sale.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Crumbledge Foods Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>BS1 4TR</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900002</ApplicationNumber>
+            <ApplicationDate>2025-08-02</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>HOT CLOUD</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>30</ClassNumber>
+                  <GoodsServicesDescription>Hot sauce; chilli sauce; condiments; marinades; seasonings sold in bottles.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Hot Cloud Kitchen Limited</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>M4 1HN</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900003</ApplicationNumber>
+            <ApplicationDate>2025-07-11</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>NORTHGATE TABLE</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>43</ClassNumber>
+                  <GoodsServicesDescription>Restaurant services; cafe services; catering services.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Northgate Table Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>LS1 2AA</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900004</ApplicationNumber>
+            <ApplicationDate>2025-06-30</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>GOLDCREST CRISPS</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>29</ClassNumber>
+                  <GoodsServicesDescription>Potato crisps; vegetable crisps; savoury snacks; prepared nuts.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Nestle UK Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>CR0 4XQ</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900005</ApplicationNumber>
+            <ApplicationDate>2025-09-01</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>MOORFOOT GRANOLA</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>30</ClassNumber>
+                  <GoodsServicesDescription>Granola; muesli; breakfast cereal; oats; packaged cereal preparations.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Moorfoot Provisions Limited</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>EH1 3AA</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900006</ApplicationNumber>
+            <ApplicationDate>2025-05-20</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>TERRA PASTURE</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>31</ClassNumber>
+                  <GoodsServicesDescription>Raw and unprocessed agricultural produce; agricultural seeds; live animals; animal feed.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Terra Pasture Farms Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>EX1 1AA</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900007</ApplicationNumber>
+            <ApplicationDate>2025-09-22</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>BRINEHOUSE</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>29</ClassNumber>
+                  <GoodsServicesDescription>Preserved vegetables; pickles; packaged prepared foods for retail sale.</GoodsServicesDescription>
+                </ClassDescription>
+                <ClassDescription>
+                  <ClassNumber>30</ClassNumber>
+                  <GoodsServicesDescription>Sauces; chutney; relish; condiments.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Brinehouse Preserves Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>NR1 1AA</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+          <TradeMark>
+            <RegistrationOfficeCode>GB</RegistrationOfficeCode>
+            <ApplicationNumber>UK00003900008</ApplicationNumber>
+            <ApplicationDate>2025-04-04</ApplicationDate>
+            <MarkCurrentStatusCode>Application published</MarkCurrentStatusCode>
+            <MarkFeature>Word</MarkFeature>
+            <SeriesQuantity>0</SeriesQuantity>
+            <PublicationDetails><Publication><PublicationDate>2025-12-12</PublicationDate></Publication></PublicationDetails>
+            <WordMarkSpecification><MarkVerbalElementText>VELDT ROAST</MarkVerbalElementText></WordMarkSpecification>
+            <GoodsServicesDetails><GoodsServices>
+              <ClassDescriptionDetails>
+                <ClassDescription>
+                  <ClassNumber>30</ClassNumber>
+                  <GoodsServicesDescription>Coffee; ground coffee; coffee beans; tea; hot chocolate.</GoodsServicesDescription>
+                </ClassDescription>
+              </ClassDescriptionDetails>
+            </GoodsServices></GoodsServicesDetails>
+            <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+              <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Veldt Roast Coffee Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+              <Address><CountryCode>GB</CountryCode><PostcodeText>CF10 1AA</PostcodeText></Address>
+            </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+          </TradeMark>
+
+        </TradeMarkDetails>
+      </TransactionData>
+    </TransactionContentDetails>
+  </TradeMarkTransactionBody>
+</TradeMarkTransaction>

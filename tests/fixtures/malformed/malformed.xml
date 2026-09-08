@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TradeMarkTransaction>
+  <TradeMarkDetails>
+    <TradeMark>
+      <ApplicationNumber>UK00003999001</ApplicationNumber>
+      <ApplicationDate>not-a-date</ApplicationDate>
+      <WordMarkSpecification><MarkVerbalElementText>BROKEN DATES</MarkVerbalElementText></WordMarkSpecification>
+      <GoodsServicesDetails><GoodsServices><ClassDescriptionDetails><ClassDescription>
+        <ClassNumber>99</ClassNumber>
+        <GoodsServicesDescription>Snack bars.</GoodsServicesDescription>
+      </ClassDescription></ClassDescriptionDetails></GoodsServices></GoodsServicesDetails>
+    </TradeMark>
+    <TradeMark>
+      <MarkVerbalElementText>NO APPLICATION NUMBER</MarkVerbalElementText>
+    </TradeMark>
+    <TradeMark>
+      <ApplicationNumber>UK00003999003</ApplicationNumber>
+      <ApplicationDate>2025-01-02</ApplicationDate>
+      <WordMarkSpecification><MarkVerbalElementText>STILL VALID</MarkVerbalElementText></WordMarkSpecification>
+      <GoodsServicesDetails><GoodsServices><ClassDescriptionDetails><ClassDescription>
+        <ClassNumber>30</ClassNumber>
+        <GoodsServicesDescription>Biscuits; cookies.</GoodsServicesDescription>
+      </ClassDescription></ClassDescriptionDetails></GoodsServices></GoodsServicesDetails>
+      <ApplicantDetails><Applicant><ApplicantAddressBook><FormattedNameAddress>
+        <Name><FreeFormatName><FreeFormatNameDetails><FreeFormatNameLine>Still Valid Ltd</FreeFormatNameLine></FreeFormatNameDetails></FreeFormatName></Name>
+      </FormattedNameAddress></ApplicantAddressBook></Applicant></ApplicantDetails>
+    </TradeMark>
+  </TradeMarkDetails>
+</TradeMarkTransaction>

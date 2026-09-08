@@ -20,10 +20,11 @@ def _volume_flags(result: PipelineResult, history: list[dict[str, Any]] | None) 
     guard = load_config("validation_bands.json")["volume_guardrails"]
     flags: list[str] = []
     raw = result.counts.raw_records
-    if raw < guard["min_expected_records_per_journal"]:
+    by_source = guard.get("min_expected_records_per_journal_by_source", {})
+    minimum = int(by_source.get(result.journal.source_name, guard["min_expected_records_per_journal"]))
+    if raw < minimum:
         flags.append(
-            f"Record volume is unusually LOW: {raw} parsed, expected at least "
-            f"{guard['min_expected_records_per_journal']}."
+            f"Record volume is unusually LOW: {raw} parsed, expected at least {minimum}."
         )
     if raw > guard["max_expected_records_per_journal"]:
         flags.append(

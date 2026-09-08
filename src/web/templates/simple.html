@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} — LaunchTrace{% endblock %}
+{% block content %}
+<div class="wrap" style="padding:48px 0;max-width:760px">
+  <h1 style="font-size:26px;letter-spacing:-.02em;margin:0 0 12px">{{ heading }}</h1>
+  {% if flash %}<div class="flash {{ flash_kind or 'ok' }}">{{ flash }}</div>{% endif %}
+  <div style="font-size:15px;line-height:1.7;color:var(--muted)">{{ body_html|safe }}</div>
+  {% if back %}<p style="margin-top:24px"><a href="/">← Back to LaunchTrace</a></p>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,335 @@
+{
+  "generated_at": "2026-09-08T10:56:21.737348+00:00",
+  "weeks_processed": 4,
+  "weeks_completed": 4,
+  "average_good_opportunities_per_week": 5.5,
+  "total_good_opportunities": 22,
+  "total_high": 0,
+  "total_medium": 22,
+  "verdict_band": "QUESTIONABLE",
+  "verdict": "4-7 per week — thin. Either widen the qualification rules or reconsider the weekly cadence.",
+  "verdict_is_provisional": true,
+  "bands": [
+    {
+      "key": "GREEN",
+      "min": 15,
+      "max": null,
+      "verdict": "Average 15+ good opportunities per week — enough weekly volume to justify a paid weekly feed."
+    },
+    {
+      "key": "PROMISING",
+      "min": 8,
+      "max": 14.999,
+      "verdict": "8-14 per week — commercially plausible, needs supplier feedback on quality before scaling."
+    },
+    {
+      "key": "QUESTIONABLE",
+      "min": 4,
+      "max": 7.999,
+      "verdict": "4-7 per week — thin. Either widen the qualification rules or reconsider the weekly cadence."
+    },
+    {
+      "key": "FAIL_RETHINK",
+      "min": 0,
+      "max": 3.999,
+      "verdict": "Fewer than 4 per week — trade mark activity alone does not surface enough emerging food brands. Rethink the signal or the product."
+    }
+  ],
+  "evidence": {
+    "company_registry": "companies_house_bulk",
+    "company_registry_live": true,
+    "llm_classifier": "none",
+    "web_search": "none",
+    "web_search_available": false,
+    "missing_credentials": {
+      "COMPANIES_HOUSE_API_KEY": "Live Companies House API lookups (the free bulk snapshot provider is used instead)",
+      "LLM_API_KEY": "LLM-assisted product classification (rule-only mode is used)",
+      "SEARCH_API_KEY": "Web enrichment (websites, retail presence, maturity)",
+      "RESEND_API_KEY": "Sending email (HTML is rendered to disk instead)",
+      "STRIPE_SECRET_KEY": "Live subscription checkout",
+      "DATABASE_URL": "Hosted PostgreSQL / Supabase (local SQLite is used)"
+    }
+  },
+  "caveats": [
+    "Web enrichment did not run (no search provider configured). Without it the pipeline cannot verify whether a brand is already established, so every record is capped below the HIGH band. The HIGH counts here are therefore structurally zero, not a finding about the signal. Connect SEARCH_PROVIDER and SEARCH_API_KEY and re-run to get the real HIGH/MEDIUM split.",
+    "Product classification ran on deterministic rules only (no LLM key configured). That is more conservative than the full classifier and will under-detect some packaged-food filings.",
+    "These weeks came from the IPO Open Data release rather than the weekly journal XML. The Open Data release does not publish goods and services text, so product categorisation relied on Nice class, Companies House SIC codes and the brand name. The weekly journal XML does carry goods text, so live weekly runs have strictly more evidence than this validation did."
+  ],
+  "score_sensitivity": [
+    {
+      "threshold": 75,
+      "total": 7,
+      "per_week": 1.75
+    },
+    {
+      "threshold": 70,
+      "total": 10,
+      "per_week": 2.5
+    },
+    {
+      "threshold": 65,
+      "total": 14,
+      "per_week": 3.5
+    },
+    {
+      "threshold": 60,
+      "total": 22,
+      "per_week": 5.5
+    },
+    {
+      "threshold": 55,
+      "total": 29,
+      "per_week": 7.25
+    },
+    {
+      "threshold": 50,
+      "total": 32,
+      "per_week": 8.0
+    },
+    {
+      "threshold": 45,
+      "total": 35,
+      "per_week": 8.75
+    },
+    {
+      "threshold": 40,
+      "total": 43,
+      "per_week": 10.75
+    }
+  ],
+  "score_histogram": {
+    "80+": 0,
+    "70-79": 10,
+    "60-69": 12,
+    "50-59": 10,
+    "40-49": 11,
+    "below 40": 130
+  },
+  "scored_records_total": 173,
+  "weeks": [
+    {
+      "week": 1,
+      "journal_number": "2018-001",
+      "publication_date": "2018-01-05",
+      "source": "ipo_open_data",
+      "status": "completed",
+      "total_trademark_applications_parsed": 857,
+      "food_class_candidates": 100,
+      "packaged_food_candidates": 41,
+      "uk_corporate_applicants": 25,
+      "companies_house_matched": 28,
+      "emerging_brand_candidates": 29,
+      "web_enriched": 0,
+      "high": 0,
+      "medium": 3,
+      "good_opportunities": 3,
+      "suppressed": 26,
+      "duplicates_dropped": 0,
+      "enrichment_failures": 0,
+      "llm_failures": 0,
+      "top_rejection_reasons": [
+        [
+          "no_food_class",
+          738
+        ],
+        [
+          "supporting_class_only",
+          41
+        ],
+        [
+          "score_below_band",
+          26
+        ],
+        [
+          "no_brand_name",
+          21
+        ],
+        [
+          "non_uk_applicant",
+          12
+        ],
+        [
+          "company_too_established",
+          12
+        ],
+        [
+          "raw_agricultural_only",
+          3
+        ],
+        [
+          "major_brand_owner",
+          1
+        ]
+      ],
+      "csv": "week_1.csv"
+    },
+    {
+      "week": 2,
+      "journal_number": "2018-002",
+      "publication_date": "2018-01-12",
+      "source": "ipo_open_data",
+      "status": "completed",
+      "total_trademark_applications_parsed": 1333,
+      "food_class_candidates": 161,
+      "packaged_food_candidates": 65,
+      "uk_corporate_applicants": 47,
+      "companies_house_matched": 40,
+      "emerging_brand_candidates": 50,
+      "web_enriched": 0,
+      "high": 0,
+      "medium": 6,
+      "good_opportunities": 6,
+      "suppressed": 44,
+      "duplicates_dropped": 0,
+      "enrichment_failures": 0,
+      "llm_failures": 0,
+      "top_rejection_reasons": [
+        [
+          "no_food_class",
+          1131
+        ],
+        [
+          "supporting_class_only",
+          68
+        ],
+        [
+          "no_brand_name",
+          45
+        ],
+        [
+          "score_below_band",
+          44
+        ],
+        [
+          "company_too_established",
+          15
+        ],
+        [
+          "non_uk_applicant",
+          13
+        ],
+        [
+          "raw_agricultural_only",
+          4
+        ],
+        [
+          "major_brand_owner",
+          4
+        ]
+      ],
+      "csv": "week_2.csv"
+    },
+    {
+      "week": 3,
+      "journal_number": "2018-003",
+      "publication_date": "2018-01-19",
+      "source": "ipo_open_data",
+      "status": "completed",
+      "total_trademark_applications_parsed": 1627,
+      "food_class_candidates": 177,
+      "packaged_food_candidates": 60,
+      "uk_corporate_applicants": 36,
+      "companies_house_matched": 44,
+      "emerging_brand_candidates": 41,
+      "web_enriched": 0,
+      "high": 0,
+      "medium": 7,
+      "good_opportunities": 7,
+      "suppressed": 34,
+      "duplicates_dropped": 0,
+      "enrichment_failures": 0,
+      "llm_failures": 0,
+      "top_rejection_reasons": [
+        [
+          "no_food_class",
+          1412
+        ],
+        [
+          "supporting_class_only",
+          61
+        ],
+        [
+          "no_brand_name",
+          38
+        ],
+        [
+          "score_below_band",
+          34
+        ],
+        [
+          "non_uk_applicant",
+          28
+        ],
+        [
+          "company_too_established",
+          19
+        ],
+        [
+          "major_brand_owner",
+          17
+        ],
+        [
+          "raw_agricultural_only",
+          8
+        ]
+      ],
+      "csv": "week_3.csv"
+    },
+    {
+      "week": 4,
+      "journal_number": "2018-004",
+      "publication_date": "2018-01-26",
+      "source": "ipo_open_data",
+      "status": "completed",
+      "total_trademark_applications_parsed": 1502,
+      "food_class_candidates": 176,
+      "packaged_food_candidates": 71,
+      "uk_corporate_applicants": 51,
+      "companies_house_matched": 53,
+      "emerging_brand_candidates": 53,
+      "web_enriched": 0,
+      "high": 0,
+      "medium": 6,
+      "good_opportunities": 6,
+      "suppressed": 47,
+      "duplicates_dropped": 0,
+      "enrichment_failures": 0,
+      "llm_failures": 0,
+      "top_rejection_reasons": [
+        [
+          "no_food_class",
+          1277
+        ],
+        [
+          "supporting_class_only",
+          71
+        ],
+        [
+          "no_brand_name",
+          54
+        ],
+        [
+          "score_below_band",
+          47
+        ],
+        [
+          "company_too_established",
+          18
+        ],
+        [
+          "major_brand_owner",
+          16
+        ],
+        [
+          "non_uk_applicant",
+          8
+        ],
+        [
+          "raw_agricultural_only",
+          5
+        ]
+      ],
+      "csv": "week_4.csv"
+    }
+  ]
+}

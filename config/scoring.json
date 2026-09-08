@@ -1,7 +1,7 @@
 {
   "$schema_version": "1.0",
   "description": "LaunchTrace Score configuration. The score is an internal opportunity / early-stage signal from 0-100. It is NOT a probability that the company will buy from a subscriber.",
-  "base_score": 40,
+  "base_score": 25,
   "min_score": 0,
   "max_score": 100,
   "bands": [
@@ -27,77 +27,77 @@
   "positive_indicators": [
     {
       "key": "company_incorporated_within_12m",
-      "weight": 18,
+      "weight": 12,
       "reason_template": "UK company incorporated {company_age_months} months before this filing"
     },
     {
       "key": "company_incorporated_within_24m",
-      "weight": 12,
+      "weight": 8,
       "reason_template": "UK company incorporated {company_age_months} months before this filing"
     },
     {
       "key": "company_incorporated_within_48m",
-      "weight": 6,
+      "weight": 4,
       "reason_template": "UK company incorporated {company_age_months} months before this filing"
     },
     {
       "key": "first_trademark_for_applicant",
-      "weight": 12,
+      "weight": 8,
       "reason_template": "First trade mark we have seen from this applicant"
     },
     {
       "key": "single_mark_this_journal",
-      "weight": 4,
+      "weight": 3,
       "reason_template": "Single mark filed this week, consistent with a product launch rather than a portfolio programme"
     },
     {
       "key": "specific_packaged_food_category",
-      "weight": 14,
+      "weight": 10,
       "reason_template": "Specific packaged food category: {product_category}"
     },
     {
       "key": "narrow_class_profile",
-      "weight": 6,
+      "weight": 4,
       "reason_template": "Narrow class profile ({class_count} class(es)), consistent with a single product range"
     },
     {
       "key": "food_sic_code_match",
-      "weight": 8,
+      "weight": 6,
       "reason_template": "Companies House SIC code indicates food manufacturing or wholesale ({sic_summary})"
     },
     {
       "key": "strong_company_match",
-      "weight": 8,
+      "weight": 5,
       "reason_template": "Confident Companies House match ({match_confidence}% confidence)"
     },
     {
       "key": "early_stage_website",
-      "weight": 10,
+      "weight": 7,
       "reason_template": "Website looks early-stage ({website})"
     },
     {
       "key": "no_major_retail_listings",
-      "weight": 10,
+      "weight": 7,
       "reason_template": "No established multiple-retailer listings found"
     },
     {
       "key": "active_launch_signals",
-      "weight": 8,
+      "weight": 6,
       "reason_template": "Evidence of active launch preparation ({launch_evidence})"
     },
     {
       "key": "small_company_accounts",
-      "weight": 5,
+      "weight": 3,
       "reason_template": "Companies House accounts category indicates a micro or small entity"
     },
     {
       "key": "distinctive_consumer_brand_name",
-      "weight": 5,
+      "weight": 3,
       "reason_template": "Brand name reads as a new consumer product name"
     },
     {
       "key": "word_mark",
-      "weight": 3,
+      "weight": 2,
       "reason_template": "Word mark (brand name being protected ahead of launch)"
     }
   ],
@@ -109,62 +109,62 @@
     },
     {
       "key": "company_older_than_6y",
-      "weight": -22,
+      "weight": -18,
       "reason_template": "Company incorporated {company_age_years} years before this filing"
     },
     {
       "key": "company_older_than_10y",
-      "weight": -12,
+      "weight": -10,
       "reason_template": "Long-established company"
     },
     {
       "key": "portfolio_filing",
-      "weight": -25,
+      "weight": -20,
       "reason_template": "{applicant_journal_mark_count} marks filed by this applicant in the same journal (portfolio activity)"
     },
     {
       "key": "many_classes",
-      "weight": -10,
+      "weight": -8,
       "reason_template": "Broad class profile ({class_count} classes), consistent with a corporate portfolio filing"
     },
     {
       "key": "no_company_match",
-      "weight": -18,
+      "weight": -15,
       "reason_template": "No confident Companies House match for the applicant"
     },
     {
       "key": "weak_company_match",
-      "weight": -10,
+      "weight": -8,
       "reason_template": "Companies House match is uncertain ({match_confidence}% confidence)"
     },
     {
       "key": "natural_person_applicant",
-      "weight": -25,
+      "weight": -20,
       "reason_template": "Applicant appears to be an individual rather than a company"
     },
     {
       "key": "non_uk_applicant",
-      "weight": -30,
+      "weight": -25,
       "reason_template": "Applicant is based outside the UK"
     },
     {
       "key": "service_only_profile",
-      "weight": -30,
+      "weight": -25,
       "reason_template": "Filing looks service-led rather than a packaged product"
     },
     {
       "key": "mature_brand_footprint",
-      "weight": -30,
+      "weight": -25,
       "reason_template": "Brand already has an established retail or online footprint"
     },
     {
       "key": "widely_distributed",
-      "weight": -20,
+      "weight": -18,
       "reason_template": "Product already appears widely distributed"
     },
     {
       "key": "goods_text_unavailable",
-      "weight": -6,
+      "weight": -8,
       "reason_template": "Goods and services text was not available in the source, so product classification relies on Nice class and brand name only"
     },
     {
@@ -174,13 +174,18 @@
     },
     {
       "key": "company_dormant",
-      "weight": -12,
+      "weight": -10,
       "reason_template": "Companies House accounts category is dormant"
     },
     {
       "key": "service_business_sic_only",
-      "weight": -28,
+      "weight": -25,
       "reason_template": "Companies House SIC codes describe a service business rather than a product brand ({sic_summary})"
+    },
+    {
+      "key": "already_on_marketplace",
+      "weight": -6,
+      "reason_template": "Already listed on a consumer marketplace, so the brand is past first launch"
     }
   ],
   "confidence_requirements": {
@@ -189,9 +194,27 @@
     "high_band_requires_product_category": true,
     "note": "A record cannot be presented as HIGH without a company match we are reasonably confident in. Without it the score is capped.",
     "high_band_requires_web_evidence": false,
-    "web_evidence_note": "Without web enrichment we cannot tell an early-stage brand from an established one except by company age, so scores are capped below the top of the HIGH band until a search provider is connected. Set SEARCH_PROVIDER and SEARCH_API_KEY to lift the cap."
+    "web_evidence_note": "The HIGH band means 'we checked and this brand still looks early'. That check needs web evidence. Until SEARCH_PROVIDER and SEARCH_API_KEY are set, records are capped at the top of the MEDIUM band rather than presented as verified strong signals."
   },
   "high_band_cap_without_company_match": 74,
   "max_reasons_shown": 6,
-  "score_cap_without_web_evidence": 90
+  "score_cap_without_web_evidence": 79,
+  "calibration_note": "Weights are set so that a record with every positive indicator firing lands at 100, a strong record with verified web evidence lands in the mid-80s, and a record scored without web evidence tops out in the 70s. That is deliberate: without a search provider connected we cannot tell an early-stage brand from an established one, so such records are reported as MEDIUM rather than presented to a customer as a strong launch signal.",
+  "evidence_groups": {
+    "_note": "Indicators grouped by the enrichment stage that produces them. When a stage did not run, its weight is redistributed across the indicators we could actually evaluate, so a record is not punished for research we chose not to buy. The band cap still communicates the thinner evidence.",
+    "web": [
+      "early_stage_website",
+      "no_major_retail_listings",
+      "active_launch_signals"
+    ],
+    "company": [
+      "company_incorporated_within_12m",
+      "company_incorporated_within_24m",
+      "company_incorporated_within_48m",
+      "food_sic_code_match",
+      "strong_company_match",
+      "small_company_accounts"
+    ]
+  },
+  "normalise_for_missing_evidence": true
 }

@@ -1,0 +1,107 @@
+{
+  "run_id": "run_20260908T105553_3806f3",
+  "generated_on": "2026-09-08",
+  "journal_number": "2018-003",
+  "publication_date": "2018-01-19",
+  "source": "ipo_open_data",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 1627,
+    "food_class_candidates": 177,
+    "packaged_food_candidates": 60,
+    "uk_corporate_applicants": 36,
+    "company_matched": 44,
+    "emerging_candidates": 41,
+    "web_enriched": 0,
+    "scored": 41,
+    "high": 0,
+    "medium": 7,
+    "suppressed": 34,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "rejection_reasons": {
+      "no_food_class": 1412,
+      "supporting_class_only": 61,
+      "non_uk_applicant": 28,
+      "no_brand_name": 38,
+      "raw_agricultural_only": 8,
+      "major_brand_owner": 17,
+      "dead_or_withdrawn": 3,
+      "company_too_established": 19,
+      "score_below_band": 34
+    }
+  },
+  "score_summary": {
+    "delivered": 7,
+    "high": 0,
+    "medium": 7,
+    "suppressed": 34,
+    "min_score": 62,
+    "max_score": 74,
+    "mean_score": 65.7
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      1412
+    ],
+    [
+      "supporting_class_only",
+      61
+    ],
+    [
+      "no_brand_name",
+      38
+    ],
+    [
+      "score_below_band",
+      34
+    ],
+    [
+      "non_uk_applicant",
+      28
+    ],
+    [
+      "company_too_established",
+      19
+    ],
+    [
+      "major_brand_owner",
+      17
+    ],
+    [
+      "raw_agricultural_only",
+      8
+    ],
+    [
+      "dead_or_withdrawn",
+      3
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00003277104 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277107 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277109 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277135 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277175 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277177 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277178 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277180 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277181 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277182 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277183 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277184 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277189 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277192 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277196 — McCain Foods (GB) Limited (mccain)",
+    "UK00003277198 — McCain Foods (GB) Limited (mccain)",
+    "UK00003279363 — Weetabix Limited (weetabix)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}
