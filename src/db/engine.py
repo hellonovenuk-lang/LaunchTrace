@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.db.tables import Base
@@ -76,11 +76,53 @@ def session_scope(database_url: str | None = None) -> Iterator[Session]:
 
 
 def init_db(database_url: str | None = None) -> None:
-    """Create any missing tables.
+    """Create any missing tables, and add any missing columns to existing ones.
 
     For PostgreSQL the versioned SQL in ``migrations/`` is the canonical
     schema; this is the convenience path for local SQLite work and tests.
+
+    ``create_all`` only creates what is absent entirely, so a database created
+    by an earlier version keeps its old columns and every query against a new
+    one fails. Rather than asking an owner to delete their database — which
+    would take their customer records with it — missing columns are added in
+    place. Additive only: nothing is dropped, renamed or retyped here.
     """
     engine = get_engine(database_url)
     Base.metadata.create_all(engine)
-    log.info("db.initialised", url=str(engine.url).split("@")[-1])
+    added = _add_missing_columns(engine)
+    log.info("db.initialised", url=str(engine.url).split("@")[-1], columns_added=len(added))
+
+
+def _add_missing_columns(engine: Engine) -> list[str]:
+    """Bring existing tables up to the current model, additively."""
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    dialect = engine.dialect
+    added: list[str] = []
+
+    with engine.begin() as connection:
+        for table in Base.metadata.sorted_tables:
+            if table.name not in existing_tables:
+                continue
+            present = {column["name"] for column in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in present:
+                    continue
+                if not column.nullable and column.default is None:
+                    # Adding a NOT NULL column with no default to a table that
+                    # already has rows cannot succeed. Say so rather than
+                    # failing with a database error nobody can act on.
+                    log.warning(
+                        "db.column_needs_migration",
+                        table=table.name,
+                        column=column.name,
+                        detail="not nullable and has no default — add it in migrations/",
+                    )
+                    continue
+                spec = column.type.compile(dialect=dialect)
+                connection.execute(
+                    text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {spec}")
+                )
+                added.append(f"{table.name}.{column.name}")
+                log.info("db.column_added", table=table.name, column=column.name)
+    return added

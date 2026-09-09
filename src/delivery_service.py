@@ -19,6 +19,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.customer_lifecycle import DELIVERABLE_STATUSES, delivery_allowed
 from src.db.repository import record_delivery
 from src.db.tables import Customer, CustomerPreference, PipelineRun
 from src.deliver.email_render import RenderedEmail, render_alert_email, render_weekly_email
@@ -45,14 +46,19 @@ class DeliverySummary:
 
 
 def active_customers(session: Session) -> list[Customer]:
-    return list(
-        session.execute(
-            select(Customer).where(
-                Customer.delivery_enabled.is_(True),
-                Customer.subscription_status.in_(["active", "trialing", "past_due"]),
-            )
-        ).scalars()
-    )
+    """Customers who should receive the next weekly feed.
+
+    The database narrows the set; ``delivery_allowed`` makes the final call, so
+    a past-due account that has run out of grace stops receiving the feed
+    without anyone having to remember to switch it off.
+    """
+    candidates = session.execute(
+        select(Customer).where(
+            Customer.delivery_enabled.is_(True),
+            Customer.subscription_status.in_(sorted(DELIVERABLE_STATUSES)),
+        )
+    ).scalars()
+    return [customer for customer in candidates if delivery_allowed(customer)]
 
 
 def recipients_for(session: Session, customer: Customer) -> list[CustomerPreference]:

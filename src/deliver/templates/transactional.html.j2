@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>{{ heading }}</title></head>
+<body style="margin:0;background:#f5f5f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1917;">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+  <p style="margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#78716c;">LaunchTrace Food</p>
+  <h1 style="margin:0 0 16px;font-size:20px;font-weight:600;">{{ heading }}</h1>
+
+  <p style="font-size:15px;line-height:1.6;">Hello{% if contact_name %} {{ contact_name }}{% endif %},</p>
+
+  {% for paragraph in paragraphs %}
+  <p style="font-size:15px;line-height:1.6;">{{ paragraph }}</p>
+  {% endfor %}
+
+  {% if facts %}
+  <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
+    {% for label, value in facts %}
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;color:#78716c;width:45%;">{{ label }}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;font-weight:600;">{{ value }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if action_url and action_label %}
+  <p style="margin:24px 0;">
+    <a href="{{ action_url }}" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:11px 20px;border-radius:5px;font-size:14px;font-weight:600;">{{ action_label }}</a>
+  </p>
+  {% endif %}
+
+  {% if closing %}
+  <p style="font-size:15px;line-height:1.6;">{{ closing }}</p>
+  {% endif %}
+
+  <p style="margin-top:28px;font-size:12px;line-height:1.6;color:#78716c;">
+    LaunchTrace Food · a weekly signal of emerging UK food brands, from UK Intellectual
+    Property Office and Companies House data under the Open Government Licence v3.0.
+    {% if manage_url %}<br>Manage your subscription: <a href="{{ manage_url }}" style="color:#78716c;">{{ manage_url }}</a>{% endif %}
+    {% if unsubscribe_url %}<br><a href="{{ unsubscribe_url }}" style="color:#78716c;">Opt out of LaunchTrace email</a>.{% endif %}
+  </p>
+</div>
+</body></html>

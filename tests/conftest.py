@@ -150,3 +150,94 @@ def make_web(**overrides) -> WebEnrichment:  # type: ignore[no-untyped-def]
     base = {"attempted": False, "provider": "none"}
     base.update(overrides)
     return WebEnrichment(**base)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# commercial-operations fixtures
+# ---------------------------------------------------------------------------
+
+
+def make_prospect(**overrides):  # type: ignore[no-untyped-def]
+    """A prospect with enough research on it to be scored and previewed."""
+    from src.sales.models import Prospect
+
+    base = {
+        "prospect_id": "P001",
+        "company_name": "Pouchworks Ltd",
+        "website": "https://pouchworks.test/",
+        "company_type": "ltd",
+        "supplier_category": "flexible_packaging",
+        "geography": "UK",
+        "icp_reason": "Printed pouches for food startups, low MOQ and short runs.",
+        "contact_route": "website_form",
+        "date_added": date(2026, 1, 6),
+    }
+    base.update(overrides)
+    return Prospect(**base)  # type: ignore[arg-type]
+
+
+def make_lead(**overrides):  # type: ignore[no-untyped-def]
+    """A qualifying opportunity, as the sales tooling sees it."""
+    from src.sales.leads import Lead
+
+    base = {
+        "brand_name": "CRUMBLEDGE",
+        "trademark_number": "UK00003900001",
+        "product_category": "cereal_bars",
+        "product_category_label": "Cereal, protein and energy bars",
+        "company_name": "CRUMBLEDGE FOODS LTD",
+        "company_number": "14000001",
+        "company_incorporation_date": date(2025, 3, 1),
+        "company_region": "BRISTOL",
+        "launch_stage": "pre_launch",
+        "intents": {
+            "flexible_packaging": "HIGH",
+            "labels": "HIGH",
+            "cartons": "MEDIUM",
+            "contract_manufacturing": "HIGH",
+            "copacking": "HIGH",
+            "distribution": "MEDIUM",
+            "brokerage": "LOW",
+            "fulfilment": "MEDIUM",
+            "marketing": "MEDIUM",
+        },
+        "score": 78,
+        "band": "MEDIUM",
+        "reasons": ["UK company incorporated 6 months before this filing"],
+        "source_url": "https://example.invalid/tm/UK00003900001",
+        "filing_date": date(2025, 9, 15),
+        "publication_date": date(2025, 12, 12),
+        "journal_number": "2025-050",
+    }
+    base.update(overrides)
+    return Lead(**base)  # type: ignore[arg-type]
+
+
+@pytest.fixture
+def prospect_store(tmp_path: Path):  # type: ignore[no-untyped-def]
+    """An isolated prospect store, so no test can touch the real list."""
+    from src.sales.store import ProspectStore, SuppressionList
+
+    return ProspectStore(
+        prospects=[],
+        path=tmp_path / "prospects.csv",
+        suppressions=SuppressionList(),
+    )
+
+
+@pytest.fixture
+def customer(db_session):  # type: ignore[no-untyped-def]
+    """An active founding customer with one recipient."""
+    from src.db.tables import Customer, CustomerPreference
+
+    row = Customer(
+        company="Pouchworks Ltd",
+        plan_key="founding_monthly",
+        subscription_status="active",
+        supplier_type="flexible_packaging",
+    )
+    db_session.add(row)
+    db_session.flush()
+    db_session.add(CustomerPreference(customer_id=row.id, recipient_email="sales@pouchworks.test"))
+    db_session.flush()
+    return row

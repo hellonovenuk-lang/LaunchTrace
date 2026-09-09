@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -79,7 +80,7 @@ class EmailSender:
             ]
 
         if not self.live:
-            return self._write_to_outbox(to, rendered, payload, attachments)
+            return self._write_to_outbox(to, rendered, payload, attachments, idempotency_key)
 
         try:
             message_id = self._post(payload, idempotency_key)
@@ -117,13 +118,32 @@ class EmailSender:
         return _do()
 
     def _write_to_outbox(
-        self, to: list[str], rendered: RenderedEmail, payload: dict, attachments: list[Path] | None
+        self,
+        to: list[str],
+        rendered: RenderedEmail,
+        payload: dict,
+        attachments: list[Path] | None,
+        idempotency_key: str | None = None,
     ) -> SendResult:
         self.outbox.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
-        safe_to = to[0].replace("@", "_at_").replace("/", "_")
-        base = self.outbox / f"{stamp}_{safe_to}"
-        html_path = base.with_suffix(".html")
+        # Every part of the name is reduced to safe characters, and the
+        # extension is appended rather than substituted: Path.with_suffix would
+        # treat the dot in a recipient's domain as the extension and truncate
+        # the name, so several messages would collapse onto one file.
+        safe_to = _slug(to[0])
+        safe_key = _slug(idempotency_key) if idempotency_key else ""
+        stem = "_".join(part for part in (stamp, safe_to, safe_key) if part)
+
+        # Onboarding writes three messages to the same recipient in the same
+        # second. Without this, two of them would be lost.
+        candidate = stem
+        counter = 2
+        while (self.outbox / f"{candidate}.html").exists():
+            candidate = f"{stem}_{counter}"
+            counter += 1
+
+        html_path = self.outbox / f"{candidate}.html"
         html_path.write_text(rendered.html, encoding="utf-8")
         meta = {
             "to": to,
@@ -132,6 +152,11 @@ class EmailSender:
             "attachments": [p.name for p in (attachments or []) if p.exists()],
             "reason": "RESEND_API_KEY is not set — email rendered to disk instead of sent",
         }
-        base.with_suffix(".json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        (self.outbox / f"{candidate}.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         log.info("email.rendered_not_sent", to=to, path=str(html_path))
         return SendResult(status="rendered_not_sent", path=str(html_path))
+
+
+def _slug(value: str, limit: int = 60) -> str:
+    """Reduce arbitrary text to something safe and unambiguous in a filename."""
+    return re.sub(r"[^A-Za-z0-9]+", "-", value).strip("-")[:limit]

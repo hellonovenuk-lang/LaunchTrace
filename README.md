@@ -16,6 +16,16 @@ subscribers an email and a CSV.
 trade mark database, or a CRM. It is a commercial signal, and it says so
 everywhere it can be misread.
 
+## Two command lines
+
+| | |
+| --- | --- |
+| `python -m src.pipeline` | **The product.** Ingest a journal, score it, deliver the feed. Sections 4–21 below. |
+| `python -m src.admin` | **The business.** Prospects, outreach, samples, customers, feedback, cost. Section 22. |
+
+Both print `--help`. If you are here to get a customer rather than to run a
+pipeline, start at [`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md).
+
 ---
 
 ## Contents
@@ -41,6 +51,7 @@ everywhere it can be misread.
 19. [When something goes wrong](#19-when-something-goes-wrong)
 20. [Adding another product category later](#20-adding-another-product-category-later)
 21. [What it costs to run](#21-what-it-costs-to-run)
+22. [Running the business: prospects, outreach and customers](#22-running-the-business-prospects-outreach-and-customers)
 
 ---
 
@@ -612,6 +623,121 @@ filters, and results are cached.
 
 ---
 
+## 22. Running the business: prospects, outreach and customers
+
+Everything in this section is `python -m src.admin`. **None of it sends an
+email to a prospect** — there is no send command and no code path to one. It
+drafts, you send.
+
+### The one command to know
+
+```bash
+python -m src.admin outreach-due
+```
+
+Who is due which sales action today, in the order to work through, with the
+command for each. Ten minutes a day covers the whole pipeline.
+
+### Prospects
+
+```bash
+python -m src.admin prospects list --priority A   # who to approach first
+python -m src.admin prospects ready               # who is ready for a first email
+python -m src.admin prospects show --prospect-id P012
+python -m src.admin prospects audit               # duplicates, gaps, priority spread
+python -m src.admin prospects rescore             # after editing the CSV or weights
+```
+
+`outreach/prospects.csv` is the source of truth: 60 researched UK suppliers,
+scored into Priority A/B/C by an explainable keyword model in
+`config/icp_scoring.json`. Every score comes back with its reasons, so you can
+disagree with any of it and edit the weights.
+
+Move a prospect along after you have acted:
+
+```bash
+python -m src.admin prospects set-status --prospect-id P012 --status EMAIL_1_SENT
+```
+
+Transitions are checked, so the funnel numbers mean what they say.
+
+### A prospect-specific preview
+
+```bash
+python -m src.admin prospect-preview --prospect-id P012 --draft-email
+```
+
+Picks the strongest opportunities that genuinely suit **that** supplier — a
+pouch converter sees snack and bar brands, a label printer sees sauces and jars
+— then drafts Email 1 with them already inserted.
+
+It returns fewer than three when fewer than three fit, and never pads. It never
+shows the same applicant twice. If nothing fits, it says so and tells you not
+to send.
+
+### The full sample
+
+```bash
+python -m src.admin prepare-sample --prospect-id P012
+```
+
+Builds a branded HTML report and a clean CSV, writes the cover email with the
+count filled in, and prints what to do next. Read the report as the customer
+would before sending it.
+
+### Opt-outs
+
+```bash
+python -m src.admin prospects opt-out --prospect-id P012 --reason "asked not to be contacted"
+```
+
+One command, immediately and permanently. It records the opt-out against email,
+domain *and* company name, so no future import can bring them back under a
+different spelling.
+
+### Customers
+
+```bash
+python -m src.admin customer-status
+python -m src.admin customer-lifecycle --customer-id 1 --event start
+```
+
+Once Stripe is connected, onboarding happens on its own when someone pays:
+customer created, recipients recorded, delivery enabled, and welcome,
+confirmation and first-feed-timing emails prepared. `--event start` does the
+same thing by hand for a customer you invoiced yourself.
+
+`customer-status` shows the line that matters: **`Next Friday feed: yes`**.
+
+### Feedback, metrics and cost
+
+```bash
+python -m src.admin feedback add --state USEFUL --trademark UK00003275632 --customer-id 1
+python -m src.admin feedback summary
+python -m src.admin business-status
+python -m src.admin costs --customers 10
+python -m src.admin backup
+```
+
+`business-status` is the whole picture: funnel, conversion, MRR, product volume,
+feedback, operations, cost and margin. A rate on fewer than five observations is
+labelled as not yet a rate.
+
+Feedback is recorded as evidence and **never changes scoring automatically** —
+that stays a deliberate decision with the reasoning written down.
+
+### Where to read more
+
+- [`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md) — zero to one
+  paying customer, step by step
+- [`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) — what is ready, what
+  needs a credential, what is still unproven
+- [`outreach/README.md`](outreach/README.md) — the prospecting rules
+- [`docs/BACKUP_AND_RECOVERY.md`](docs/BACKUP_AND_RECOVERY.md) — what is source
+  of truth for each file
+
+---
+
 ## Licensing and attribution
 
 Trade mark data from the UK Intellectual Property Office and company data from
@@ -623,6 +749,11 @@ including the questions still open.
 
 ## Further reading
 
+- [`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md) — the exact
+  sequence from zero outreach to a first £79 customer
+- [`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) — what is commercially
+  operational, the credential checklist in dependency order, and what is still
+  not validated
 - [`HANDOFF.md`](HANDOFF.md) — what is built, what is waiting on you, and the
   exact steps to finish it
 - [`BUILD_REPORT.md`](BUILD_REPORT.md) — what works, what was tested, and how
@@ -632,3 +763,11 @@ including the questions still open.
   [`docs/LEGITIMATE_INTERESTS_ASSESSMENT.md`](docs/LEGITIMATE_INTERESTS_ASSESSMENT.md),
   [`docs/DATA_RETENTION.md`](docs/DATA_RETENTION.md) — operational drafts for
   your review
+- [`docs/COMPLIANCE_REVIEW.md`](docs/COMPLIANCE_REVIEW.md) — what was checked,
+  and what still needs a solicitor
+- [`docs/DOMAIN_AND_EMAIL_SETUP.md`](docs/DOMAIN_AND_EMAIL_SETUP.md) — buying a
+  domain and setting up email, with no DNS knowledge assumed
+- [`docs/WEBSITE_INTEGRATION.md`](docs/WEBSITE_INTEGRATION.md) — the contract
+  the replacement website builds against
+- [`docs/BACKUP_AND_RECOVERY.md`](docs/BACKUP_AND_RECOVERY.md) — what is source
+  of truth, and how to get it back

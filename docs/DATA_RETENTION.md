@@ -19,6 +19,10 @@ system enforces them.**
 | Sample requests | `sample_requests` | [24] months from last interaction | Following up a business enquiry. |
 | Suppression list | `suppression_rules` | **Indefinite** | The only way to guarantee an opted-out contact is never contacted again. Deleting it would defeat its purpose. |
 | Stripe webhook events | `webhook_events` | [24] months | Idempotency guard and payment audit trail. |
+| Customer lead feedback | `lead_feedback` | [24] months | Evidence for tuning scoring. Free-text notes are written by a customer about a *brand*, not about a person. |
+| Supplier prospect tracker | `outreach/prospects.csv` | [24] months from last interaction | LaunchTrace's own sales pipeline. Holds corporate contact details, plus a named contact and role **only where the operator already knew them** — nothing is inferred or looked up. |
+| Prospect suppression list | `outreach/suppressions.csv` | **Indefinite** | Records opt-outs by email, domain and company name. Never deleted, for the same reason as `suppression_rules`. |
+| Generated drafts, previews and samples | `reports/outreach_drafts/`, `reports/previews/`, `reports/samples/` | Delete freely; regenerate on demand | Working files containing prospect names and lead data. They are outputs, not records — nothing depends on keeping them. |
 
 ## Rules that do not change
 
@@ -30,6 +34,16 @@ system enforces them.**
 3. **Never delete a suppression record** in order to re-contact someone.
 4. **Never commit real credentials.** `.env` is git-ignored; `.env.example`
    holds names only.
+5. **Never generate a contact address.** A contact email is only ever recorded
+   with the source it came from (`email_source`), and "I guessed the pattern"
+   is not a source. `python -m src.admin prospects audit` reports how many rows
+   have a verified address; it will never fill one in.
+6. **Never re-import a suppressed business.** The prospect store refuses, by
+   email, domain and company name. See `src/sales/store.py`.
+7. **Minimise personal data in the prospect tracker.** A generic `sales@`
+   address is preferred over a named individual's. `named_contact` and
+   `decision_maker_role` exist for contacts you already deal with; do not go
+   looking for them.
 
 ## How to enforce it
 
@@ -42,9 +56,30 @@ this scale; do not build a retention framework for a few thousand rows.
 
 ## Deletion requests
 
-On a request from a company or individual:
+### From a company in the feed
 
 1. `python -m src.pipeline suppress --type company --value "<name>" --reason "removal request"`
 2. Delete their rows from `opportunities`, `company_matches` and
    `web_enrichment`.
 3. Keep the suppression record. Confirm to the requester in writing.
+
+### From a supplier we approached
+
+1. `python -m src.admin prospects opt-out --prospect-id <id> --reason "<what they said>"`
+
+   This is one command on purpose. It sets their status to `OPTED_OUT`, and
+   adds them to `outreach/suppressions.csv` by email, domain **and** company
+   name, so they cannot return through a future import under a different
+   spelling.
+2. If they ask for erasure rather than just an opt-out, clear their research
+   fields in `outreach/prospects.csv` by hand but **leave the row and the
+   suppression entry in place** — a deleted row is a row that gets re-added.
+3. Confirm to the requester in writing.
+
+## Backups
+
+`python -m src.admin backup` copies the prospect tracker, the suppression list,
+customer records, feedback and configuration into one dated folder. Retention
+applies to backups too: do not keep a backup longer than the data in it.
+
+See `docs/BACKUP_AND_RECOVERY.md` for what is source of truth for each file.

@@ -1,0 +1,155 @@
+{
+  "$schema_version": "1.0",
+  "description": "Internal ICP (ideal customer profile) scoring for LaunchTrace's own supplier prospects. This decides who to approach first. It is a prioritisation aid, not a prediction: a Priority A prospect is one worth ten minutes of research, nothing more. Every weight here is editable, and every score comes back with the reasons that produced it.",
+  "precision_note": "Scores are derived from text the operator wrote about each prospect. They are only as good as that text. Treat a 5-point difference as noise.",
+  "bands": {
+    "A": 55,
+    "B": 38,
+    "C": 15
+  },
+  "band_note": "Score at or above the threshold lands in that band. Below the C threshold, or any hard-suppress rule, gives SUPPRESS. The A threshold is set so that Priority A is roughly a fortnight of careful outreach rather than a label almost nobody earns; it is a working-set size, not a claim about quality.",
+  "category_weights": {
+    "flexible_packaging": 16,
+    "labels": 14,
+    "cartons": 11,
+    "contract_manufacturing": 16,
+    "copacking": 16,
+    "distribution": 9,
+    "brokerage": 8,
+    "fulfilment": 10,
+    "marketing": 6,
+    "other": 0
+  },
+  "category_weight_note": "How well LaunchTrace's signal matches what this supplier sells. Packaging, co-packing and contract manufacturing are what an emerging brand buys first, so a new-brand signal is worth most to them.",
+  "positive_signals": [
+    {
+      "key": "serves_startups",
+      "label": "Explicitly markets to startups or challenger brands",
+      "weight": 14,
+      "fields": ["icp_reason", "products_services", "notes"],
+      "any_of": ["startup", "start-up", "challenger", "emerging brand", "new brand", "small brand", "newer brand", "young brand", "artisan", "craft producer", "scale-up", "growing brand"]
+    },
+    {
+      "key": "low_moq",
+      "label": "Low minimum order quantities or short runs, so a first-time brand can actually buy",
+      "weight": 12,
+      "fields": ["icp_reason", "products_services", "notes"],
+      "any_of": ["low moq", "low minimum", "short run", "small run", "small batch", "digital print", "no minimum", "low volume", "short-run"]
+    },
+    {
+      "key": "food_specialism",
+      "label": "Food or FMCG specialism rather than general industry",
+      "weight": 12,
+      "fields": ["icp_reason", "products_services", "supplier_subcategory", "notes"],
+      "any_of": ["food", "fmcg", "snack", "drink", "beverage", "confectionery", "bakery", "sauce", "grocery", "brc", "salsa", "condiment", "nutrition", "supplement"]
+    },
+    {
+      "key": "recurring_service",
+      "label": "Sells something a new consumer brand buys repeatedly, not once",
+      "weight": 10,
+      "fields": ["icp_reason", "products_services", "supplier_category", "notes"],
+      "any_of": ["packaging", "label", "film", "pouch", "carton", "co-pack", "copack", "contract manufactur", "fulfilment", "fulfillment", "3pl", "distribution", "wholesale", "print"]
+    },
+    {
+      "key": "new_business_function",
+      "label": "Has a sales or business-development function to act on a lead",
+      "weight": 9,
+      "fields": ["icp_reason", "products_services", "notes", "decision_maker_role"],
+      "any_of": ["sales team", "business development", "sales director", "commercial director", "account manager", "new business", "sales manager", "bdm"]
+    },
+    {
+      "key": "uk_wide",
+      "label": "Sells across the UK rather than to one town",
+      "weight": 7,
+      "fields": ["geography", "icp_reason", "notes"],
+      "any_of": ["uk", "nationwide", "united kingdom", "national", "england", "scotland", "wales"]
+    },
+    {
+      "key": "one_customer_matters",
+      "label": "Small or mid-sized, so one new brand is financially meaningful",
+      "weight": 9,
+      "fields": ["icp_reason", "notes", "company_size_hint"],
+      "any_of": ["sme", "small business", "family business", "independent", "owner-managed", "boutique", "under 50", "growing supplier"]
+    },
+    {
+      "key": "industry_body",
+      "label": "Member of a relevant trade body, so takes the sector seriously",
+      "weight": 4,
+      "fields": ["icp_reason", "notes", "products_services"],
+      "any_of": ["bpif", "food and drink federation", "fdf", "brcgs", "brc", "sali", "packaging federation", "ukwa", "cbi", "iom3"]
+    },
+    {
+      "key": "corporate_identity_verified",
+      "label": "Corporate identity is verifiable (limited company, LLP or PLC)",
+      "weight": 6,
+      "fields": ["company_type"],
+      "any_of": ["ltd", "limited", "llp", "plc"]
+    },
+    {
+      "key": "contactable",
+      "label": "A usable business contact route is already recorded",
+      "weight": 5,
+      "fields": ["contact_route"],
+      "any_of": ["generic_email", "website_form", "phone"]
+    }
+  ],
+  "negative_signals": [
+    {
+      "key": "enterprise_only",
+      "label": "Serves only very large contracts, so a first-time brand is not a customer",
+      "weight": -18,
+      "fields": ["icp_reason", "products_services", "notes"],
+      "any_of": ["blue chip only", "multinational only", "enterprise only", "tier 1 only", "high minimum", "large volume only", "high moq", "minimum 100,000", "global accounts only"]
+    },
+    {
+      "key": "wrong_sector",
+      "label": "No clear food or FMCG relevance",
+      "weight": -20,
+      "fields": ["icp_reason", "products_services", "supplier_subcategory", "notes"],
+      "any_of": ["automotive", "aerospace", "pharmaceutical only", "construction", "industrial only", "oil and gas", "defence", "agricultural machinery"]
+    },
+    {
+      "key": "local_consumer_service",
+      "label": "Local consumer-facing business, not a supplier to brands",
+      "weight": -16,
+      "fields": ["icp_reason", "products_services", "notes"],
+      "any_of": ["retail shop", "restaurant", "cafe", "farm shop", "market stall", "consumer only", "high street"]
+    },
+    {
+      "key": "very_large",
+      "label": "Very large business where a £79/month feed is likely immaterial",
+      "weight": -12,
+      "fields": ["icp_reason", "notes", "company_size_hint"],
+      "any_of": ["ftse", "listed multinational", "global group", "turnover over £500m", "10,000 employees", "plc group", "large plc", "large multinational", "large group"]
+    },
+    {
+      "key": "no_sales_function",
+      "label": "No commercial sales function to receive a lead",
+      "weight": -10,
+      "fields": ["icp_reason", "notes"],
+      "any_of": ["no sales team", "orders online only", "self-serve only", "no bd function"]
+    },
+    {
+      "key": "identity_unverified",
+      "label": "Corporate identity could not be confirmed",
+      "weight": -8,
+      "fields": ["company_type"],
+      "any_of": ["unknown"]
+    },
+    {
+      "key": "website_unverified",
+      "label": "Website was never confirmed, so the record may be wrong",
+      "weight": -6,
+      "fields": ["notes"],
+      "any_of": ["verify website"]
+    }
+  ],
+  "hard_suppress": {
+    "description": "Conditions that force SUPPRESS regardless of score. These are safety rules, not scoring.",
+    "opted_out": "The prospect asked not to be contacted.",
+    "status_suppressed": "The prospect is already marked SUPPRESSED.",
+    "not_trading": "The business is recorded as dissolved or no longer trading.",
+    "no_company_name": "No company name, so nothing can be verified."
+  },
+  "not_trading_markers": ["dissolved", "ceased trading", "no longer trading", "in liquidation", "administration", "struck off"]
+}

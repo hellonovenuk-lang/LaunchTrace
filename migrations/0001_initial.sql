@@ -51,9 +51,12 @@ CREATE TABLE IF NOT EXISTS customers (
 	stripe_subscription_id VARCHAR(64), 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	cancelled_at TIMESTAMP WITH TIME ZONE, 
+	past_due_since TIMESTAMP WITH TIME ZONE, 
+	prospect_id VARCHAR(16), 
 	PRIMARY KEY (id)
 );
 
+CREATE INDEX IF NOT EXISTS ix_customers_prospect_id ON customers (prospect_id);
 CREATE INDEX IF NOT EXISTS ix_customers_stripe_customer_id ON customers (stripe_customer_id);
 CREATE INDEX IF NOT EXISTS ix_customers_stripe_subscription_id ON customers (stripe_subscription_id);
 CREATE INDEX IF NOT EXISTS ix_customers_subscription_status ON customers (subscription_status);
@@ -261,6 +264,8 @@ CREATE TABLE IF NOT EXISTS customer_preferences (
 	min_score_band VARCHAR(16) NOT NULL, 
 	regions JSON NOT NULL, 
 	product_categories JSON NOT NULL, 
+	supplier_category VARCHAR(64), 
+	buying_intent_categories JSON NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT uq_customer_recipient UNIQUE (customer_id, recipient_email), 
@@ -293,6 +298,27 @@ CREATE INDEX IF NOT EXISTS ix_deliveries_journal_number ON deliveries (journal_n
 CREATE INDEX IF NOT EXISTS ix_deliveries_recipient_email ON deliveries (recipient_email);
 CREATE INDEX IF NOT EXISTS ix_deliveries_run_id ON deliveries (run_id);
 CREATE INDEX IF NOT EXISTS ix_deliveries_status ON deliveries (status);
+
+CREATE TABLE IF NOT EXISTS lead_feedback (
+	id SERIAL NOT NULL, 
+	customer_id INTEGER, 
+	dedupe_key VARCHAR(64), 
+	trademark_number VARCHAR(32), 
+	brand_name VARCHAR(512), 
+	journal_number VARCHAR(32), 
+	state VARCHAR(32) NOT NULL, 
+	note TEXT, 
+	source VARCHAR(32) NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(customer_id) REFERENCES customers (id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS ix_feedback_customer_state ON lead_feedback (customer_id, state);
+CREATE INDEX IF NOT EXISTS ix_lead_feedback_dedupe_key ON lead_feedback (dedupe_key);
+CREATE INDEX IF NOT EXISTS ix_lead_feedback_journal_number ON lead_feedback (journal_number);
+CREATE INDEX IF NOT EXISTS ix_lead_feedback_state ON lead_feedback (state);
+CREATE INDEX IF NOT EXISTS ix_lead_feedback_trademark_number ON lead_feedback (trademark_number);
 
 CREATE TABLE IF NOT EXISTS trademark_records (
 	id SERIAL NOT NULL, 

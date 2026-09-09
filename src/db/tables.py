@@ -206,6 +206,13 @@ class Customer(Base):
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # When the subscription first went past_due. Delivery continues through a
+    # short grace period and then stops, so a failed card never becomes an
+    # indefinite free subscription.
+    past_due_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The prospect this customer came from, so the funnel can be reconciled
+    # end to end without a second system.
+    prospect_id: Mapped[str | None] = mapped_column(String(16), index=True)
 
     preferences: Mapped[list[CustomerPreference]] = relationship(
         back_populates="customer", cascade="all, delete-orphan"
@@ -222,6 +229,12 @@ class CustomerPreference(Base):
     min_score_band: Mapped[str] = mapped_column(String(16), default="MEDIUM")
     regions: Mapped[list] = mapped_column(JSON, default=list)
     product_categories: Mapped[list] = mapped_column(JSON, default=list)
+    # What this customer supplies, and which buying-intent categories matter to
+    # them. Recorded from the first day so the feed can be tailored later
+    # without going back to every customer to ask. The MVP still delivers the
+    # full food feed to everyone: see src/delivery_service.py.
+    supplier_category: Mapped[str | None] = mapped_column(String(64))
+    buying_intent_categories: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     customer: Mapped[Customer] = relationship(back_populates="preferences")
@@ -319,6 +332,31 @@ class SampleRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (UniqueConstraint("work_email", name="uq_sample_request_email"),)
+
+
+class LeadFeedback(Base):
+    """What a customer said about one delivered opportunity.
+
+    Recorded as evidence, deliberately not wired into scoring. Letting customer
+    opinion move the weights automatically would make the score unexplainable
+    and untestable; the point of collecting this is to have something real to
+    tune against later, by hand, with the reasoning written down.
+    """
+
+    __tablename__ = "lead_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"))
+    dedupe_key: Mapped[str | None] = mapped_column(String(64), index=True)
+    trademark_number: Mapped[str | None] = mapped_column(String(32), index=True)
+    brand_name: Mapped[str | None] = mapped_column(String(512))
+    journal_number: Mapped[str | None] = mapped_column(String(32), index=True)
+    state: Mapped[str] = mapped_column(String(32), index=True)
+    note: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(32), default="operator")  # operator | form | csv
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (Index("ix_feedback_customer_state", "customer_id", "state"),)
 
 
 class WebhookEvent(Base):

@@ -4,6 +4,12 @@ What is built, what is waiting on you, and exactly what to do next.
 
 Read section 4 first if you only read one thing.
 
+**If your question is "how do I get a customer?"** — that is
+[`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md), and it is the more
+useful document. This one is about the machine; that one is about the business.
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) lists the credentials in
+dependency order and says plainly what is still unproven.
+
 ---
 
 ## 1. COMPLETED
@@ -35,11 +41,34 @@ Built, tested, and working right now with no external account of any kind.
 - **Billing.** Stripe checkout, billing portal, cancellation, signature-verified webhooks with per-event idempotency, and the full subscription state machine. Runs in stub mode without a key so the whole flow is testable
 - **Operator CLI.** 20 commands covering runs, approval, sending, CSV regeneration, customers, suppression, errors and diagnostics
 - **Container.** Dockerfile **built and run in this session**: 369 MB, non-root, health-checked, serving the site
-- **Tests.** 390 tests, 76% line coverage, no test touching a live external API
+- **Tests.** 526 tests, no test touching a live external API
 - **Quality gates.** `ruff check`, `ruff format --check` and `mypy src` all clean
 - **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and validation, and a deploy workflow that is a build check until you opt in
 - **Documentation.** README written for a non-technical owner, plus privacy notice, terms, data-source attribution, legitimate interests assessment and a retention note — all labelled as drafts needing your review
 - **Prospecting.** 60 researched UK supplier companies with the reason each one fits, a defined schema, and three editable email templates. **No code in this repository can send any of it**
+
+### The commercial layer
+
+Built in a second pass, on top of the above, with no credential of any kind:
+
+| | |
+| --- | --- |
+| **Prospect tracker** | 32-field lifecycle schema in `outreach/prospects.csv`. Checked status transitions, so the funnel numbers mean what they say |
+| **ICP scoring** | Explainable keyword model, weights in `config/icp_scoring.json`. Every score returns its reasons. Priority A/B/C/Suppress — currently 11 A, 38 B, 10 C, 1 suppressed |
+| **Duplicate protection** | The same business cannot enter twice by name, domain, company number or email. Found and resolved a real duplicate in the existing 60 |
+| **Suppression** | Opt-out recorded against email, domain **and** company name. Copy-on-write, and a save can never shorten the list |
+| **Prospect-specific previews** | Selects the leads that genuinely suit one supplier. Returns fewer than three rather than padding; never shows the same applicant twice |
+| **Outreach drafting** | Templates with explicit placeholders, lead block inserted automatically. **No send path exists, and a test enforces it** |
+| **Due-state logic** | `outreach-due` — who is due what today, in the order to work through |
+| **Customer sample** | Branded HTML report plus a clean CSV. Score, reasons, relevance bands, source links. Suppressed and unmatched records excluded |
+| **Customer lifecycle** | Onboarding, payment failure with a 14-day grace period, recovery and cancellation. Five transactional templates. Every message prepared exactly once |
+| **Feedback** | Seven states, by CLI, CSV or a one-question form. Recorded as evidence; never changes scoring automatically |
+| **Metrics and cost** | `business-status` — funnel, MRR, product, operations, cost and margin. Rates on tiny denominators are labelled as such |
+| **Website plumbing** | Business logic split out of the HTML into `src/web/services.py`, exposed as JSON at `/api`. The front end can be replaced without touching billing or opt-outs |
+| **Backup** | One command for everything that cannot be reconstructed |
+
+Commands: `python -m src.admin --help`. Detail:
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md).
 
 ### The four-week validation
 
@@ -68,6 +97,11 @@ that.
 
 Complete in code. Each needs one account from you. **The system runs without
 every one of them** — each has a working fallback, listed below.
+
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) §2 lists the same accounts
+**in dependency order**, saying for each what it blocks — validation, sales, or
+production. Use that to decide what to open first; use this section for the
+detail of each one.
 
 ### 2.1 Web search — the highest-value one
 
@@ -271,88 +305,142 @@ show to a supplier. Everything after that is optional until someone says yes.
 
 ### Talk to suppliers (this is the actual next step)
 
-11. Open `outreach/prospects.csv`. It has 60 real UK companies with a reason
-    each one fits.
-12. For the first ten, open their website and find the real `sales@` or
-    `enquiries@` address. Paste it into the `generic_contact_email` column.
-13. Open `outreach/templates/email_1_first_contact.md`.
-14. For each of those ten, pick **three real brands** from
-    `top_opportunities.csv` that genuinely suit what that company makes. A film
-    converter should see snack and bar brands, not sauces.
-15. Send those ten emails **yourself, from your own mailbox**. Nothing in this
-    repository will do it for you, on purpose.
-16. Record replies in the `status` and `reply_status` columns.
+Full detail, with the stop/adjust points, is in
+[`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md). The short version:
+
+11. **Pick ten.** `python -m src.admin prospects list --priority A` gives eleven
+    already scored by fit. Check any one with
+    `python -m src.admin prospects show --prospect-id P012`.
+12. **Find a real contact address for each.** Open their website, find the real
+    `sales@` or `enquiries@`, paste it into `generic_contact_email` in
+    `outreach/prospects.csv` and set `email_source` to `website_verified`.
+    About an hour for ten. **Never guess an address** — nothing in this system
+    will generate one for you, and a wrong one costs you the prospect.
+    Then: `python -m src.admin prospects set-status --prospect-id P012 --status READY`
+13. **Generate each preview.**
+    `python -m src.admin prospect-preview --prospect-id P012 --draft-email`
+    picks the leads that genuinely suit that supplier and drafts Email 1 with
+    them inserted. It returns fewer than three rather than padding.
+14. **Read three of them properly** before sending anything. Open a source link
+    and check the brand is what we say it is. If a supplier would not care
+    about those three companies, that is worth knowing before ten emails go out.
+15. **Send them yourself, from your own mailbox.** The draft is in
+    `reports/outreach_drafts/`. Nothing in this repository will send it, on
+    purpose. Then:
+    `python -m src.admin prospects set-status --prospect-id P012 --status EMAIL_1_SENT`
+16. **Record every reply the day it arrives**, with what they actually said:
+    ```bash
+    python -m src.admin prospects set-status --prospect-id P012 \
+      --status NOT_NOW --note "their exact words"
+    python -m src.admin prospects opt-out --prospect-id P012   # if they ask
+    ```
+17. **Each morning:** `python -m src.admin outreach-due` tells you who is due
+    what, in the order to do it.
 
 **Stop here until someone replies.** Everything below is for after that.
 
+### When someone asks for the sample
+
+18. `python -m src.admin prepare-sample --prospect-id P012` builds the HTML
+    report, the CSV to attach and the cover email. **Open the report and read
+    it as they will** — it is the thing that decides whether they pay.
+19. Send it, then:
+    `python -m src.admin prospects set-status --prospect-id P012 --status SAMPLE_SENT`
+
+### When someone says yes, before Stripe exists
+
+Do not make them wait for an account to be opened:
+
+```bash
+python -m src.pipeline add-customer --company "Their Company" \
+  --email their@address.co.uk --supplier-type labels --status active
+python -m src.admin customer-lifecycle --customer-id 1 --event start
+```
+
+That records the customer, enables delivery and prepares their welcome,
+confirmation and first-feed-timing emails (to `reports/outbox/` until Resend is
+connected). Invoice them however you normally would, and open the Stripe
+account afterwards — a paying customer is a much better reason than a
+hypothesis.
+
 ### Go live (only once a supplier says yes)
 
-17. **Create a Supabase account** at <https://supabase.com/>. New project,
+Numbering continues from above; work through
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) §2 if you would rather see
+these ordered by what each one unblocks.
+
+20. **Create a Supabase account** at <https://supabase.com/>. New project,
     London region. Write the database password down.
-18. Project Settings → Database → Connection string → URI. Copy it, replace
+21. Project Settings → Database → Connection string → URI. Copy it, replace
     `[YOUR-PASSWORD]` with your password, and put it in `.env` as
     `DATABASE_URL=`.
-19. Run `python -m src.pipeline init-db`.
-20. **Create a Resend account** at <https://resend.com/>. Add your domain and
+22. Run `python -m src.pipeline init-db`.
+23. **Create a Resend account** at <https://resend.com/>. Add your domain and
     add the DNS records it gives you wherever your domain is registered.
-21. Resend → API Keys → Create API Key, sending access. Copy it into `.env` as
+24. Resend → API Keys → Create API Key, sending access. Copy it into `.env` as
     `RESEND_API_KEY=`.
-22. **Create a Stripe account** at <https://stripe.com/>. Stay in Test mode.
-23. Stripe → Product catalogue → Add product:
+25. **Create a Stripe account** at <https://stripe.com/>. Stay in Test mode.
+26. Stripe → Product catalogue → Add product:
     `LaunchTrace Food — Founding access`, price `79.00 GBP`, Recurring,
     Monthly. Save, click the price, copy the ID starting `price_`.
-24. Repeat for `LaunchTrace Food — Standard` at `129.00 GBP` monthly.
-25. Stripe → Developers → API keys. Copy the **Secret key**.
-26. Put all four into `.env`: `STRIPE_SECRET_KEY`,
+27. Repeat for `LaunchTrace Food — Standard` at `129.00 GBP` monthly.
+28. Stripe → Developers → API keys. Copy the **Secret key**.
+29. Put all four into `.env`: `STRIPE_SECRET_KEY`,
     `STRIPE_FOUNDING_PRICE_ID`, `STRIPE_STANDARD_PRICE_ID`.
-27. **Deploy the site.** Install `flyctl` from
+30. **Deploy the site.** Install `flyctl` from
     <https://fly.io/docs/hands-on/install-flyctl/>, then in the project folder:
     `fly launch --no-deploy` and `fly deploy`.
-28. Point your domain at it and set `SITE_URL` in `.env` to your real address.
-29. Stripe → Developers → Webhooks → Add endpoint, URL
+31. Point your domain at it and set `SITE_URL` in `.env` to your real address.
+32. Stripe → Developers → Webhooks → Add endpoint, URL
     `https://your-domain/billing/webhook`, with the six events listed in
     section 2.4. Copy the signing secret into `.env` as
     `STRIPE_WEBHOOK_SECRET`.
 
 ### Turn on the Friday schedule
 
-30. In this repository on GitHub: **Settings → Secrets and variables →
+33. In this repository on GitHub: **Settings → Secrets and variables →
     Actions**.
-31. Under **Secrets**, add `DATABASE_URL`, `SEARCH_API_KEY`, `RESEND_API_KEY`
+34. Under **Secrets**, add `DATABASE_URL`, `SEARCH_API_KEY`, `RESEND_API_KEY`
     (and `LLM_API_KEY` if you added one), each with the value from your `.env`.
-32. Under **Variables**, add `SEND_MODE` = `review`, `SITE_URL`,
+35. Under **Variables**, add `SEND_MODE` = `review`, `SITE_URL`,
     `ADMIN_EMAIL`, `SEARCH_PROVIDER` = `tavily`, `EMAIL_FROM`.
-33. **Actions → Weekly pipeline → Run workflow** to test it now rather than
+36. **Actions → Weekly pipeline → Run workflow** to test it now rather than
     waiting for Friday.
-34. Each Friday: download the run's artefact, read the QA report, then
+37. Each Friday: download the run's artefact, read the QA report, then
     `approve` and `send`.
-35. **Only after four clean weeks** consider changing the `SEND_MODE` variable
+38. **Only after four clean weeks** consider changing the `SEND_MODE` variable
     to `automatic`.
 
 ### Before you take real money
 
-36. Read `docs/PRIVACY.md`, `docs/TERMS.md` and
+39. Read `docs/PRIVACY.md`, `docs/TERMS.md` and
     `docs/LEGITIMATE_INTERESTS_ASSESSMENT.md`. Fill in every `[BRACKET]`.
-37. Have a solicitor review them. They are drafts, and they say so.
-38. Email the IPO to confirm the weekly Journal XML is Open Government
+40. Have a solicitor review them. They are drafts, and they say so.
+41. Email the IPO to confirm the weekly Journal XML is Open Government
     Licence v3.0, and record the reply in `docs/ATTRIBUTION.md`.
-39. Register with the ICO as a data controller if you are not already:
+42. Register with the ICO as a data controller if you are not already:
     <https://ico.org.uk/for-organisations/data-protection-fee/>. It is £40–60 a
     year.
-40. Switch Stripe out of Test mode and swap in the live keys.
+43. Switch Stripe out of Test mode and swap in the live keys.
 
 ---
 
 ## 5. Publishing state
 
-All work is committed on the branch `claude/launchtrace-food-mvp-7h7bc6` and
-pushed to <https://github.com/hellonovenuk-lang/LaunchTrace>.
+All work is committed on the branch
+`claude/launchrace-commercial-readiness-ungyuf` and pushed to
+<https://github.com/hellonovenuk-lang/LaunchTrace>.
+
+That branch contains the full history: the original pipeline build (previously
+on `claude/launchtrace-food-mvp-7h7bc6`) plus this commercial-readiness pass on
+top of it. **`main` is still an empty initial commit**, so neither has been
+merged yet.
 
 If a push had failed, the commits would still be here locally and the remaining
 action would have been:
 
 ```bash
-git push -u origin claude/launchtrace-food-mvp-7h7bc6
+git push -u origin claude/launchrace-commercial-readiness-ungyuf
 ```
 
 The visible effect of the push: the branch appears on GitHub with the full
@@ -360,7 +448,16 @@ implementation, and the four workflows become available under the **Actions**
 tab. **The Friday schedule only fires from the default branch**, so merging
 this branch into `main` is what actually starts the weekly run.
 
----
+### One-off commands after pulling this branch
+
+```bash
+pip install -r requirements-dev.txt
+python -m src.pipeline init-db      # adds new columns to an existing database
+```
+
+`init-db` is additive: it creates missing tables and adds missing columns
+without dropping anything, so an existing database keeps its customers. Run it
+once after updating.
 
 ## 6. Ideas deliberately not built
 

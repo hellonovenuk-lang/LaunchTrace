@@ -12,6 +12,7 @@ a CSV.
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 from pathlib import Path
 from typing import Any
@@ -26,7 +27,6 @@ from sqlalchemy.orm import Session
 from src.billing.stripe_client import get_billing, load_plans
 from src.billing.webhooks import WebhookProcessor
 from src.db import get_session, init_db
-from src.db.repository import add_suppression
 from src.db.tables import (
     Customer,
     CustomerPreference,
@@ -36,15 +36,28 @@ from src.db.tables import (
     SampleRequest,
 )
 from src.logging_setup import configure_logging, get_logger
+from src.sales.feedback import FeedbackState
 from src.settings import REPORTS_DIR, get_settings, load_config
-from src.web.security import (
-    RateLimiter,
-    clean_text,
-    constant_time_equals,
-    hash_ip,
-    is_freemail,
-    is_valid_work_email,
+from src.web.api import build_api_router
+from src.web.security import RateLimiter, constant_time_equals
+from src.web.services import (
+    record_opt_out,
+    start_checkout,
+    submit_lead_feedback,
+    submit_sample_request,
 )
+
+# What each feedback option is called on the form. Kept next to the page rather
+# than in the enum: these are words for a customer, not internal state names.
+FEEDBACK_LABELS = {
+    FeedbackState.USEFUL: "Useful — worth following up",
+    FeedbackState.CONTACTED: "We contacted them",
+    FeedbackState.CONVERTED: "We won business from it",
+    FeedbackState.NOT_RELEVANT: "Not relevant to what we supply",
+    FeedbackState.ALREADY_KNOWN: "We already knew about them",
+    FeedbackState.TOO_ESTABLISHED: "Too established already",
+    FeedbackState.TOO_EARLY: "Too early to be worth contacting",
+}
 
 log = get_logger(__name__)
 BASE_DIR = Path(__file__).parent
@@ -152,12 +165,6 @@ def create_app() -> FastAPI:
         session: Session = Depends(db_session),
     ) -> HTMLResponse:
         client_ip = request.client.host if request.client else None
-
-        if website_url.strip():
-            # Honeypot filled: a bot. Answer as if accepted, store nothing.
-            log.info("sample.honeypot_triggered")
-            return _render_index(request, session, "Thanks — we'll be in touch shortly.", True)
-
         if not sample_limiter.allow(client_ip or "unknown"):
             return _render_index(
                 request,
@@ -165,46 +172,16 @@ def create_app() -> FastAPI:
                 "Too many requests from this address. Please try again later.",
                 False,
             )
-
-        email = clean_text(work_email, 254).lower()
-        valid, error = is_valid_work_email(email)
-        if not valid:
-            return _render_index(
-                request, session, error or "Please check your email address.", False
-            )
-
-        company_clean = clean_text(company, 200)
-        if not company_clean:
-            return _render_index(request, session, "Please tell us your company name.", False)
-
-        existing = session.execute(
-            select(SampleRequest).where(SampleRequest.work_email == email)
-        ).scalar_one_or_none()
-        if existing is not None:
-            return _render_index(
-                request,
-                session,
-                "You've already requested a sample — it's on its way. Reply to that email if it hasn't arrived.",
-                True,
-            )
-
-        session.add(
-            SampleRequest(
-                work_email=email,
-                company=company_clean,
-                contact_name=clean_text(contact_name, 120) or None,
-                supplier_type=clean_text(supplier_type, 40) or None,
-                source_ip_hash=hash_ip(client_ip),
-                status="new" if not is_freemail(email) else "review_freemail",
-            )
-        )
-        log.info("sample.requested", company=company_clean, freemail=is_freemail(email))
-        return _render_index(
-            request,
+        result = submit_sample_request(
             session,
-            "Thanks — we'll send the most recent sample to that address shortly.",
-            True,
+            work_email=work_email,
+            company=company,
+            contact_name=contact_name,
+            supplier_type=supplier_type,
+            honeypot=website_url,
+            client_ip=client_ip,
         )
+        return _render_index(request, session, result.message, result.ok)
 
     @app.get("/unsubscribe", response_class=HTMLResponse)
     def unsubscribe_form(request: Request) -> HTMLResponse:
@@ -230,15 +207,7 @@ def create_app() -> FastAPI:
     def unsubscribe(
         request: Request, email: str = Form(...), session: Session = Depends(db_session)
     ) -> HTMLResponse:
-        address = clean_text(email, 254).lower()
-        valid, _ = is_valid_work_email(address)
-        if valid:
-            add_suppression(session, "email", address, "self-service opt-out", "website")
-            for pref in session.execute(
-                select(CustomerPreference).where(CustomerPreference.recipient_email == address)
-            ).scalars():
-                session.delete(pref)
-            log.info("unsubscribe.recorded")
+        record_opt_out(session, email, source="website")
         return templates.TemplateResponse(
             request=request,
             name="simple.html",
@@ -248,6 +217,72 @@ def create_app() -> FastAPI:
                 "flash": "That address will not receive further LaunchTrace email.",
                 "body_html": "<p>If you also have a paid subscription, cancel it from the link in your "
                 "welcome email or by replying to any LaunchTrace message.</p>",
+            },
+        )
+
+    # -- feedback ----------------------------------------------------------
+    @app.get("/feedback", response_class=HTMLResponse)
+    def feedback_form(request: Request, tm: str = "", email: str = "") -> HTMLResponse:
+        """One question, no login. Linked from every weekly feed email.
+
+        Deliberately the smallest thing that could work: a customer portal to
+        collect four words of feedback would cost more than the feedback is
+        worth at this stage.
+        """
+        options = "".join(
+            f'<option value="{state.value}">{label}</option>'
+            for state, label in FEEDBACK_LABELS.items()
+        )
+        return templates.TemplateResponse(
+            request=request,
+            name="simple.html",
+            context={
+                "heading": "Was this lead useful?",
+                "back": True,
+                "body_html": f"""
+                <p>One answer is enough. It tells us whether the feed is worth your
+                team's time, and it is the only thing that shapes what we change.</p>
+                <form class="sample" method="post" action="/feedback" style="margin-top:16px">
+                  <input type="hidden" name="trademark_number" value="{html_lib.escape(tm)}">
+                  <label for="email">Your email (so we know which feed it came from)</label>
+                  <input id="email" name="email" type="email" value="{html_lib.escape(email)}">
+                  <label for="state">How was it?</label>
+                  <select id="state" name="state" required>{options}</select>
+                  <label for="note">Anything else? (optional)</label>
+                  <input id="note" name="note" type="text" maxlength="500">
+                  <button class="btn btn-primary" type="submit">Send</button>
+                </form>
+                """,
+            },
+        )
+
+    @app.post("/feedback", response_class=HTMLResponse)
+    def feedback_submit(
+        request: Request,
+        state: str = Form(...),
+        trademark_number: str = Form(""),
+        email: str = Form(""),
+        note: str = Form(""),
+        session: Session = Depends(db_session),
+    ) -> HTMLResponse:
+        result = submit_lead_feedback(
+            session,
+            state=state,
+            trademark_number=trademark_number,
+            email=email,
+            note=note,
+        )
+        return templates.TemplateResponse(
+            request=request,
+            name="simple.html",
+            context={
+                "heading": "Thank you",
+                "back": True,
+                "flash": result.message,
+                "flash_kind": "ok" if result.ok else "err",
+                "body_html": "<p>That goes straight into how the feed is judged. "
+                "If you have more to say, replying to any LaunchTrace email reaches "
+                "a person.</p>",
             },
         )
 
@@ -277,10 +312,10 @@ def create_app() -> FastAPI:
     # -- billing -----------------------------------------------------------
     @app.get("/billing/checkout")
     def checkout(plan: str = "founding_monthly", email: str | None = None) -> RedirectResponse:
-        if plan not in plans:
-            raise HTTPException(status_code=404, detail="Unknown plan")
-        session = billing.create_checkout_session(plan, email=email)
-        return RedirectResponse(session.url, status_code=303)
+        result = start_checkout(plan, email=email, settings=settings)
+        if not result.ok:
+            raise HTTPException(status_code=result.status_code, detail=result.message)
+        return RedirectResponse(str(result.data["url"]), status_code=303)
 
     @app.get("/billing/success", response_class=HTMLResponse)
     def billing_success(request: Request) -> HTMLResponse:
@@ -400,6 +435,10 @@ def create_app() -> FastAPI:
                 "send_mode": settings.send_mode,
             },
         )
+
+    # The JSON API a replacement front end builds against. Same functions as
+    # the HTML routes above, so the two can never drift apart in behaviour.
+    app.include_router(build_api_router(db_session))
 
     @app.get("/admin/run/{journal_number}")
     def admin_run(request: Request, journal_number: str) -> JSONResponse:

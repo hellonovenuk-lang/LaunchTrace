@@ -8,12 +8,17 @@ subscription.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.customer_lifecycle import (
+    on_cancelled,
+    on_payment_failed,
+    on_payment_recovered,
+    on_subscription_started,
+)
 from src.db.tables import Customer, CustomerPreference, WebhookEvent
 from src.logging_setup import get_logger
 
@@ -137,6 +142,10 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
         customer.delivery_enabled = True
         customer.founding_customer = plan_key == "founding_monthly"
         customer.cancelled_at = None
+        if metadata.get("prospect_id"):
+            customer.prospect_id = str(metadata["prospect_id"])
+        if metadata.get("supplier_type") and not customer.supplier_type:
+            customer.supplier_type = str(metadata["supplier_type"])
         if email:
             existing = session.execute(
                 select(CustomerPreference).where(
@@ -145,10 +154,29 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
                 )
             ).scalar_one_or_none()
             if existing is None:
-                session.add(CustomerPreference(customer_id=customer.id, recipient_email=email))
+                session.add(
+                    CustomerPreference(
+                        customer_id=customer.id,
+                        recipient_email=email,
+                        supplier_category=customer.supplier_type,
+                    )
+                )
         session.flush()
-        log.info("stripe.subscription_started", customer_id=customer.id, plan=plan_key)
-        return WebhookOutcome(handled=True, action="subscription_started", customer_id=customer.id)
+        # Onboarding — welcome, confirmation and first-feed timing. Each is
+        # prepared once; with no Resend key they land in reports/outbox/.
+        outcome = on_subscription_started(session, customer)
+        log.info(
+            "stripe.subscription_started",
+            customer_id=customer.id,
+            plan=plan_key,
+            prepared=len(outcome.messages),
+        )
+        return WebhookOutcome(
+            handled=True,
+            action="subscription_started",
+            customer_id=customer.id,
+            detail=outcome.detail,
+        )
 
     if event_type.startswith("customer.subscription."):
         stripe_customer_id = obj.get("customer")
@@ -160,14 +188,18 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
         status = STATUS_MAP.get(str(obj.get("status", "")), "unknown")
         if event_type == "customer.subscription.deleted":
             status = "cancelled"
-        customer.subscription_status = status
         customer.stripe_subscription_id = obj.get("id") or customer.stripe_subscription_id
         if status == "cancelled":
-            customer.delivery_enabled = False
-            customer.cancelled_at = datetime.now(UTC)
+            on_cancelled(session, customer)
+        elif status == "past_due":
+            on_payment_failed(session, customer, invoice_id=str(obj.get("id") or ""))
         elif status in {"active", "trialing"}:
+            customer.subscription_status = status
             customer.delivery_enabled = True
             customer.cancelled_at = None
+            customer.past_due_since = None
+        else:
+            customer.subscription_status = status
         session.flush()
         log.info("stripe.subscription_updated", customer_id=customer.id, status=status)
         return WebhookOutcome(handled=True, action=f"status_{status}", customer_id=customer.id)
@@ -176,18 +208,14 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
         customer = _customer_for(session, obj.get("customer"), None)
         if customer is None:
             return WebhookOutcome(handled=True, action="no_matching_customer")
-        customer.subscription_status = "past_due"
-        session.flush()
+        on_payment_failed(session, customer, invoice_id=str(obj.get("id") or ""))
         return WebhookOutcome(handled=True, action="status_past_due", customer_id=customer.id)
 
     if event_type == "invoice.paid":
         customer = _customer_for(session, obj.get("customer"), None)
         if customer is None:
             return WebhookOutcome(handled=True, action="no_matching_customer")
-        if customer.subscription_status == "past_due":
-            customer.subscription_status = "active"
-        customer.delivery_enabled = True
-        session.flush()
+        on_payment_recovered(session, customer)
         return WebhookOutcome(handled=True, action="status_active", customer_id=customer.id)
 
     return WebhookOutcome(handled=False, action="ignored", detail=event_type)

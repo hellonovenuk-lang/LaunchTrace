@@ -1,0 +1,132 @@
+{
+  "$schema_version": "1.0",
+  "description": "Vendor unit costs used to estimate what a weekly LaunchTrace run costs and what the gross margin is at £79/month. Every figure here is EDITABLE and every one is an assumption until you have a real invoice. Nothing in the code fetches live pricing.",
+  "currency": "GBP",
+  "verification_note": "Each entry carries a 'confidence' and a 'source_note'. 'assumed' means nobody has confirmed it. Replace assumed figures with your real bill as soon as you have one, then re-run: python -m src.admin business-status",
+  "fx_note": "Vendor prices quoted in USD are converted at the rate below. Update it when it drifts.",
+  "usd_to_gbp": 0.79,
+  "line_items": [
+    {
+      "key": "search_enrichment",
+      "label": "Web enrichment searches (Tavily free tier)",
+      "unit": "search",
+      "pence_per_unit": 0.0,
+      "units_per_weekly_run": 150,
+      "monthly_fixed_pence": 0,
+      "scales_with": "run",
+      "confidence": "known",
+      "source_note": "Tavily free tier gives 1,000 searches/month and a weekly run is capped at SEARCH_MAX_CANDIDATES_PER_RUN (150). Four runs a month stay inside the free tier, so the marginal cost is zero until you exceed it."
+    },
+    {
+      "key": "search_enrichment_paid",
+      "label": "Web enrichment searches beyond the free tier",
+      "unit": "search",
+      "pence_per_unit": 0.6,
+      "units_per_weekly_run": 0,
+      "monthly_fixed_pence": 0,
+      "scales_with": "run",
+      "confidence": "assumed",
+      "source_note": "ASSUMED. Only applies once you pass 1,000 searches/month. Set units_per_weekly_run above zero if you move to a paid plan, and put the real per-search price here."
+    },
+    {
+      "key": "llm_classification",
+      "label": "LLM product classification",
+      "unit": "call",
+      "pence_per_unit": 0.08,
+      "units_per_weekly_run": 400,
+      "monthly_fixed_pence": 0,
+      "scales_with": "run",
+      "confidence": "assumed",
+      "source_note": "ASSUMED, and only incurred if LLM_PROVIDER is set. Based on a small model and roughly 700 input plus 150 output tokens per candidate, capped at LLM_MAX_CANDIDATES_PER_RUN. Replace with your provider's actual per-token price."
+    },
+    {
+      "key": "companies_house",
+      "label": "Companies House lookups",
+      "unit": "lookup",
+      "pence_per_unit": 0.0,
+      "units_per_weekly_run": 250,
+      "monthly_fixed_pence": 0,
+      "scales_with": "run",
+      "confidence": "known",
+      "source_note": "Free. Both routes (REST API and the bulk snapshot) cost nothing."
+    },
+    {
+      "key": "journal_ingest",
+      "label": "UKIPO journal retrieval",
+      "unit": "download",
+      "pence_per_unit": 0.0,
+      "units_per_weekly_run": 1,
+      "monthly_fixed_pence": 0,
+      "scales_with": "run",
+      "confidence": "known",
+      "source_note": "Free. Open Government Licence v3.0 data."
+    },
+    {
+      "key": "transactional_email",
+      "label": "Weekly feed and transactional email (Resend)",
+      "unit": "email",
+      "pence_per_unit": 0.0,
+      "units_per_customer_per_month": 6,
+      "monthly_fixed_pence": 0,
+      "scales_with": "customer",
+      "confidence": "known",
+      "source_note": "Resend free tier is 3,000 emails/month. At roughly 6 emails per customer per month (4 weekly feeds plus transactional), the free tier covers about 500 customers. Marginal cost is zero well past the first hundred."
+    },
+    {
+      "key": "database",
+      "label": "Hosted PostgreSQL (Supabase)",
+      "unit": "month",
+      "pence_per_unit": 0,
+      "monthly_fixed_pence": 0,
+      "scales_with": "fixed",
+      "confidence": "known",
+      "source_note": "Supabase free tier. Becomes about £2000/month pence (£20) on the Pro plan, which you will not need at single-digit customer counts."
+    },
+    {
+      "key": "hosting",
+      "label": "Website and pipeline hosting (Fly.io)",
+      "unit": "month",
+      "pence_per_unit": 0,
+      "monthly_fixed_pence": 400,
+      "scales_with": "fixed",
+      "confidence": "assumed",
+      "source_note": "ASSUMED £4/month for one small always-on machine. Fly's free allowance may cover it entirely. Replace with your real bill."
+    },
+    {
+      "key": "domain",
+      "label": "Domain registration",
+      "unit": "month",
+      "pence_per_unit": 0,
+      "monthly_fixed_pence": 100,
+      "scales_with": "fixed",
+      "confidence": "assumed",
+      "source_note": "ASSUMED about £12/year for a .co.uk, spread monthly."
+    },
+    {
+      "key": "stripe_fees",
+      "label": "Stripe transaction fees",
+      "unit": "transaction",
+      "percent_of_revenue": 1.5,
+      "pence_per_unit": 20,
+      "units_per_customer_per_month": 1,
+      "monthly_fixed_pence": 0,
+      "scales_with": "customer",
+      "confidence": "known",
+      "source_note": "Stripe UK standard pricing: 1.5% + 20p per successful domestic card charge. Only incurred when you are paid."
+    },
+    {
+      "key": "ico_fee",
+      "label": "ICO data protection fee",
+      "unit": "month",
+      "pence_per_unit": 0,
+      "monthly_fixed_pence": 400,
+      "scales_with": "fixed",
+      "confidence": "known",
+      "source_note": "£40–60 a year for a tier 1 controller, taken here as £48/year spread monthly. Payable once you process personal data as a controller."
+    }
+  ],
+  "runs_per_month": 4.33,
+  "runs_per_month_note": "52 weekly runs a year divided by 12.",
+  "plan_price_pence": 7900,
+  "plan_price_note": "The founding monthly price. Kept here so the margin calculation has something to divide by; config/customer_plans.json remains the source of truth for what customers are actually charged."
+}

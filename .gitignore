@@ -25,3 +25,13 @@ reports/local/
 reports/runs/
 reports/smoke/
 reports/outbox/
+# Generated sales working files. Every one is reproducible from a command, and
+# they contain prospect names and lead data that has no reason to be in git.
+reports/previews/
+reports/samples/
+reports/outreach_drafts/
+reports/backups/
+
+# Copy-on-write safety copies of the prospect and suppression lists. The
+# tracked files are the record; these are the undo button for the last write.
+outreach/backups/

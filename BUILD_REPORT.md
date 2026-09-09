@@ -3,8 +3,13 @@
 An honest account of what was built, what was verified and how, and what was
 not.
 
-Built in a single session. Every claim below was checked by running it, and
-anything that could not be run is marked as such.
+Built in two sessions: the product pipeline first, then the commercial layer
+around it. Every claim below was checked by running it, and anything that could
+not be run is marked as such.
+
+**Session 2 (commercial readiness)** is recorded in its own section at the end
+of this document, and summarised for the owner in
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md).
 
 ---
 
@@ -16,7 +21,12 @@ environment and one commercially marginal result.**
 The full chain runs end to end on real UK government data: official trade mark
 records → packaged-food filtering → real Companies House verification →
 explainable scoring → supplier buying-intent mapping → CSV, email and QA report.
-390 tests pass, lint, formatting and type checks are clean, and the container
+Around it, the commercial chain also runs end to end: prospect → ICP priority →
+prospect-specific preview → drafted email → sample → customer → weekly delivery
+→ feedback → metrics, none of it requiring a credential and none of it able to
+send anything.
+
+526 tests pass, lint, formatting and type checks are clean, and the container
 image was built and served.
 
 The four-week validation produced a real but marginal number, reported as it
@@ -294,3 +304,109 @@ including whether to spend the eight hours above, depends on that number.
 Then send `reports/validation/top_opportunities.csv` to five suppliers from
 `outreach/prospects.csv` and ask them one question: *would you want to reach
 these companies?*
+
+---
+
+## Session 2: commercial readiness
+
+### What was built
+
+The product could produce a feed. It could not yet be sold. This session built
+the path from a supplier prospect to a paying customer, and stopped at every
+point where a credential would have been needed.
+
+| Area | Module | Notes |
+| --- | --- | --- |
+| Prospect model and lifecycle | `src/sales/models.py` | 32 fields, checked status transitions |
+| Storage, duplicates, suppression | `src/sales/store.py` | Copy-on-write; a save can never shorten the suppression list |
+| ICP scoring | `src/sales/icp.py`, `config/icp_scoring.json` | Explainable keyword model, every score returns its reasons |
+| Lead loading | `src/sales/leads.py` | From the database or a delivered CSV; read-only view of the pipeline |
+| Prospect-specific matching | `src/sales/matching.py`, `config/supplier_profiles.json` | Ranks qualified leads by supplier fit; never promotes one that did not qualify |
+| Preview rendering | `src/sales/preview.py` | Markdown briefing, email block, CSV |
+| Outreach drafting and due states | `src/sales/outreach.py` | No send path exists, and a test enforces it |
+| Customer sample | `src/deliver/sample_pack.py` | Branded HTML plus a clean CSV |
+| Transactional email | `src/deliver/transactional.py` | Five templates |
+| Customer lifecycle | `src/customer_lifecycle.py` | Onboarding, past-due grace, recovery, cancellation |
+| Feedback | `src/sales/feedback.py` | Seven states; never feeds back into scoring |
+| Metrics and cost | `src/sales/metrics.py`, `src/sales/costs.py`, `config/costs.json` | Every assumed price labelled as assumed |
+| Website business logic | `src/web/services.py`, `src/web/api.py` | JSON API; HTML pages call the same functions |
+| Operator CLI | `src/admin.py`, `src/sales_commands.py` | 12 commands |
+
+### What was verified by running it
+
+* **The whole sales path**, against the real historical validation data:
+  prospect list → ICP scoring → preview for four different supplier types →
+  drafted email → sample pack → HTML report opened and read → customer created
+  → onboarding → payment failure → recovery → cancellation → feedback →
+  `business-status`.
+* **Different supplier types get genuinely different shortlists.** A label
+  printer, a contract manufacturer, a 3PL and a distributor were each run
+  against the same 22 opportunities and each received a different ranking, with
+  a different lead first.
+* **The 60-prospect list**: audited, migrated to the new schema with no research
+  lost, scored, and prioritised. One real duplicate found and resolved.
+* **The sample report**, rendered in a browser and inspected as a customer
+  would see it.
+* **526 tests**, `ruff check`, `ruff format --check`, `mypy src`, and the
+  end-to-end smoke test.
+
+### Defects found and fixed in this session
+
+Six, all found by running the thing rather than by reading it.
+
+1. **Outbox files overwrote each other.** Onboarding writes three messages to
+   one recipient in the same second; `Path.with_suffix` treated the dot in the
+   email domain as a file extension and truncated the name, so all three
+   collapsed onto one file — and the collision-avoidance loop then spun
+   forever. Two of the three messages would have been silently lost. Fixed by
+   building the filename explicitly and including the message kind.
+2. **The preview age filter emptied every preview.** It measured against
+   today, so historical validation data — the only data that exists before the
+   first live Friday — was entirely excluded. Now measured against the newest
+   lead in the source, with a staleness warning shown instead of silence.
+3. **The same applicant appeared twice in one preview.** Two brands from one
+   company read as one lead repeated. Company diversity is now a hard rule,
+   even when it means returning two leads instead of three.
+4. **Template substitution was fragile.** Matching placeholder prose broke when
+   a placeholder wrapped across two lines, leaving raw template text in a
+   draft. Replaced with explicit `{{TOKEN}}` substitution, plus a check that
+   reports any token left unsubstituted.
+5. **An existing database could not be upgraded.** `create_all` does not add
+   columns to existing tables, so every query failed after the schema changed.
+   `init-db` now adds missing columns additively, so an owner who has already
+   run it does not have to delete their customers to upgrade.
+6. **Two tests were reaching the real development database.** Patching the
+   settings accessor did not reach the engine. Fixed by setting the database
+   URL through the environment.
+
+### Deliberate decisions worth recording
+
+* **The ICP Priority A threshold was set to 55, not 60.** At 60 only five
+  prospects qualified, which is not a working set. This is LaunchTrace's own
+  sales prioritisation, not the LaunchTrace Score — no signal threshold was
+  touched, and the reasoning is written into `config/icp_scoring.json`.
+* **`carton_relevance` and `brokerage_relevance` were added to the delivered
+  CSV.** Without them a carton supplier or a broker could not be matched at
+  all. Older CSVs lacking the columns read as `UNKNOWN` rather than `NONE`,
+  because "not recorded" is not the same claim as "not relevant".
+* **Past-due customers keep the feed for 14 days, then stop.** An expired card
+  should not lose a customer; a non-paying account should not become an
+  indefinite free subscription.
+* **Feedback does not change scoring.** Collect it, then change weights
+  deliberately with the reasoning written down.
+
+### What this session did not do
+
+No email was sent. No account was created. No domain was bought. The website
+was not redesigned. No customer dashboard was built. The core scoring
+methodology was not changed, and no threshold was moved to make any number look
+better.
+
+### Still not validated
+
+Unchanged by this session, and the part that decides whether there is a
+business: **no supplier has seen any of this.** Every conversion rate reported
+by `business-status` currently has a denominator of zero or one. The volume
+figure of 5.5 good opportunities per week was produced without web enrichment
+and without goods-and-services text, so it remains a floor rather than a
+measurement. See [`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) §3.

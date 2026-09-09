@@ -1,0 +1,122 @@
+{
+  "$schema_version": "1.0",
+  "description": "How to rank LaunchTrace opportunities FOR one supplier prospect. Each profile says which buying-intent categories matter to that supplier, which product groups suit them best, and which launch stages are worth their time. Used by the prospect-specific preview generator so a pouch converter sees snack and bar brands, and a co-packer sees brands that need filling.",
+  "usage_note": "Weights are relative and only decide ordering within a supplier's own shortlist. They never change the LaunchTrace Score itself, and they never let a suppressed or below-threshold opportunity into a preview.",
+  "relevance_points": {
+    "HIGH": 3,
+    "MEDIUM": 2,
+    "LOW": 1,
+    "NONE": 0
+  },
+  "score_weight": 0.35,
+  "score_weight_note": "How much the underlying LaunchTrace Score contributes relative to supplier fit. Fit decides the shortlist; score breaks ties within it.",
+  "stage_points": {
+    "pre_launch": 6,
+    "early_launch": 5,
+    "unknown": 2,
+    "scaling": 1,
+    "established": 0
+  },
+  "profiles": [
+    {
+      "key": "flexible_packaging",
+      "label": "Flexible packaging manufacturer",
+      "primary_intents": {"flexible_packaging": 10, "labels": 3, "copacking": 2},
+      "preferred_product_groups": ["snacks", "cereal_bars", "confectionery", "cereal_granola", "coffee_tea", "biscuits_bakery", "health_nutrition_food"],
+      "product_group_bonus": 6,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "Brands in this category normally commission printed film or pouches before their first production run."
+    },
+    {
+      "key": "labels",
+      "label": "Label or print supplier",
+      "primary_intents": {"labels": 10, "cartons": 3, "flexible_packaging": 2},
+      "preferred_product_groups": ["sauces_condiments", "ambient_meals", "coffee_tea", "chilled_frozen", "health_nutrition_food", "baby_food"],
+      "product_group_bonus": 6,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "Jarred, bottled and pot formats in this category need pressure-sensitive labels from the first batch onwards."
+    },
+    {
+      "key": "cartons",
+      "label": "Carton and secondary packaging supplier",
+      "primary_intents": {"cartons": 10, "labels": 3, "flexible_packaging": 2},
+      "preferred_product_groups": ["biscuits_bakery", "confectionery", "cereal_granola", "coffee_tea", "baby_food"],
+      "product_group_bonus": 6,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "Retail-ready cartons and outer cases are usually the second packaging decision a brand in this category makes."
+    },
+    {
+      "key": "contract_manufacturing",
+      "label": "Food contract manufacturer",
+      "primary_intents": {"contract_manufacturing": 10, "copacking": 4},
+      "preferred_product_groups": ["sauces_condiments", "ambient_meals", "health_nutrition_food", "cereal_bars", "chilled_frozen", "baby_food"],
+      "product_group_bonus": 6,
+      "preferred_stages": ["pre_launch"],
+      "line": "A brand filing at this stage is usually still deciding who will make the product at volume."
+    },
+    {
+      "key": "copacking",
+      "label": "Co-packer",
+      "primary_intents": {"copacking": 10, "contract_manufacturing": 4, "flexible_packaging": 2},
+      "preferred_product_groups": ["snacks", "cereal_bars", "confectionery", "cereal_granola", "coffee_tea", "biscuits_bakery"],
+      "product_group_bonus": 6,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "Filling, sealing and multipacking is typically outsourced by brands of this size rather than done in house."
+    },
+    {
+      "key": "distribution",
+      "label": "Food distributor or wholesaler",
+      "primary_intents": {"distribution": 10, "brokerage": 4, "fulfilment": 2},
+      "preferred_product_groups": ["snacks", "sauces_condiments", "ambient_meals", "confectionery", "coffee_tea", "biscuits_bakery"],
+      "product_group_bonus": 5,
+      "preferred_stages": ["early_launch", "scaling"],
+      "line": "Brands at this stage are looking for routes into independent retail and wholesale."
+    },
+    {
+      "key": "brokerage",
+      "label": "Broker or sales agency",
+      "primary_intents": {"brokerage": 10, "distribution": 4, "marketing": 2},
+      "preferred_product_groups": ["snacks", "cereal_bars", "confectionery", "sauces_condiments", "health_nutrition_food"],
+      "product_group_bonus": 5,
+      "preferred_stages": ["early_launch", "scaling"],
+      "line": "A brand with a product but no buyer relationships is the case a broker is usually brought in for."
+    },
+    {
+      "key": "fulfilment",
+      "label": "3PL or ecommerce fulfilment provider",
+      "primary_intents": {"fulfilment": 10, "distribution": 3},
+      "preferred_product_groups": ["snacks", "cereal_bars", "coffee_tea", "health_nutrition_food", "confectionery", "cereal_granola"],
+      "product_group_bonus": 5,
+      "preferred_stages": ["early_launch"],
+      "line": "Direct-to-consumer despatch is usually outsourced once a brand starts shipping its own orders."
+    },
+    {
+      "key": "marketing",
+      "label": "Food and FMCG marketing agency",
+      "primary_intents": {"marketing": 10, "brokerage": 2},
+      "preferred_product_groups": ["snacks", "confectionery", "health_nutrition_food", "coffee_tea", "cereal_bars"],
+      "product_group_bonus": 4,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "Brand, pack design and launch marketing are commissioned around the point a trade mark is filed."
+    },
+    {
+      "key": "other",
+      "label": "Other supplier to food brands",
+      "primary_intents": {"flexible_packaging": 4, "labels": 4, "contract_manufacturing": 4, "copacking": 4, "distribution": 3, "fulfilment": 3},
+      "preferred_product_groups": [],
+      "product_group_bonus": 0,
+      "preferred_stages": ["pre_launch", "early_launch"],
+      "line": "An early-stage UK food brand that has just protected its name."
+    }
+  ],
+  "preview": {
+    "default_count": 3,
+    "minimum_score": 60,
+    "minimum_score_note": "A preview lead must clear the MEDIUM band on its own merit. This is the delivered-product threshold, not a separate sales threshold, and lowering it to fill a preview is exactly the thing not to do.",
+    "require_company_match": true,
+    "require_intent_at_least": "MEDIUM",
+    "require_intent_note": "The supplier's own primary category must be at least this relevant, or the lead does not belong in their preview.",
+    "max_age_days": 400,
+    "max_age_note": "How old a published opportunity may be and still be worth showing. Raise it only when you have no recent run."
+  }
+}
