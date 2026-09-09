@@ -18,6 +18,17 @@ on:
       journal:
         description: "Journal number (e.g. 2026-036). Leave blank for the latest."
         required: false
+      source:
+        description: "Journal source. Use 'local' for a journal XML committed to data/journals/, because ipo.gov.uk refuses automated clients."
+        required: false
+        default: "ukipo_http"
+        type: choice
+        options: [ukipo_http, local, open_data]
+      company_index:
+        description: "Build the free Companies House bulk index (~500 MB, ~10 min, cached for the month). Without it there is no company evidence and every record is capped below HIGH."
+        type: boolean
+        default: true
+        required: false
       send:
         description: "Attempt delivery after the run (still blocked in review mode)"
         type: boolean
@@ -46,6 +57,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Company evidence is one of the five legs of a meaningful run. Without
+      # either this index or a Companies House API key the registry resolves to
+      # 'none', nothing matches, and every record is capped below the HIGH
+      # band -- a degraded result that reads like a finding about the signal.
+      # Companies House refreshes the snapshot monthly, so the key is the month:
+      # a new month misses, rebuilds and re-caches; the rest of the month hits.
+      - name: Work out the snapshot month
+        if: github.event.inputs.company_index != 'false'
+        id: stamp
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Companies House index
+        if: github.event.inputs.company_index != 'false'
+        id: ch-cache
+        uses: actions/cache@v4
+        with:
+          path: data/companies_house/ch_index.sqlite
+          key: ch-index-${{ steps.stamp.outputs.month }}
+
+      - name: Build the Companies House index if this month's is not cached
+        if: github.event.inputs.company_index != 'false' && steps.ch-cache.outputs.cache-hit != 'true'
+        run: python -m src.pipeline build-company-index --download
+
       - name: Run the weekly pipeline
         id: pipeline
         env:
@@ -63,8 +97,12 @@ jobs:
           SEARCH_API_KEY: ${{ secrets.SEARCH_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+          JOURNAL_SOURCE: ${{ github.event.inputs.source || 'ukipo_http' }}
         run: |
           set -o pipefail
+          # Say what this run actually has before it runs, so a degraded result
+          # is never mistaken for a finding about the signal.
+          python -m src.pipeline check-config
           ARGS=""
           if [ -n "${{ github.event.inputs.journal }}" ]; then
             ARGS="--journal ${{ github.event.inputs.journal }}"
