@@ -87,7 +87,8 @@ ruff format --check .  119 files already formatted
 mypy src               Success: no issues found in 76 source files
 ```
 
-All three run in CI on every push.
+All three run in CI on every push, and **the complete workflow has now passed
+on a GitHub runner** — see "CI" below.
 
 ## Live integrations tested
 
@@ -177,6 +178,36 @@ including `rejections.csv` with every one of the 5,147 dropped records and the
 reason for each. Nothing was cherry-picked. The report files themselves are
 unchanged from the run that produced them, and still use the older word
 "validation" in their own headings.
+
+## CI
+
+`tests.yml` runs two jobs on every push. Both pass on GitHub, on
+`claude/launchrace-pre-credentials-cleanup-fkim4m` at `97d9c97`
+([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)):
+
+| Job | Step | Result |
+| --- | --- | --- |
+| `test` | Install dependencies | pass |
+| `test` | Lint (`ruff check .`) | pass |
+| `test` | Format check (`ruff format --check .`) | pass |
+| `test` | Type check (`mypy src`) | pass |
+| `test` | Tests (`pytest -q --cov=src`) | pass — 531 tests |
+| `test` | Smoke test (whole pipeline on fixture data) | pass |
+| `test` | Verify the PostgreSQL migration applies | pass |
+| `migration` | Apply the schema to a real PostgreSQL 16 | pass |
+
+Before this session the runner failed before pytest could collect anything, with
+`ModuleNotFoundError: No module named 'src'`. The suite passed locally because
+`python -m pytest` puts the working directory on `sys.path` and the workflow's
+`pytest` does not. The fix is a packaging one, not a working-directory one:
+
+* `pyproject.toml` discovers `src` **and its subpackages**, and declares the
+  Jinja templates and static files as package data;
+* `requirements-dev.txt` installs the project itself editable (`-e .`), so
+  `import src` resolves identically for `pytest`, `mypy`, `python -m
+  src.pipeline` and the scripts, on any machine and from any directory;
+* `tests/` is a real package, so `from tests.conftest import ...` resolves the
+  same way under `pytest` and `python -m pytest`.
 
 ## Defects found and fixed during the build
 
@@ -313,9 +344,10 @@ Stated plainly rather than buried:
    internally consistent, but no supplier has yet said whether a 79 is a better
    lead than a 62. That feedback is what should drive the next tuning pass, and
    `score_events` already records the history to support it.
-5. **The GitHub Actions workflows have not run.** They are syntactically valid
-   and their steps were each run by hand locally, but no workflow has executed
-   on a runner.
+5. **Two of the four workflows have still not run.** `weekly-pipeline.yml`,
+   `backfill.yml` and `deploy.yml` are syntactically valid and their steps were
+   each run by hand locally, but only `tests.yml` has executed on a runner.
+   That one is now green end to end ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)).
 
 ## Recommended immediate next action
 

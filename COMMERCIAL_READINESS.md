@@ -72,6 +72,11 @@ opt-outs. Contract: `docs/WEBSITE_INTEGRATION.md`.
 531 tests pass. `ruff check`, `ruff format --check` and `mypy src` are clean.
 The smoke test passes end to end on fixture data with no network access.
 
+All of that also passes **on GitHub**, not just locally: the complete `Tests`
+workflow is green — install, lint, format check, type check, tests, smoke test,
+the migration freshness check, and a second job applying the schema to a real
+PostgreSQL 16 ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)).
+
 ---
 
 ## 2. What needs a credential

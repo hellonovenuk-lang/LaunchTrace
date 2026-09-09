@@ -93,13 +93,21 @@ src/
   web/         the website, sample form and operator view
   pipeline.py  the command line
 config/        all the business rules, as JSON you can edit
-data/journals/ four real UKIPO journal weeks, for validation
+data/journals/ four real UKIPO journal weeks (January 2018), for the historical
+               sanity test
 migrations/    the PostgreSQL schema
 reports/       everything the pipeline produces
 tests/         the test suite
-outreach/      your own prospect list and email templates (nothing sends)
+outreach/      your own prospect *research* and email templates (nothing sends).
+               Live contacts, replies, dates and opt-outs are in the database,
+               not here
 docs/          privacy, terms, attribution, retention, legitimate interests
 ```
+
+The project is installed rather than picked up from whichever directory you
+happen to be in: `pip install -r requirements-dev.txt` installs LaunchTrace
+itself editable, which is what makes `import src` behave the same for the
+tests, the type checker, `python -m src.pipeline` and CI.
 
 **The rules live in `config/`, not in the code.** To change what counts as a
 food product, how the score is weighted, or which suppliers a category maps to,
@@ -112,7 +120,15 @@ edit the JSON. You do not need to touch Python.
 | `config/scoring.json` | The LaunchTrace Score weights and bands |
 | `config/buying_intent.json` | Which suppliers each product category needs |
 | `config/customer_plans.json` | Plans, prices and recipient limits |
-| `config/validation_bands.json` | The commercial validation thresholds and safety guardrails |
+| `config/validation_bands.json` | The volume bands and safety guardrails |
+
+### Continuous integration
+
+`.github/workflows/tests.yml` runs on every push and is **green on GitHub**:
+lint, format check, `mypy src`, 531 tests, the end-to-end smoke test, a check
+that `migrations/0001_initial.sql` still matches the models, and a second job
+that applies that schema to a real PostgreSQL 16
+([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)).
 
 ## 3. Setting it up on your computer
 

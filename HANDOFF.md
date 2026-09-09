@@ -43,7 +43,7 @@ Built, tested, and working right now with no external account of any kind.
 - **Container.** Dockerfile **built and run in this session**: 369 MB, non-root, health-checked, serving the site
 - **Tests.** 531 tests, no test touching a live external API
 - **Quality gates.** `ruff check`, `ruff format --check` and `mypy src` all clean
-- **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and validation, and a deploy workflow that is a build check until you opt in
+- **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and the historical sanity test, and a deploy workflow that is a build check until you opt in. **The tests workflow is green on GitHub** — lint, format, `mypy src`, 531 tests, the smoke test and the PostgreSQL migration, plus a second job applying the schema to a real PostgreSQL 16 ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152))
 - **Documentation.** README written for a non-technical owner, plus privacy notice, terms, data-source attribution, legitimate interests assessment and a retention note — all labelled as drafts needing your review
 - **Prospecting.** 60 researched UK supplier companies with the reason each one fits, a defined schema, and three editable email templates. The research is in git; every live contact detail, reply and opt-out is in the database instead. **No code in this repository can send any of it**
 
