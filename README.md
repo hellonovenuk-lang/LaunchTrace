@@ -214,12 +214,21 @@ To process the last four journals and store them:
 python -m src.pipeline backfill --weeks 4
 ```
 
-To produce the **validation evidence** — the funnel counts, the rejection
-reasons and the opportunity totals for each week:
+To re-run the **January 2018 historical sanity test** — the funnel counts, the
+rejection reasons and the opportunity totals for each of those four weeks:
 
 ```bash
 python -m src.pipeline validate --weeks 4
 ```
+
+This is an engineering and historical check that parsing, matching, scoring and
+weekly volume behave correctly on real data. **It is not the commercial
+validation, and re-running it with web enrichment switched on does not make it
+one** — today's web tells you what a 2018 brand became over eight years, not
+what was knowable about it in the week it was published. The decisive product
+test is a current one: current UKIPO weekly journal + current goods/services
+text + current Companies House evidence + current Tavily/web enrichment +
+current classification, from a live `python -m src.pipeline weekly`.
 
 That writes `reports/validation/`:
 
@@ -228,10 +237,10 @@ That writes `reports/validation/`:
 | `4_week_summary.md` | The report to read. Funnel per week, rejection reasons, threshold sensitivity |
 | `4_week_summary.json` | The same, machine-readable |
 | `week_1.csv` … `week_4.csv` | The deliverable opportunities for each week |
-| `top_opportunities.csv` | The strongest across all four weeks — **this is your sales sample** |
+| `top_opportunities.csv` | The strongest across all four weeks. Real companies from real journals, and eight years old — see `FIRST_CUSTOMER_PLAYBOOK.md` before showing it to anyone |
 | `rejections.csv` | Every record dropped, with the stage and reason |
 
-Read `4_week_summary.md` before you show anything to a supplier.
+Read `4_week_summary.md` before you draw any conclusion from these numbers.
 
 ## 7. Generating and approving a report
 
@@ -401,7 +410,9 @@ toggle **off** and swap the keys for the live ones.
 
 **This is the single most valuable credential to add.** Without it the pipeline
 cannot tell an early-stage brand from an established one, so every record is
-capped below the HIGH band. See `reports/validation/4_week_summary.md`.
+capped below the HIGH band — which is why the January 2018 sanity test shows 0
+HIGH. Connecting it and then running one **current** week is the decisive
+product test; connecting it and re-running 2018 is not.
 
 Any one of these works. Free tiers are ample — a weekly run makes at most a few
 hundred lookups.
@@ -645,13 +656,27 @@ python -m src.admin prospects list --priority A   # who to approach first
 python -m src.admin prospects ready               # who is ready for a first email
 python -m src.admin prospects show --prospect-id P012
 python -m src.admin prospects audit               # duplicates, gaps, priority spread
-python -m src.admin prospects rescore             # after editing the CSV or weights
+python -m src.admin prospects rescore             # after editing the seed or weights
 ```
 
-`outreach/prospects.csv` is the source of truth: 60 researched UK suppliers,
-scored into Priority A/B/C by an explainable keyword model in
+The list has two halves. **The research** — 60 UK suppliers, what they supply
+and why LaunchTrace suits them — is in `outreach/prospects_seed.csv` and git,
+because it is reusable and contains no personal data. **The live outreach
+state** — verified addresses, named contacts, reply notes, milestone dates,
+opt-outs and funnel position — is in the `prospect_state` and
+`prospect_suppressions` tables, because it is personal data about real people
+and does not belong in a commit history.
+
+Prospects are scored into Priority A/B/C by an explainable keyword model in
 `config/icp_scoring.json`. Every score comes back with its reasons, so you can
 disagree with any of it and edit the weights.
+
+Record a contact address you have checked on the company's own website:
+
+```bash
+python -m src.admin prospects set-contact --prospect-id P012 \
+  --email sales@example.co.uk --source website_verified
+```
 
 Move a prospect along after you have acted:
 
@@ -703,8 +728,9 @@ python -m src.admin customer-lifecycle --customer-id 1 --event start
 ```
 
 Once Stripe is connected, onboarding happens on its own when someone pays:
-customer created, recipients recorded, delivery enabled, and welcome,
-confirmation and first-feed-timing emails prepared. `--event start` does the
+customer created, recipients recorded, delivery enabled, and one onboarding
+email per recipient prepared — confirmation, what happens next and the first
+Friday date, in a single message. `--event start` does the
 same thing by hand for a customer you invoiced yourself.
 
 `customer-status` shows the line that matters: **`Next Friday feed: yes`**.
@@ -758,7 +784,7 @@ including the questions still open.
   exact steps to finish it
 - [`BUILD_REPORT.md`](BUILD_REPORT.md) — what works, what was tested, and how
 - [`reports/validation/4_week_summary.md`](reports/validation/4_week_summary.md)
-  — the four-week evidence
+  — the January 2018 four-week historical sanity test
 - [`docs/PRIVACY.md`](docs/PRIVACY.md), [`docs/TERMS.md`](docs/TERMS.md),
   [`docs/LEGITIMATE_INTERESTS_ASSESSMENT.md`](docs/LEGITIMATE_INTERESTS_ASSESSMENT.md),
   [`docs/DATA_RETENTION.md`](docs/DATA_RETENTION.md) — operational drafts for

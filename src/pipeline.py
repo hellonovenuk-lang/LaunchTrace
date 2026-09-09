@@ -50,7 +50,8 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--out", help="Output directory (default reports/smoke)")
 
     validate = sub.add_parser(
-        "validate", help="Run the four-week historical validation and write reports/validation/"
+        "validate",
+        help="Run the four-week January 2018 historical sanity test into reports/validation/",
     )
     validate.add_argument("--weeks", type=int, default=4)
     validate.add_argument("--source", default="open_data")

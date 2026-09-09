@@ -1,13 +1,19 @@
 """Transactional customer email.
 
-Five messages carry the whole customer relationship, because there is no
+Three messages carry the whole customer relationship, because there is no
 dashboard and no account area:
 
-* **welcome** — you are subscribed, here is what happens and when;
-* **subscription confirmed** — the payment receipt in LaunchTrace's own words;
-* **first feed timing** — the specific Friday your first feed arrives;
+* **onboarding** — one message on the day they subscribe: the payment is
+  confirmed, here is what happens next, and here is the Friday the first feed
+  arrives;
 * **payment failed** — your card was declined and what happens if it stays that way;
 * **cancellation confirmed** — it has stopped, and when the last feed was.
+
+Onboarding used to be three separate messages — welcome, subscription
+confirmed, first feed timing — prepared for every recipient at once. Three
+emails landing together on day one reads as a mailing list rather than a
+person, and every fact in them fits comfortably in one. They are now one
+message, ``onboarding``.
 
 Rendering is separate from sending, as everywhere else, so the exact message a
 customer would receive can be produced and reviewed with no email credential.
@@ -88,7 +94,7 @@ def _render(
     return RenderedEmail(subject=subject, html=html, text=text)
 
 
-def render_welcome(
+def render_onboarding(
     company: str,
     contact_name: str | None = None,
     plan_key: str = "founding_monthly",
@@ -96,24 +102,39 @@ def render_welcome(
     first_feed: date | None = None,
     settings: Settings | None = None,
 ) -> RenderedEmail:
+    """The single message a new customer receives on the day they subscribe.
+
+    Confirmation that the payment went through, what happens next, and the
+    exact Friday the first feed arrives — in one email rather than three.
+    """
     plan = _plan(plan_key)
     friday = first_feed or next_friday(date.today())
     recipients = recipients or []
     return _render(
         heading="You're subscribed to LaunchTrace Food",
-        subject="You're subscribed to LaunchTrace Food",
+        subject=(
+            f"You're subscribed to LaunchTrace Food — first feed Friday {friday.strftime('%-d %B')}"
+        ),
         contact_name=contact_name,
         paragraphs=[
-            f"Thanks — {company} is set up on {plan['name']}.",
+            (
+                f"Thanks — {company} is set up on {plan['name']}, payment has gone through, "
+                "and Stripe will email you the receipt."
+            ),
             (
                 f"Your first feed arrives on Friday {friday.strftime('%-d %B %Y')}, and every "
                 "Friday after that. Each one is an email with the strongest new signals "
-                "summarised, and the full week attached as a CSV."
+                "summarised and the full week attached as a CSV. It covers the trade mark "
+                "journal published that week, so the brands in it are days old rather than "
+                "months old — a quiet week means the week was quiet, not that anything is "
+                "broken."
             ),
             (
                 "There is no dashboard and no login, by design. Everything arrives in your "
                 f"inbox. You can have up to {plan['max_recipients']} recipients on this plan — "
-                "reply to this email with the addresses and I'll add them."
+                "reply to this email with the addresses and I'll add them. Cancelling works "
+                "the same way: reply to any LaunchTrace email, and it takes effect "
+                "immediately with no notice period."
             ),
             (
                 "One thing worth saying plainly: these are commercial signals, not confirmed "
@@ -125,75 +146,18 @@ def render_welcome(
             ("Plan", plan["name"]),
             ("Price", f"£{plan['price_pence'] / 100:.0f} per month"),
             ("First feed", friday.strftime("%A %-d %B %Y")),
+            ("Then", "Every Friday"),
             ("Recipients", ", ".join(recipients) if recipients else "to be confirmed"),
+            ("Cancel", "Any time, effective immediately"),
         ],
         closing="If anything in the feed is not useful, tell me — that feedback is what shapes it.",
         text=(
             f"{company} is subscribed to LaunchTrace Food on {plan['name']} at "
-            f"£{plan['price_pence'] / 100:.0f}/month. Your first weekly feed arrives on "
-            f"{friday.isoformat()}. Reply to add up to {plan['max_recipients']} recipients."
+            f"£{plan['price_pence'] / 100:.0f}/month, and the payment has gone through. "
+            f"Your first weekly feed arrives on {friday.isoformat()}, then every Friday. "
+            f"Reply to add up to {plan['max_recipients']} recipients, or to cancel — "
+            "cancellation is immediate and there is no notice period."
         ),
-        settings=settings,
-    )
-
-
-def render_subscription_confirmed(
-    company: str,
-    plan_key: str = "founding_monthly",
-    contact_name: str | None = None,
-    settings: Settings | None = None,
-) -> RenderedEmail:
-    plan = _plan(plan_key)
-    return _render(
-        heading="Subscription confirmed",
-        subject="LaunchTrace Food — subscription confirmed",
-        contact_name=contact_name,
-        paragraphs=[
-            f"Your subscription for {company} is active and payment has gone through.",
-            (
-                "Stripe will email you the receipt and handles billing from here. Cancelling "
-                "takes effect immediately, there is no notice period, and you can do it by "
-                "replying to any LaunchTrace email."
-            ),
-        ],
-        facts=[
-            ("Plan", plan["name"]),
-            ("Price", f"£{plan['price_pence'] / 100:.0f} per month"),
-            ("Billing", "Monthly, via Stripe"),
-            ("Cancel", "Any time, effective immediately"),
-        ],
-        text=(
-            f"Subscription confirmed for {company} on {plan['name']} at "
-            f"£{plan['price_pence'] / 100:.0f}/month. Cancel any time."
-        ),
-        settings=settings,
-    )
-
-
-def render_first_feed_timing(
-    company: str,
-    first_feed: date | None = None,
-    contact_name: str | None = None,
-    settings: Settings | None = None,
-) -> RenderedEmail:
-    friday = first_feed or next_friday(date.today())
-    return _render(
-        heading="When your first feed arrives",
-        subject=f"Your first LaunchTrace feed: Friday {friday.strftime('%-d %B')}",
-        contact_name=contact_name,
-        paragraphs=[
-            (
-                f"Just so you know what to expect: the first feed for {company} arrives on "
-                f"Friday {friday.strftime('%-d %B %Y')}."
-            ),
-            (
-                "It covers the trade mark journal published that week, so the brands in it are "
-                "days old rather than months old. Some weeks are busier than others — a quiet "
-                "week means the week was quiet, not that anything is broken."
-            ),
-        ],
-        facts=[("First feed", friday.strftime("%A %-d %B %Y")), ("Then", "Every Friday")],
-        text=f"Your first LaunchTrace Food feed arrives on {friday.isoformat()}, then every Friday.",
         settings=settings,
     )
 
@@ -271,9 +235,7 @@ def render_cancellation_confirmed(
 
 
 TRANSACTIONAL_KINDS = {
-    "welcome": render_welcome,
-    "subscription_confirmed": render_subscription_confirmed,
-    "first_feed_timing": render_first_feed_timing,
+    "onboarding": render_onboarding,
     "payment_failed": render_payment_failed,
     "cancellation_confirmed": render_cancellation_confirmed,
 }
@@ -283,8 +245,6 @@ __all__ = [
     "TRANSACTIONAL_KINDS",
     "next_friday",
     "render_cancellation_confirmed",
-    "render_first_feed_timing",
+    "render_onboarding",
     "render_payment_failed",
-    "render_subscription_confirmed",
-    "render_welcome",
 ]

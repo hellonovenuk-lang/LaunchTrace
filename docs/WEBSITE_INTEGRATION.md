@@ -225,7 +225,7 @@ Visitor clicks Subscribe
         → customer record created or matched
         → recipient email recorded
         → subscription_status = active, delivery enabled
-        → welcome, subscription-confirmed and first-feed-timing prepared
+        → one onboarding email prepared per recipient
   → redirect to /billing/success  (browser)
 ```
 

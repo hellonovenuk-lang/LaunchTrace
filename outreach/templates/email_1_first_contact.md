@@ -46,7 +46,7 @@ Open Government Licence v3.0. Reply "no thanks" and I won't contact you again.*
 - [ ] Every brand is real, from a recent run, and suits **this** prospect's product
 - [ ] You have opened at least one source link and checked it says what we say
 - [ ] The address is a real one you found on their website, not a guess
-- [ ] This company is not in `outreach/suppressions.csv`
+- [ ] This company is not suppressed — `prospects show` says so, and `outreach-due` drops anyone blocked
 - [ ] Your name, company and an opt-out line are all present
 
 ## What not to do

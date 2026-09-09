@@ -3,6 +3,10 @@
 Source data (``journals``, ``trademark_records``) is kept separate from derived
 data (``company_matches``, ``web_enrichment``, ``opportunities``) so a scoring
 change never requires re-fetching a journal.
+
+It is also where LaunchTrace's own live sales state lives (``prospect_state``,
+``prospect_suppressions``). The researched seed list is reusable research and
+stays in git; anything that accumulates from contacting real people does not.
 """
 
 from __future__ import annotations
@@ -357,6 +361,82 @@ class LeadFeedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (Index("ix_feedback_customer_state", "customer_id", "state"),)
+
+
+class ProspectStateRow(Base):
+    """Live outreach state for one prospect on LaunchTrace's own sales list.
+
+    The researched seed list — who these companies are and why they fit — stays
+    in ``outreach/prospects_seed.csv`` and in git, because it is reusable
+    research. Everything that changes as a result of contacting a real person
+    lives here instead: verified addresses, named contacts, reply notes, the
+    dates things were sent, opt-outs and the current funnel position.
+
+    None of that belongs in a commit history. It is personal data about
+    identifiable people at identifiable businesses, it has a retention period,
+    an opt-out has to be honoured immediately and permanently, and git makes
+    deletion effectively impossible.
+    """
+
+    __tablename__ = "prospect_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    prospect_id: Mapped[str] = mapped_column(String(16), index=True)
+
+    # How to reach them, and where the address came from. Never a guess.
+    generic_contact_email: Mapped[str] = mapped_column(String(256), default="")
+    named_contact: Mapped[str] = mapped_column(String(256), default="")
+    decision_maker_role: Mapped[str] = mapped_column(String(128), default="")
+    email_source: Mapped[str] = mapped_column(String(32), default="none")
+
+    # Where they stand.
+    status: Mapped[str] = mapped_column(String(32), default="RESEARCHED", index=True)
+    priority: Mapped[str] = mapped_column(String(16), default="C", index=True)
+    icp_score: Mapped[int] = mapped_column(Integer, default=0)
+
+    # When things happened.
+    date_added: Mapped[date | None] = mapped_column(Date)
+    email_1_sent_date: Mapped[date | None] = mapped_column(Date)
+    sample_requested_date: Mapped[date | None] = mapped_column(Date)
+    sample_sent_date: Mapped[date | None] = mapped_column(Date)
+    offer_sent_date: Mapped[date | None] = mapped_column(Date)
+    converted_date: Mapped[date | None] = mapped_column(Date)
+    follow_up_due_date: Mapped[date | None] = mapped_column(Date)
+
+    # What came back.
+    stripe_customer_id: Mapped[str] = mapped_column(String(64), default="")
+    reply_state: Mapped[str] = mapped_column(String(16), default="none")
+    opted_out: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    suppression_reason: Mapped[str] = mapped_column(String(512), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (UniqueConstraint("prospect_id", name="uq_prospect_state_prospect_id"),)
+
+
+class ProspectSuppression(Base):
+    """Who must never be contacted, by any identity we can check.
+
+    Separate from ``prospect_state`` so that deleting a prospect can never
+    delete the record of their opt-out, and insert-only so that no code path
+    can shorten the list. ``SuppressionRule`` is the equivalent for the product
+    feed; this one is about LaunchTrace's own outreach.
+    """
+
+    __tablename__ = "prospect_suppressions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)  # email | domain | company
+    value: Mapped[str] = mapped_column(String(512), index=True)
+    company_name: Mapped[str] = mapped_column(String(512), default="")
+    date_added: Mapped[str] = mapped_column(String(32), default="")
+    reason: Mapped[str] = mapped_column(String(512), default="")
+    added_by: Mapped[str] = mapped_column(String(64), default="operator")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (UniqueConstraint("kind", "value", name="uq_prospect_suppression_kind_value"),)
 
 
 class WebhookEvent(Base):

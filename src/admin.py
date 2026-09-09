@@ -26,7 +26,7 @@ import sys
 
 from src.logging_setup import configure_logging
 from src.sales.feedback import FeedbackState
-from src.sales.models import SUPPLIER_CATEGORIES, Priority, ProspectStatus
+from src.sales.models import SUPPLIER_CATEGORIES, EmailSource, Priority, ProspectStatus
 from src.settings import get_settings
 
 EPILOG = """\
@@ -80,6 +80,26 @@ def build_parser() -> argparse.ArgumentParser:
     set_status.add_argument("--status", required=True, choices=[s.value for s in ProspectStatus])
     set_status.add_argument("--date", help="When it happened (YYYY-MM-DD), default today")
     set_status.add_argument("--note", help="Anything worth recording, e.g. what they said")
+
+    set_contact = prospect_actions.add_parser(
+        "set-contact",
+        help="Record a contact address you checked on their own website, and where it came from",
+        description=(
+            "Contact details are personal data, so they are stored in the application "
+            "database, never in a git-tracked file. An address always has to come with "
+            "a source; there is no way to record a guess as a checked address."
+        ),
+    )
+    set_contact.add_argument("--prospect-id", required=True)
+    set_contact.add_argument("--email", help="The generic sales@ or enquiries@ address")
+    set_contact.add_argument(
+        "--source",
+        default=EmailSource.WEBSITE_VERIFIED.value,
+        choices=[s.value for s in EmailSource],
+        help="Where the address came from. 'I guessed the pattern' is not a source.",
+    )
+    set_contact.add_argument("--named-contact", help="Only if you already deal with them")
+    set_contact.add_argument("--role", help="Only if already known")
 
     prospect_actions.add_parser(
         "rescore", help="Re-run ICP scoring and reassign Priority A/B/C after editing the config"

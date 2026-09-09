@@ -162,8 +162,9 @@ def apply_subscription_event(session: Session, event: dict[str, Any]) -> Webhook
                     )
                 )
         session.flush()
-        # Onboarding — welcome, confirmation and first-feed timing. Each is
-        # prepared once; with no Resend key they land in reports/outbox/.
+        # Onboarding — one message per recipient carrying the confirmation,
+        # what happens next and the first Friday. Prepared once per customer;
+        # with no Resend key it lands in reports/outbox/.
         outcome = on_subscription_started(session, customer)
         log.info(
             "stripe.subscription_started",

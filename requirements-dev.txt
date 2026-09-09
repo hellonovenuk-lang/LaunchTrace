@@ -1,4 +1,10 @@
 -r requirements.txt
+
+# Install LaunchTrace itself, editable. Without this ``import src`` depends on
+# the current working directory, which is why the suite passed locally under
+# ``python -m pytest`` and failed on CI under ``pytest``.
+-e .
+
 pytest==9.1.1
 pytest-cov==7.0.0
 ruff==0.16.6

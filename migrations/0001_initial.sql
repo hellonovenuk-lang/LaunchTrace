@@ -172,6 +172,55 @@ CREATE INDEX IF NOT EXISTS ix_pipeline_runs_journal_number ON pipeline_runs (jou
 CREATE UNIQUE INDEX ix_pipeline_runs_run_id ON pipeline_runs (run_id);
 CREATE INDEX IF NOT EXISTS ix_pipeline_runs_status ON pipeline_runs (status);
 
+CREATE TABLE IF NOT EXISTS prospect_state (
+	id SERIAL NOT NULL, 
+	prospect_id VARCHAR(16) NOT NULL, 
+	generic_contact_email VARCHAR(256) NOT NULL, 
+	named_contact VARCHAR(256) NOT NULL, 
+	decision_maker_role VARCHAR(128) NOT NULL, 
+	email_source VARCHAR(32) NOT NULL, 
+	status VARCHAR(32) NOT NULL, 
+	priority VARCHAR(16) NOT NULL, 
+	icp_score INTEGER NOT NULL, 
+	date_added DATE, 
+	email_1_sent_date DATE, 
+	sample_requested_date DATE, 
+	sample_sent_date DATE, 
+	offer_sent_date DATE, 
+	converted_date DATE, 
+	follow_up_due_date DATE, 
+	stripe_customer_id VARCHAR(64) NOT NULL, 
+	reply_state VARCHAR(16) NOT NULL, 
+	opted_out BOOLEAN NOT NULL, 
+	suppression_reason VARCHAR(512) NOT NULL, 
+	notes TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_prospect_state_prospect_id UNIQUE (prospect_id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_prospect_state_opted_out ON prospect_state (opted_out);
+CREATE INDEX IF NOT EXISTS ix_prospect_state_priority ON prospect_state (priority);
+CREATE INDEX IF NOT EXISTS ix_prospect_state_prospect_id ON prospect_state (prospect_id);
+CREATE INDEX IF NOT EXISTS ix_prospect_state_status ON prospect_state (status);
+
+CREATE TABLE IF NOT EXISTS prospect_suppressions (
+	id SERIAL NOT NULL, 
+	kind VARCHAR(16) NOT NULL, 
+	value VARCHAR(512) NOT NULL, 
+	company_name VARCHAR(512) NOT NULL, 
+	date_added VARCHAR(32) NOT NULL, 
+	reason VARCHAR(512) NOT NULL, 
+	added_by VARCHAR(64) NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_prospect_suppression_kind_value UNIQUE (kind, value)
+);
+
+CREATE INDEX IF NOT EXISTS ix_prospect_suppressions_kind ON prospect_suppressions (kind);
+CREATE INDEX IF NOT EXISTS ix_prospect_suppressions_value ON prospect_suppressions (value);
+
 CREATE TABLE IF NOT EXISTS sample_requests (
 	id SERIAL NOT NULL, 
 	work_email VARCHAR(256) NOT NULL, 

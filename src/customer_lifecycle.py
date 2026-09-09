@@ -8,8 +8,8 @@ stub mode, and with no Resend key every message is written to
 The three transitions that matter:
 
 * **subscription started** — the customer exists, recipients are recorded,
-  delivery is enabled, and welcome, confirmation and first-feed-timing messages
-  are prepared once each;
+  delivery is enabled, and one onboarding message per recipient is prepared:
+  confirmation, what happens next and the first Friday, in a single email;
 * **payment failed** — the account goes past due, one message goes out, and the
   feed continues through a grace period before pausing. It is never cancelled
   by us, and the message is never sent twice for the same failure;
@@ -35,10 +35,8 @@ from src.deliver.resend_client import EmailSender
 from src.deliver.transactional import (
     next_friday,
     render_cancellation_confirmed,
-    render_first_feed_timing,
+    render_onboarding,
     render_payment_failed,
-    render_subscription_confirmed,
-    render_welcome,
 )
 from src.logging_setup import get_logger
 from src.settings import Settings, get_settings
@@ -158,47 +156,19 @@ def on_subscription_started(
     messages: list[PreparedMessage] = []
 
     for pref in preferences:
+        # One message, not three. The idempotency key is per customer and kind,
+        # so a redelivered webhook or a re-run command still prepares it once.
         messages.append(
             _prepare(
                 session,
                 customer,
-                "welcome",
-                render_welcome(
+                "onboarding",
+                render_onboarding(
                     company=customer.company,
                     contact_name=customer.contact_name,
                     plan_key=customer.plan_key,
                     recipients=[p.recipient_email for p in preferences],
                     first_feed=friday,
-                    settings=settings,
-                ),
-                pref.recipient_email,
-                sender,
-            )
-        )
-        messages.append(
-            _prepare(
-                session,
-                customer,
-                "subscription_confirmed",
-                render_subscription_confirmed(
-                    company=customer.company,
-                    plan_key=customer.plan_key,
-                    contact_name=customer.contact_name,
-                    settings=settings,
-                ),
-                pref.recipient_email,
-                sender,
-            )
-        )
-        messages.append(
-            _prepare(
-                session,
-                customer,
-                "first_feed_timing",
-                render_first_feed_timing(
-                    company=customer.company,
-                    first_feed=friday,
-                    contact_name=customer.contact_name,
                     settings=settings,
                 ),
                 pref.recipient_email,

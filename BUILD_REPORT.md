@@ -26,11 +26,13 @@ prospect-specific preview → drafted email → sample → customer → weekly d
 → feedback → metrics, none of it requiring a credential and none of it able to
 send anything.
 
-526 tests pass, lint, formatting and type checks are clean, and the container
+531 tests pass, lint, formatting and type checks are clean, and the container
 image was built and served.
 
-The four-week validation produced a real but marginal number, reported as it
-came out rather than framed favourably. See "Validation" below.
+The four-week January 2018 historical sanity test produced a real but marginal
+number, reported as it came out rather than framed favourably. It is an
+engineering and historical check, not the commercial validation. See "The four
+January 2018 weeks" below.
 
 ## Commits
 
@@ -39,7 +41,7 @@ All on `claude/launchtrace-food-mvp-7h7bc6`, oldest first:
 | Commit | What |
 | --- | --- |
 | `8036832` | Pipeline core: ingest, parse, classify, enrich, score |
-| `83869ea` | Billing, website, operator CLI and four-week validation |
+| `83869ea` | Billing, website, operator CLI and the four-week January 2018 historical sanity test |
 | `bd1ebc5` | Test suite, `.env.example`, lint and type-check clean-up |
 | `dfbaf40` | Migrations, GitHub Actions, compliance drafts, prospecting material |
 | `eaa9274` | README, container image and deployment configuration |
@@ -81,8 +83,8 @@ What is covered, and why each was worth testing:
 
 ```
 ruff check .           All checks passed!
-ruff format --check .  88 files already formatted
-mypy src               Success: no issues found in 58 source files
+ruff format --check .  119 files already formatted
+mypy src               Success: no issues found in 76 source files
 ```
 
 All three run in CI on every push.
@@ -97,7 +99,7 @@ Genuinely exercised against real external systems during the build:
 | **Companies House bulk data** | Downloaded the real September 2026 snapshot (492 MB) and indexed **5,689,367 companies**. Live matching verified against real applicant names from the 2018 journals |
 | **PostgreSQL 16** | The generated migration applied cleanly: 14 tables, 69 indexes. The full pipeline then ran against it and wrote 53 opportunities, 1,456 trade mark records and 53 company matches |
 | **Docker** | Image built (369 MB), container started, `/healthz` returned `{"status":"ok"}` and the landing page served correctly |
-| **Web search (research)** | Used to identify and verify the 60 real UK supplier companies in `outreach/prospects.csv` |
+| **Web search (research)** | Used to identify and verify the 60 real UK supplier companies in `outreach/prospects_seed.csv` |
 
 ## Mocked or fixture-tested integrations
 
@@ -109,7 +111,27 @@ Genuinely exercised against real external systems during the build:
 | **Resend** | File mode — every email written to `reports/outbox/` as it would have been sent | No account exists yet |
 | **Stripe** | Stub checkout plus webhook fixtures covering every state transition | No account exists yet |
 
-## Validation: what the four weeks produced
+## The four January 2018 weeks: what they are, and what they are not
+
+**What they are.** An engineering and historical sanity test: proof that
+parsing, company matching, scoring and weekly volume behave correctly across
+four consecutive weeks of real UKIPO data, with every dropped record and its
+reason recorded.
+
+**What they are not.** They are not the 2026 commercial validation, and
+re-running them with web enrichment switched on will not turn them into it.
+Current web enrichment applied to a brand published in January 2018 recovers
+what that brand became over the following eight years — not what was knowable
+about it in the week it was published. That flatters the brands that later
+succeeded and says nothing useful about the ones that were genuinely early at
+the time, so the resulting number would not measure the product.
+
+**The decisive product test is a current one:** current UKIPO weekly journal +
+current goods/services text + current Companies House evidence + current
+Tavily/web enrichment + current classification — one live
+`python -m src.pipeline weekly`, scored on what is knowable that week.
+
+The historical numbers below are unchanged and reported as they came out.
 
 Four consecutive **real** UKIPO journal weeks (5 to 26 January 2018 — the most
 recent complete weeks in the IPO's Open Data release), enriched against the
@@ -132,14 +154,14 @@ recent complete weeks in the IPO's Open Data release), enriched against the
 **The 0 HIGH is structural, not a finding about the signal.** Without a search
 provider the pipeline cannot verify whether a brand is already established, so
 the score is deliberately capped below the HIGH band. It refuses to present an
-unverified record as a strong signal. Connect a search key and re-run to get
-the real split.
+unverified record as a strong signal. The way to get the real split is to
+connect a search key and run a **current** week — not to re-run these four.
 
 Three further limits, all recorded in the report itself:
 
 - The Open Data release does not publish goods and services text. **The live
   weekly journal XML does**, so a real Friday run has strictly more evidence
-  than this validation had.
+  than these four weeks had.
 - Classification ran on rules only, which is more conservative than the full
   classifier.
 - The threshold is a business choice. The report includes a sensitivity table:
@@ -149,9 +171,12 @@ The output is credible on inspection. The top records are real emerging UK food
 brands of that period — Bloody Bens, Qima Coffee, Figment Coffee, Seaweed & Co,
 The Snaffling Pig — which is the qualitative check that matters most.
 
-**No conclusion is drawn about whether the business is validated.** The
-evidence is in `reports/validation/`, including `rejections.csv` with every one
-of the 5,147 dropped records and the reason for each. Nothing was cherry-picked.
+**No conclusion is drawn about whether the business is validated**, and none
+can be drawn from these four weeks. The evidence is in `reports/validation/`,
+including `rejections.csv` with every one of the 5,147 dropped records and the
+reason for each. Nothing was cherry-picked. The report files themselves are
+unchanged from the run that produced them, and still use the older word
+"validation" in their own headings.
 
 ## Defects found and fixed during the build
 
@@ -258,8 +283,8 @@ results are cached.
 
 | Task | Time |
 | --- | --- |
-| Set up locally and read the validation | 30 minutes |
-| Create a Tavily account, rebuild the index, re-run validation | 30 minutes |
+| Set up locally and read the January 2018 sanity test | 30 minutes |
+| Create a Tavily account, rebuild the index, run one current week | 30 minutes |
 | Complete the prospect contact addresses | 2 hours |
 | Send the first ten outreach emails | 1 hour |
 | Supabase, Resend and Stripe accounts | 1 hour |
@@ -282,7 +307,9 @@ Stated plainly rather than buried:
 3. **No real payment has been taken.** The webhook state machine is tested
    against fixtures covering every transition; Stripe's live API has not been
    called.
-4. **The score is calibrated, not validated.** The weights are reasoned and
+4. **The score is calibrated, not validated.** The four January 2018 weeks test
+   the machinery, not the commercial signal; only a current-data run can do
+   that. The weights are reasoned and
    internally consistent, but no supplier has yet said whether a 79 is a better
    lead than a 62. That feedback is what should drive the next tuning pass, and
    `score_events` already records the history to support it.
@@ -292,18 +319,23 @@ Stated plainly rather than buried:
 
 ## Recommended immediate next action
 
-**Create a free Tavily account, put the key in `.env`, and re-run
-`python -m src.pipeline validate --weeks 4`.**
+**Create a free Tavily account, put the key in `.env`, and run one current
+week: `python -m src.pipeline weekly`.**
 
 It takes about ten minutes and it answers the only question that matters right
-now. The current 5.5/week was produced with the pipeline's most important
-enrichment stage switched off. Until it runs, you do not know whether
-LaunchTrace Food is a GREEN business or a FAIL — and every other decision,
-including whether to spend the eight hours above, depends on that number.
+now. The 5.5/week figure is from four January 2018 weeks with the pipeline's
+most important enrichment stage switched off, and it cannot be repaired by
+switching enrichment on and re-running those same weeks — current web evidence
+about a 2018 brand is not the evidence that existed in 2018. Only a current
+week measures the product: current journal, current goods/services text,
+current Companies House evidence, current enrichment, current classification.
+Until that has run, you do not know whether LaunchTrace Food is a GREEN
+business or a FAIL — and every other decision, including whether to spend the
+eight hours above, depends on that number.
 
-Then send `reports/validation/top_opportunities.csv` to five suppliers from
-`outreach/prospects.csv` and ask them one question: *would you want to reach
-these companies?*
+Then send that week's opportunities to five suppliers from
+`outreach/prospects_seed.csv` and ask them one question: *would you want to
+reach these companies?*
 
 ---
 
@@ -334,7 +366,7 @@ point where a credential would have been needed.
 
 ### What was verified by running it
 
-* **The whole sales path**, against the real historical validation data:
+* **The whole sales path**, against the real January 2018 historical data:
   prospect list → ICP scoring → preview for four different supplier types →
   drafted email → sample pack → HTML report opened and read → customer created
   → onboarding → payment failure → recovery → cancellation → feedback →
@@ -347,7 +379,7 @@ point where a credential would have been needed.
   lost, scored, and prioritised. One real duplicate found and resolved.
 * **The sample report**, rendered in a browser and inspected as a customer
   would see it.
-* **526 tests**, `ruff check`, `ruff format --check`, `mypy src`, and the
+* **531 tests**, `ruff check`, `ruff format --check`, `mypy src`, and the
   end-to-end smoke test.
 
 ### Defects found and fixed in this session
@@ -406,7 +438,16 @@ better.
 
 Unchanged by this session, and the part that decides whether there is a
 business: **no supplier has seen any of this.** Every conversion rate reported
-by `business-status` currently has a denominator of zero or one. The volume
-figure of 5.5 good opportunities per week was produced without web enrichment
-and without goods-and-services text, so it remains a floor rather than a
-measurement. See [`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) §3.
+by `business-status` currently has a denominator of zero or one.
+
+The volume figure of 5.5 good opportunities per week comes from four January
+2018 weeks run without web enrichment and without goods-and-services text. It
+is a historical sanity check on the machinery, not a measurement of the
+product, and it cannot be turned into one by re-running those weeks with
+enrichment connected — today's web describes what a 2018 brand became, not what
+was knowable about it that week.
+
+The measurement requires **current UKIPO weekly journal + current
+goods/services text + current Companies House evidence + current Tavily/web
+enrichment + current classification**. See
+[`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md) §3.

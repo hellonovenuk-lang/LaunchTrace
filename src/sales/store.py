@@ -1,27 +1,45 @@
-"""Reading and writing the prospect list.
+"""Reading and writing LaunchTrace's own prospect list.
 
-``outreach/prospects.csv`` is the source of truth. This module is the only code
-that writes it, and every write is whole-file: the list is small, and a partial
-write is worse than a slow one.
+The list has two halves, kept in two different places on purpose.
 
-Two safety properties matter more than anything else here:
+**The researched seed list** — ``outreach/prospects_seed.csv`` — is who these
+60 companies are, what they supply and why LaunchTrace suits them. That is
+reusable research, it is worth reviewing in a diff, and it contains no personal
+data, so it stays in git. Nothing in this module ever writes to it.
+
+**The live outreach state** lives in the application database, in
+``prospect_state`` and ``prospect_suppressions``. Verified contact addresses,
+named contacts, reply notes, the dates things were sent, opt-outs and the
+current funnel position are all personal data about identifiable people. They
+have a retention period, an opt-out has to be honoured permanently, and a
+commit history makes deletion effectively impossible. They do not belong in
+git, so they are not there.
+
+Two safety properties matter more than anything else here, and both survived
+the move:
 
 * **A suppressed or opted-out prospect can never be silently revived.** Import
-  and update paths both refuse.
-* **The same business cannot enter the list twice**, whether by name, domain or
-  company number, because contacting someone twice is the fastest way to lose
-  them.
+  and update paths both refuse, and the suppression table is insert-only —
+  there is no code path in this module that deletes from it.
+* **The same business cannot enter the list twice**, whether by name, domain,
+  company number or contact address, because contacting someone twice is the
+  fastest way to lose them.
 """
 
 from __future__ import annotations
 
 import csv
-import shutil
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from src.db.engine import get_session, init_db
+from src.db.tables import ProspectStateRow, ProspectSuppression
 from src.logging_setup import get_logger
+from src.sales.icp import apply_scores
 from src.sales.models import (
     EmailSource,
     Priority,
@@ -39,10 +57,12 @@ from src.settings import REPO_ROOT
 log = get_logger(__name__)
 
 OUTREACH_DIR = REPO_ROOT / "outreach"
-PROSPECTS_CSV = OUTREACH_DIR / "prospects.csv"
-SUPPRESSIONS_CSV = OUTREACH_DIR / "suppressions.csv"
+PROSPECTS_SEED_CSV = OUTREACH_DIR / "prospects_seed.csv"
 
-CSV_COLUMNS = [
+# The research columns, and only the research columns. If a column here ever
+# starts holding something that came back from a real person, it is in the
+# wrong file.
+SEED_COLUMNS = [
     "prospect_id",
     "company_name",
     "website",
@@ -55,11 +75,18 @@ CSV_COLUMNS = [
     "products_services",
     "buying_intent_categories",
     "contact_route",
+    "company_size_hint",
+    "researched_date",
+    "research_exclusion",
+    "research_notes",
+]
+
+# The live columns, held per prospect in ``prospect_state``.
+STATE_COLUMNS = [
     "generic_contact_email",
     "named_contact",
     "decision_maker_role",
     "email_source",
-    "company_size_hint",
     "status",
     "priority",
     "icp_score",
@@ -77,16 +104,7 @@ CSV_COLUMNS = [
     "notes",
 ]
 
-SUPPRESSION_COLUMNS = [
-    "value",
-    "kind",
-    "company_name",
-    "date_added",
-    "reason",
-    "added_by",
-]
-
-_DATE_FIELDS = [
+_STATE_DATE_FIELDS = [
     "date_added",
     "email_1_sent_date",
     "sample_requested_date",
@@ -128,8 +146,8 @@ class SuppressionEntry:
 class SuppressionList:
     """Who must never be contacted, by any identity we can check.
 
-    Held separately from the prospect list so that deleting a prospect row can
-    never delete the record of their opt-out.
+    Held in its own table so that deleting a prospect row can never delete the
+    record of their opt-out.
     """
 
     entries: list[SuppressionEntry] = field(default_factory=list)
@@ -166,78 +184,7 @@ class SuppressionList:
 
 
 # ---------------------------------------------------------------------------
-# suppression list
-# ---------------------------------------------------------------------------
-
-
-def load_suppressions(path: Path | None = None) -> SuppressionList:
-    path = path or SUPPRESSIONS_CSV
-    if not path.exists():
-        return SuppressionList()
-    entries: list[SuppressionEntry] = []
-    with path.open(encoding="utf-8-sig", newline="") as fh:
-        for row in csv.DictReader(fh):
-            # The first version of this file used an 'email' column. Read both
-            # shapes so an existing list is never lost on upgrade.
-            value = (row.get("value") or row.get("email") or "").strip()
-            if not value:
-                continue
-            entries.append(
-                SuppressionEntry(
-                    value=value,
-                    kind=(row.get("kind") or "email").strip() or "email",
-                    company_name=(row.get("company_name") or "").strip(),
-                    date_added=(row.get("date_added") or "").strip(),
-                    reason=(row.get("reason") or "").strip(),
-                    added_by=(row.get("added_by") or "").strip() or "operator",
-                )
-            )
-    return SuppressionList(entries=entries)
-
-
-def save_suppressions(suppressions: SuppressionList, path: Path | None = None) -> Path:
-    """Append-only in spirit: this never writes fewer entries than it read."""
-    path = path or SUPPRESSIONS_CSV
-    existing = load_suppressions(path)
-    merged = SuppressionList(entries=list(existing.entries))
-    for entry in suppressions.entries:
-        merged.add(entry)
-    if len(merged.entries) < len(existing.entries):  # pragma: no cover - defensive
-        raise SuppressedProspectError("Refusing to write a shorter suppression list")
-    _backup(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=SUPPRESSION_COLUMNS)
-        writer.writeheader()
-        for entry in merged.entries:
-            writer.writerow(
-                {
-                    "value": entry.value,
-                    "kind": entry.kind,
-                    "company_name": entry.company_name,
-                    "date_added": entry.date_added,
-                    "reason": entry.reason,
-                    "added_by": entry.added_by,
-                }
-            )
-    return path
-
-
-def _backup(path: Path) -> None:
-    """Keep the previous version of anything we overwrite.
-
-    The suppression list in particular must survive a mistake, so the copy is
-    taken before every write rather than on a schedule.
-    """
-    if not path.exists():
-        return
-    backup_dir = path.parent / "backups"
-    backup_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(path, backup_dir / f"{path.stem}.previous{path.suffix}")
-
-
-# ---------------------------------------------------------------------------
-# prospects
+# the seed list (git, read-only)
 # ---------------------------------------------------------------------------
 
 
@@ -251,53 +198,236 @@ def _parse_date(value: str) -> date | None:
         return None
 
 
-def _row_to_prospect(row: dict[str, str]) -> Prospect:
-    data: dict[str, object] = {}
-    for column in CSV_COLUMNS:
-        value = (row.get(column) or "").strip()
-        if column in _DATE_FIELDS:
-            data[column] = _parse_date(value)
-        elif column == "opted_out":
-            data[column] = value.lower() in {"true", "yes", "1", "y"}
-        elif column == "icp_score":
-            data[column] = int(value) if value.isdigit() else 0
-        elif column == "status":
-            data[column] = ProspectStatus(value) if value else ProspectStatus.RESEARCHED
-        elif column == "priority":
-            data[column] = Priority(value) if value else Priority.C
-        elif column == "reply_state":
-            data[column] = ReplyState(value) if value else ReplyState.NONE
-        elif column == "email_source":
-            data[column] = EmailSource(value) if value else EmailSource.NONE
-        else:
-            data[column] = value
-    return Prospect(**data)  # type: ignore[arg-type]
+def _seed_row_to_prospect(row: dict[str, str]) -> Prospect:
+    """One research row, as a Prospect with no outreach history on it yet.
+
+    The only status the seed file can express is "research says do not contact
+    this one" — ``research_exclusion``, used for a duplicate or a business that
+    turned out not to fit. Every other funnel position is something that
+    happened to a person, and that is read from the database, not from here.
+    """
+
+    def get(name: str) -> str:
+        return (row.get(name) or "").strip()
+
+    exclusion = get("research_exclusion")
+    return Prospect(
+        prospect_id=get("prospect_id"),
+        company_name=get("company_name"),
+        website=get("website"),
+        companies_house_number=get("companies_house_number"),
+        company_type=get("company_type") or "unknown",
+        supplier_category=get("supplier_category") or "other",
+        supplier_subcategory=get("supplier_subcategory"),
+        geography=get("geography"),
+        icp_reason=get("icp_reason"),
+        products_services=get("products_services"),
+        buying_intent_categories=get("buying_intent_categories"),  # type: ignore[arg-type]
+        contact_route=get("contact_route") or "unknown",
+        company_size_hint=get("company_size_hint"),
+        status=ProspectStatus.SUPPRESSED if exclusion else ProspectStatus.RESEARCHED,
+        date_added=_parse_date(get("researched_date")),
+        suppression_reason=exclusion,
+        notes=get("research_notes"),
+    )
 
 
-def _prospect_to_row(prospect: Prospect) -> dict[str, str]:
-    row: dict[str, str] = {}
-    for column in CSV_COLUMNS:
-        value = getattr(prospect, column)
-        if column in _DATE_FIELDS:
-            row[column] = value.isoformat() if value else ""
-        elif column == "opted_out":
-            row[column] = "true" if value else "false"
-        elif column == "buying_intent_categories":
-            row[column] = "|".join(value)
-        elif hasattr(value, "value"):
-            row[column] = str(value.value)
-        else:
-            row[column] = "" if value is None else str(value)
+def _prospect_to_seed_row(prospect: Prospect) -> dict[str, str]:
+    """The research half of a prospect, and nothing else.
+
+    This is the one function that decides what may reach git. It writes the
+    columns in ``SEED_COLUMNS`` and reads nothing operational, so no contact
+    address, reply, date or funnel position can leak into the file even by
+    accident.
+    """
+    return {
+        "prospect_id": prospect.prospect_id,
+        "company_name": prospect.company_name,
+        "website": prospect.website,
+        "companies_house_number": prospect.companies_house_number,
+        "company_type": prospect.company_type,
+        "supplier_category": prospect.supplier_category,
+        "supplier_subcategory": prospect.supplier_subcategory,
+        "geography": prospect.geography,
+        "icp_reason": prospect.icp_reason,
+        "products_services": prospect.products_services,
+        "buying_intent_categories": "|".join(prospect.buying_intent_categories),
+        "contact_route": prospect.contact_route,
+        "company_size_hint": prospect.company_size_hint,
+        "researched_date": (prospect.date_added or today()).isoformat(),
+        "research_exclusion": "",
+        "research_notes": prospect.notes,
+    }
+
+
+def append_seed_rows(prospects: list[Prospect], path: Path | None = None) -> int:
+    """Append research rows for prospects the seed file does not have yet.
+
+    Append-only. An existing row is never rewritten, so a research file that
+    has been corrected by hand stays corrected, and no operational value can
+    overwrite a research one.
+    """
+    path = path or PROSPECTS_SEED_CSV
+    known = {p.prospect_id for p in load_seed(path)}
+    missing = [p for p in prospects if p.prospect_id and p.prospect_id not in known]
+    if not missing:
+        return 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new_file = not path.exists()
+    with path.open("a", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=SEED_COLUMNS)
+        if new_file:
+            writer.writeheader()
+        for prospect in missing:
+            writer.writerow(_prospect_to_seed_row(prospect))
+    log.info("prospects.seed_appended", count=len(missing), path=str(path))
+    return len(missing)
+
+
+def load_seed(path: Path | None = None) -> list[Prospect]:
+    """The researched list as shipped in the repository."""
+    path = path or PROSPECTS_SEED_CSV
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8-sig", newline="") as fh:
+        return [_seed_row_to_prospect(row) for row in csv.DictReader(fh)]
+
+
+# ---------------------------------------------------------------------------
+# the live state (database)
+# ---------------------------------------------------------------------------
+
+
+def _state_rows(session: Session) -> dict[str, ProspectStateRow]:
+    rows = session.execute(select(ProspectStateRow)).scalars().all()
+    return {row.prospect_id: row for row in rows}
+
+
+def _apply_state(prospect: Prospect, row: ProspectStateRow) -> Prospect:
+    """Overlay the live state onto a seed prospect."""
+    prospect.generic_contact_email = row.generic_contact_email or ""
+    prospect.named_contact = row.named_contact or ""
+    prospect.decision_maker_role = row.decision_maker_role or ""
+    prospect.email_source = EmailSource(row.email_source or EmailSource.NONE.value)
+    prospect.status = ProspectStatus(row.status or ProspectStatus.RESEARCHED.value)
+    prospect.priority = Priority(row.priority or Priority.C.value)
+    prospect.icp_score = int(row.icp_score or 0)
+    for name in _STATE_DATE_FIELDS:
+        setattr(prospect, name, getattr(row, name))
+    prospect.stripe_customer_id = row.stripe_customer_id or ""
+    prospect.reply_state = ReplyState(row.reply_state or ReplyState.NONE.value)
+    prospect.opted_out = bool(row.opted_out)
+    prospect.suppression_reason = row.suppression_reason or ""
+    prospect.notes = row.notes or ""
+    return prospect
+
+
+def _write_state(session: Session, prospect: Prospect) -> ProspectStateRow:
+    row = session.execute(
+        select(ProspectStateRow).where(ProspectStateRow.prospect_id == prospect.prospect_id)
+    ).scalar_one_or_none()
+    if row is None:
+        row = ProspectStateRow(prospect_id=prospect.prospect_id)
+        session.add(row)
+    for name in STATE_COLUMNS:
+        value = getattr(prospect, name)
+        setattr(row, name, value.value if hasattr(value, "value") else value)
+    row.updated_at = datetime.now(UTC)
     return row
 
 
-class ProspectStore:
-    """The prospect list, loaded once and saved deliberately."""
+def load_suppressions(session: Session) -> SuppressionList:
+    rows = session.execute(select(ProspectSuppression)).scalars().all()
+    return SuppressionList(
+        entries=[
+            SuppressionEntry(
+                value=row.value,
+                kind=row.kind or "email",
+                company_name=row.company_name or "",
+                date_added=row.date_added or "",
+                reason=row.reason or "",
+                added_by=row.added_by or "operator",
+            )
+            for row in rows
+        ]
+    )
 
-    def __init__(self, prospects: list[Prospect], path: Path, suppressions: SuppressionList):
+
+def save_suppressions(session: Session, suppressions: SuppressionList) -> int:
+    """Insert-only. Returns how many entries were new.
+
+    Nothing here deletes or updates an existing row, so a suppression list can
+    only ever grow. That is the whole point of it.
+    """
+    existing = {
+        (row.kind, SuppressionEntry(row.value, row.kind).key)
+        for row in session.execute(select(ProspectSuppression)).scalars()
+    }
+    added = 0
+    for entry in suppressions.entries:
+        if (entry.kind, entry.key) in existing:
+            continue
+        session.add(
+            ProspectSuppression(
+                kind=entry.kind,
+                value=entry.value,
+                company_name=entry.company_name,
+                date_added=entry.date_added or today().isoformat(),
+                reason=entry.reason,
+                added_by=entry.added_by or "operator",
+            )
+        )
+        existing.add((entry.kind, entry.key))
+        added += 1
+    session.flush()
+    return added
+
+
+def sync_seed(session: Session, seed: list[Prospect] | None = None) -> int:
+    """Give every researched company a state row, once. Returns how many were new.
+
+    Idempotent and additive: a prospect that already has live state is left
+    exactly as it is, so re-running this can never undo an opt-out or roll a
+    funnel position backwards.
+
+    New rows are scored on the way in, from ``config/icp_scoring.json``, so a
+    fresh database starts with the same prioritisation the research implies
+    without the derived score being checked into git.
+    """
+    seed = load_seed() if seed is None else seed
+    known = set(_state_rows(session).keys())
+    fresh = [p for p in seed if p.prospect_id not in known]
+    if fresh:
+        apply_scores(fresh)
+    created = 0
+    for prospect in fresh:
+        _write_state(session, prospect)
+        created += 1
+    if created:
+        session.flush()
+        log.info("prospects.seeded", created=created)
+    return created
+
+
+# ---------------------------------------------------------------------------
+# the store
+# ---------------------------------------------------------------------------
+
+
+class ProspectStore:
+    """The prospect list: research from git, live state from the database."""
+
+    def __init__(
+        self,
+        prospects: list[Prospect],
+        session: Session,
+        suppressions: SuppressionList | None = None,
+        seed_path: Path | None = None,
+    ):
         self.prospects = prospects
-        self.path = path
-        self.suppressions = suppressions
+        self.session = session
+        self.suppressions = suppressions if suppressions is not None else SuppressionList()
+        self.seed_path = seed_path or PROSPECTS_SEED_CSV
 
     # -- lookup ------------------------------------------------------------
 
@@ -464,8 +594,8 @@ class ProspectStore:
     def opt_out(self, prospect: Prospect, reason: str = "requested no further contact") -> Prospect:
         """Record an opt-out on both the prospect row and the suppression list.
 
-        Both, always: the row can be edited or deleted by hand, the suppression
-        list is what actually stops a future import.
+        Both, always: the state row is about one prospect, the suppression list
+        is what actually stops a future import under a different spelling.
         """
         prospect.opted_out = True
         prospect.reply_state = ReplyState.OPT_OUT
@@ -510,10 +640,21 @@ class ProspectStore:
 
     # -- persistence -------------------------------------------------------
 
-    def save(self) -> Path:
-        save_prospects(self.prospects, self.path)
-        save_suppressions(self.suppressions, SUPPRESSIONS_CSV)
-        return self.path
+    def save(self) -> int:
+        """Write the live state to the database, and only that.
+
+        A prospect added since the seed file was written also gets its research
+        appended there, so the roster stays reviewable in git. Nothing
+        operational is written to a file, and no existing research row is
+        rewritten.
+        """
+        for prospect in self.prospects:
+            _write_state(self.session, prospect)
+        save_suppressions(self.session, self.suppressions)
+        self.session.commit()
+        append_seed_rows(self.prospects, self.seed_path)
+        log.info("prospects.saved", count=len(self.prospects))
+        return len(self.prospects)
 
 
 def _same_business(a: Prospect, b: Prospect) -> str | None:
@@ -533,49 +674,57 @@ def _same_business(a: Prospect, b: Prospect) -> str | None:
     return None
 
 
-def load_prospects(path: Path | None = None) -> list[Prospect]:
-    path = path or PROSPECTS_CSV
-    if not path.exists():
-        return []
-    with path.open(encoding="utf-8-sig", newline="") as fh:
-        return [_row_to_prospect(row) for row in csv.DictReader(fh)]
+def load_prospects(session: Session, seed_path: Path | None = None) -> list[Prospect]:
+    """The seed list with each prospect's live state overlaid onto it."""
+    seed = load_seed(seed_path)
+    sync_seed(session, seed)
+    state = _state_rows(session)
+    prospects = [
+        _apply_state(prospect, state[prospect.prospect_id])
+        for prospect in seed
+        if prospect.prospect_id in state
+    ]
+    seeded = {p.prospect_id for p in seed}
+    for prospect_id in sorted(set(state) - seeded):
+        # State with no research row: someone removed a row from the seed file
+        # by hand. Say so — the state, including any opt-out, is still there.
+        log.warning("prospects.state_without_research_row", prospect_id=prospect_id)
+    return prospects
 
 
-def save_prospects(prospects: list[Prospect], path: Path | None = None) -> Path:
-    path = path or PROSPECTS_CSV
-    _backup(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
-        writer.writeheader()
-        for prospect in prospects:
-            writer.writerow(_prospect_to_row(prospect))
-    log.info("prospects.saved", count=len(prospects), path=str(path))
-    return path
+def load_store(session: Session | None = None, seed_path: Path | None = None) -> ProspectStore:
+    """Open the prospect list for reading and writing.
 
-
-def load_store(path: Path | None = None, suppressions_path: Path | None = None) -> ProspectStore:
-    path = path or PROSPECTS_CSV
+    With no session, the configured application database is used and the schema
+    is created if it is not there yet, so the first ``prospects`` command on a
+    fresh machine works without a setup step.
+    """
+    if session is None:
+        init_db()
+        session = get_session()
     return ProspectStore(
-        prospects=load_prospects(path),
-        path=path,
-        suppressions=load_suppressions(suppressions_path),
+        prospects=load_prospects(session, seed_path),
+        session=session,
+        suppressions=load_suppressions(session),
+        seed_path=seed_path,
     )
 
 
 __all__ = [
-    "CSV_COLUMNS",
     "DuplicateProspectError",
-    "PROSPECTS_CSV",
+    "PROSPECTS_SEED_CSV",
     "ProspectStore",
-    "SUPPRESSIONS_CSV",
+    "SEED_COLUMNS",
+    "STATE_COLUMNS",
     "SuppressedProspectError",
     "SuppressionEntry",
     "SuppressionList",
     "TransitionError",
     "load_prospects",
+    "append_seed_rows",
+    "load_seed",
     "load_store",
     "load_suppressions",
-    "save_prospects",
     "save_suppressions",
+    "sync_seed",
 ]

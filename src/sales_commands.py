@@ -39,7 +39,7 @@ from src.sales.icp import apply_scores, score_prospect
 from src.sales.leads import load_leads
 from src.sales.matching import select_for_prospect
 from src.sales.metrics import business_status, unrated_lead_count
-from src.sales.models import Prospect, ProspectStatus, today
+from src.sales.models import EmailSource, Prospect, ProspectStatus, today
 from src.sales.outreach import (
     next_follow_up_date,
     outreach_due,
@@ -84,6 +84,7 @@ def cmd_prospects(args) -> int:  # type: ignore[no-untyped-def]
         "ready": _prospects_ready,
         "show": _prospects_show,
         "set-status": _prospects_set_status,
+        "set-contact": _prospects_set_contact,
         "rescore": _prospects_rescore,
         "audit": _prospects_audit,
         "opt-out": _prospects_opt_out,
@@ -217,6 +218,52 @@ def _prospects_set_status(args) -> int:  # type: ignore[no-untyped-def]
     return 0
 
 
+def _prospects_set_contact(args) -> int:  # type: ignore[no-untyped-def]
+    """Record a contact address you have checked on the company's own website.
+
+    The address and its source are personal data about a real business contact,
+    so they are written to the database, never to a git-tracked file. There is
+    deliberately no way to record an address without saying where it came from.
+    """
+    store = load_store()
+    prospect = store.require(args.prospect_id)
+    if not prospect.contactable:
+        print(f"{prospect.prospect_id} is {prospect.status.value} and must not be contacted.")
+        return 1
+
+    email = (getattr(args, "email", "") or "").strip()
+    if email:
+        prospect.generic_contact_email = email
+        prospect.email_source = EmailSource(args.source)
+    if getattr(args, "named_contact", None):
+        prospect.named_contact = args.named_contact.strip()
+    if getattr(args, "role", None):
+        prospect.decision_maker_role = args.role.strip()
+
+    blocked = store.suppressions.blocks(prospect)
+    if blocked:
+        print(f"Refusing: {blocked}. Nothing was recorded.")
+        return 1
+
+    duplicate = store.duplicate_of(prospect)
+    if duplicate is not None:
+        existing, how = duplicate
+        print(
+            f"Refusing: that matches {existing.prospect_id} ({existing.company_name}) "
+            f"on {how}. Contacting the same business twice is the fastest way to lose them."
+        )
+        return 1
+
+    store.save()
+    print(
+        f"{prospect.prospect_id} ({prospect.company_name}): "
+        f"{prospect.generic_contact_email or 'no address'} "
+        f"[{prospect.email_source.value}]"
+    )
+    print("Stored in the database, not in git.")
+    return 0
+
+
 def _prospects_opt_out(args) -> int:  # type: ignore[no-untyped-def]
     store = load_store()
     prospect = store.require(args.prospect_id)
@@ -320,7 +367,9 @@ def _prospects_audit(args) -> int:  # type: ignore[no-untyped-def]
     print(f"  {verified} of {len(store.prospects)} have a verified contact address.")
     print(
         "  Addresses are never generated. Open each website, find the real sales@ or\n"
-        "  enquiries@ address, and paste it into outreach/prospects.csv."
+        "  enquiries@ address, then record it with:\n"
+        "    python -m src.admin prospects set-contact --prospect-id P001 \\\n"
+        "      --email sales@example.co.uk --source website_verified"
     )
 
     print(f"\n{problems} item(s) worth fixing before you start sending.")
@@ -926,8 +975,7 @@ def cmd_backup(args) -> int:  # type: ignore[no-untyped-def]
 
     copied: list[str] = []
     for source in [
-        Path("outreach/prospects.csv"),
-        Path("outreach/suppressions.csv"),
+        Path("outreach/prospects_seed.csv"),
         Path("config"),
     ]:
         if not source.exists():
@@ -947,9 +995,11 @@ def cmd_backup(args) -> int:  # type: ignore[no-untyped-def]
 
     init_db()
     with session_scope() as session:
-        from src.db.tables import SuppressionRule
+        from src.db.tables import ProspectStateRow, ProspectSuppression, SuppressionRule
 
         rules = list(session.execute(select(SuppressionRule)).scalars())
+        prospect_state = list(session.execute(select(ProspectStateRow)).scalars())
+        prospect_suppressions = list(session.execute(select(ProspectSuppression)).scalars())
         feedback = list(session.execute(select(LeadFeedback)).scalars())
         customers = list(session.execute(select(Customer)).scalars())
 
@@ -1000,6 +1050,41 @@ def cmd_backup(args) -> int:  # type: ignore[no-untyped-def]
             )
     copied.append(str(destination / "db_suppression_rules.csv"))
 
+    # The live outreach state. It is not in git by design, which makes this
+    # export the only copy outside the database.
+    from src.sales.store import STATE_COLUMNS
+
+    with (destination / "prospect_state.csv").open("w", encoding="utf-8", newline="") as fh:
+        writer = _csv.writer(fh)
+        writer.writerow(["prospect_id", *STATE_COLUMNS])
+        for state_row in prospect_state:
+            writer.writerow(
+                [state_row.prospect_id]
+                + [
+                    value.isoformat()
+                    if hasattr(value, "isoformat")
+                    else ("" if value is None else value)
+                    for value in (getattr(state_row, name) for name in STATE_COLUMNS)
+                ]
+            )
+    copied.append(str(destination / "prospect_state.csv"))
+
+    with (destination / "prospect_suppressions.csv").open("w", encoding="utf-8", newline="") as fh:
+        writer = _csv.writer(fh)
+        writer.writerow(["kind", "value", "company_name", "date_added", "reason", "added_by"])
+        for entry in prospect_suppressions:
+            writer.writerow(
+                [
+                    entry.kind,
+                    entry.value,
+                    entry.company_name or "",
+                    entry.date_added or "",
+                    entry.reason or "",
+                    entry.added_by or "",
+                ]
+            )
+    copied.append(str(destination / "prospect_suppressions.csv"))
+
     with (destination / "lead_feedback.csv").open("w", encoding="utf-8", newline="") as fh:
         writer = _csv.writer(fh)
         writer.writerow(
@@ -1022,8 +1107,8 @@ def cmd_backup(args) -> int:  # type: ignore[no-untyped-def]
     for path in copied:
         print(f"  {path}")
     print(
-        "\nKeep a copy somewhere that is not this machine. The suppression list is the one "
-        "file that must never be lost — losing it means contacting people who asked you not to."
+        "\nKeep a copy somewhere that is not this machine. prospect_suppressions.csv is the "
+        "one file that must never be lost — losing it means contacting people who asked you not to."
     )
     print("See docs/BACKUP_AND_RECOVERY.md for what is source of truth for each file.")
     return 0

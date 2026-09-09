@@ -214,14 +214,19 @@ def make_lead(**overrides):  # type: ignore[no-untyped-def]
 
 
 @pytest.fixture
-def prospect_store(tmp_path: Path):  # type: ignore[no-untyped-def]
-    """An isolated prospect store, so no test can touch the real list."""
+def prospect_store(db_session, tmp_path: Path):  # type: ignore[no-untyped-def]
+    """An isolated prospect store, so no test can touch the real list.
+
+    Live state goes to the test database; the seed file is a throwaway path, so
+    nothing here can write to the researched list in the repository.
+    """
     from src.sales.store import ProspectStore, SuppressionList
 
     return ProspectStore(
         prospects=[],
-        path=tmp_path / "prospects.csv",
+        session=db_session,
         suppressions=SuppressionList(),
+        seed_path=tmp_path / "prospects_seed.csv",
     )
 
 

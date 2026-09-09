@@ -13,6 +13,7 @@ import pytest
 
 from src.sales.icp import apply_scores, score_prospect
 from src.sales.models import (
+    EmailSource,
     Priority,
     ProspectStatus,
     ReplyState,
@@ -22,14 +23,18 @@ from src.sales.models import (
     normalise_domain,
 )
 from src.sales.store import (
+    PROSPECTS_SEED_CSV,
+    SEED_COLUMNS,
     DuplicateProspectError,
     SuppressedProspectError,
     SuppressionEntry,
-    load_prospects,
+    SuppressionList,
+    append_seed_rows,
+    load_seed,
     load_store,
     load_suppressions,
-    save_prospects,
     save_suppressions,
+    sync_seed,
 )
 from tests.conftest import make_prospect
 
@@ -253,64 +258,109 @@ class TestSuppression:
                 )
             )
 
-    def test_saving_can_never_shorten_the_suppression_list(self, tmp_path):
-        path = tmp_path / "suppressions.csv"
-        from src.sales.store import SuppressionList
-
+    def test_saving_can_never_shorten_the_suppression_list(self, db_session):
         original = SuppressionList(
             entries=[
                 SuppressionEntry(value="a@example.test", kind="email"),
                 SuppressionEntry(value="b@example.test", kind="email"),
             ]
         )
-        save_suppressions(original, path)
-        # Someone saves a list that has lost an entry. The union survives.
+        save_suppressions(db_session, original)
+        # Someone saves a list that has lost an entry. The stored list is
+        # insert-only, so the union survives.
         save_suppressions(
+            db_session,
             SuppressionList(entries=[SuppressionEntry(value="a@example.test", kind="email")]),
-            path,
         )
-        assert len(load_suppressions(path).entries) == 2
+        assert len(load_suppressions(db_session).entries) == 2
 
-    def test_an_older_suppression_file_still_loads(self, tmp_path):
-        path = tmp_path / "suppressions.csv"
-        path.write_text(
-            "email,company_name,date_added,reason,added_by\n"
-            "old@example.test,Old Ltd,2026-01-01,opted out,operator\n",
-            encoding="utf-8",
+    def test_the_same_suppression_is_never_stored_twice(self, db_session):
+        entry = SuppressionEntry(value="dup@example.test", kind="email")
+        assert save_suppressions(db_session, SuppressionList(entries=[entry])) == 1
+        assert save_suppressions(db_session, SuppressionList(entries=[entry])) == 0
+        assert len(load_suppressions(db_session).entries) == 1
+
+    def test_an_opt_out_survives_the_prospect_row(self, db_session, prospect_store):
+        prospect = prospect_store.add(
+            make_prospect(prospect_id="", generic_contact_email="sales@pouchworks.test")
         )
-        loaded = load_suppressions(path)
-        assert "old@example.test" in loaded.emails
+        prospect_store.opt_out(prospect, reason="asked not to be contacted")
+        prospect_store.save()
+        # Forget the prospect entirely. The suppression list is a separate
+        # table and still blocks them.
+        prospect_store.prospects.clear()
+        reloaded = load_suppressions(db_session)
+        assert "sales@pouchworks.test" in reloaded.emails
+        assert reloaded.blocks(make_prospect(prospect_id="P999")) is not None
 
 
 class TestPersistence:
-    def test_a_prospect_survives_a_round_trip(self, tmp_path):
-        path = tmp_path / "prospects.csv"
-        original = make_prospect(
-            status=ProspectStatus.SAMPLE_SENT,
-            priority=Priority.A,
-            icp_score=71,
-            buying_intent_categories=["flexible_packaging", "labels"],
-            sample_sent_date=date(2026, 2, 6),
-            opted_out=False,
-            notes="Spoke to them at a trade show.",
-        )
-        save_prospects([original], path)
-        restored = load_prospects(path)[0]
+    """Research in git, everything operational in the database."""
 
-        assert restored.company_name == original.company_name
-        assert restored.status is ProspectStatus.SAMPLE_SENT
+    def test_live_state_round_trips_through_the_database(self, db_session, tmp_path):
+        seed = tmp_path / "prospects_seed.csv"
+        append_seed_rows([make_prospect(prospect_id="P001")], seed)
+        store = load_store(session=db_session, seed_path=seed)
+
+        prospect = store.require("P001")
+        prospect.generic_contact_email = "sales@pouchworks.test"
+        prospect.email_source = EmailSource.WEBSITE_VERIFIED
+        prospect.named_contact = "Sam Vale"
+        prospect.priority = Priority.A
+        prospect.icp_score = 71
+        store.set_status(prospect, ProspectStatus.READY)
+        store.set_status(prospect, ProspectStatus.EMAIL_1_SENT, when=date(2026, 2, 6))
+        store.save()
+
+        restored = load_store(session=db_session, seed_path=seed).require("P001")
+        assert restored.generic_contact_email == "sales@pouchworks.test"
+        assert restored.email_source is EmailSource.WEBSITE_VERIFIED
+        assert restored.named_contact == "Sam Vale"
+        assert restored.status is ProspectStatus.EMAIL_1_SENT
+        assert restored.email_1_sent_date == date(2026, 2, 6)
         assert restored.priority is Priority.A
         assert restored.icp_score == 71
-        assert restored.buying_intent_categories == ["flexible_packaging", "labels"]
-        assert restored.sample_sent_date == date(2026, 2, 6)
-        assert restored.opted_out is False
-        assert restored.notes == original.notes
 
-    def test_saving_keeps_the_previous_version(self, tmp_path):
-        path = tmp_path / "prospects.csv"
-        save_prospects([make_prospect()], path)
-        save_prospects([make_prospect(company_name="Renamed Ltd")], path)
-        assert (tmp_path / "backups" / "prospects.previous.csv").exists()
+    def test_nothing_operational_is_ever_written_to_the_seed_file(self, db_session, tmp_path):
+        seed = tmp_path / "prospects_seed.csv"
+        append_seed_rows([make_prospect(prospect_id="P001")], seed)
+        store = load_store(session=db_session, seed_path=seed)
+
+        prospect = store.require("P001")
+        prospect.generic_contact_email = "sales@pouchworks.test"
+        prospect.named_contact = "Sam Vale"
+        store.set_status(prospect, ProspectStatus.READY)
+        store.set_status(prospect, ProspectStatus.EMAIL_1_SENT)
+        store.save()
+
+        written = seed.read_text(encoding="utf-8")
+        header = written.splitlines()[0].split(",")
+        assert header == SEED_COLUMNS
+        for leaked in ("sales@pouchworks.test", "Sam Vale", "EMAIL_1_SENT"):
+            assert leaked not in written, f"{leaked} must not reach a git-tracked file"
+
+    def test_a_new_prospect_adds_its_research_to_the_seed_file(self, db_session, tmp_path):
+        seed = tmp_path / "prospects_seed.csv"
+        store = load_store(session=db_session, seed_path=seed)
+        store.add(
+            make_prospect(prospect_id="", company_name="Newco", website="https://newco.test/")
+        )
+        store.save()
+
+        assert [p.company_name for p in load_seed(seed)] == ["Newco"]
+        assert load_store(session=db_session, seed_path=seed).find_by_company("Newco") is not None
+
+    def test_seeding_twice_changes_nothing(self, db_session, tmp_path):
+        seed = tmp_path / "prospects_seed.csv"
+        append_seed_rows([make_prospect(prospect_id="P001")], seed)
+        store = load_store(session=db_session, seed_path=seed)
+        store.set_status(store.require("P001"), ProspectStatus.READY)
+        store.save()
+
+        assert sync_seed(db_session, load_seed(seed)) == 0
+        assert load_store(session=db_session, seed_path=seed).require("P001").status is (
+            ProspectStatus.READY
+        ), "re-seeding must never roll a funnel position back"
 
     def test_ids_are_assigned_without_reuse(self, prospect_store):
         prospect_store.prospects.append(make_prospect(prospect_id="P007"))
@@ -321,32 +371,43 @@ class TestPersistence:
 
 
 class TestTheRealProspectList:
-    """The list shipped in the repository must stay usable."""
+    """The researched list shipped in the repository must stay usable."""
 
-    def test_it_loads_and_is_free_of_unresolved_duplicates(self):
-        store = load_store()
+    def test_the_seed_file_carries_no_operational_data(self):
+        text = PROSPECTS_SEED_CSV.read_text(encoding="utf-8-sig")
+        assert text.splitlines()[0].split(",") == SEED_COLUMNS
+        assert "@" not in text, "a contact address in git is the thing this file must not have"
+
+    def test_it_loads_and_is_free_of_unresolved_duplicates(self, db_session):
+        store = load_store(session=db_session)
         assert len(store.prospects) >= 55
         assert store.duplicates() == [], "resolve duplicates before contacting anyone"
 
-    def test_every_row_has_the_research_that_makes_it_worth_contacting(self):
-        for prospect in load_store().prospects:
+    def test_every_row_has_the_research_that_makes_it_worth_contacting(self, db_session):
+        for prospect in load_store(session=db_session).prospects:
             assert prospect.company_name, "a row with no company name cannot be verified"
             assert prospect.icp_reason, f"{prospect.prospect_id} has no stated reason to contact"
             assert prospect.supplier_category
 
-    def test_no_contact_address_was_invented(self):
+    def test_no_contact_address_was_invented(self, db_session):
         """An address must always come with a recorded source."""
-        from src.sales.models import EmailSource
-
-        for prospect in load_store().prospects:
+        for prospect in load_store(session=db_session).prospects:
             if prospect.generic_contact_email:
                 assert prospect.email_source is not EmailSource.NONE, (
                     f"{prospect.prospect_id} has an address with no recorded source"
                 )
 
-    def test_every_row_is_scored_and_prioritised(self):
-        store = load_store()
+    def test_every_row_is_scored_and_prioritised(self, db_session):
+        store = load_store(session=db_session)
+        apply_scores(store.prospects)
         assert all(p.priority for p in store.prospects)
         assert any(p.priority is Priority.A for p in store.prospects), (
             "no Priority A prospects means there is nobody to start with"
         )
+
+    def test_the_researched_duplicate_is_still_excluded(self, db_session):
+        """P011 was found to be the same business as P012. It stays off-limits."""
+        excluded = load_store(session=db_session).require("P011")
+        assert excluded.status is ProspectStatus.SUPPRESSED
+        assert excluded.contactable is False
+        assert "P012" in excluded.suppression_reason

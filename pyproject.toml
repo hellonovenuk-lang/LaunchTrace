@@ -31,8 +31,17 @@ launchtrace = "src.pipeline:main"
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["src"]
+# The package is installed (``pip install -e .``) rather than picked up from
+# the working directory. That is what makes ``import src`` work identically for
+# pytest, mypy, ``python -m src.pipeline`` and the scripts in ``scripts/``,
+# on a developer machine and on a GitHub Actions runner alike.
+[tool.setuptools.packages.find]
+include = ["src*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"src.deliver" = ["templates/*.j2"]
+"src.web" = ["templates/*.html", "static/*"]
 
 [tool.ruff]
 line-length = 100

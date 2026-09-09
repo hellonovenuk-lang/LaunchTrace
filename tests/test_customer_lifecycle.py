@@ -28,8 +28,8 @@ from src.deliver.sample_pack import build_sample_pack, qualify_for_sample, rende
 from src.deliver.transactional import (
     next_friday,
     render_cancellation_confirmed,
+    render_onboarding,
     render_payment_failed,
-    render_welcome,
 )
 from src.delivery_service import active_customers
 from src.sales.feedback import FeedbackState, record_feedback, summarise_feedback
@@ -47,7 +47,7 @@ def _sender(tmp_path):  # type: ignore[no-untyped-def]
 
 
 class TestOnboarding:
-    def test_a_new_subscription_enables_delivery_and_prepares_three_messages(
+    def test_a_new_subscription_enables_delivery_and_prepares_one_message(
         self, db_session, customer, tmp_path
     ):
         outcome = on_subscription_started(db_session, customer, sender=_sender(tmp_path))
@@ -55,27 +55,34 @@ class TestOnboarding:
         assert customer.subscription_status == "active"
         assert customer.delivery_enabled is True
         assert delivery_allowed(customer) is True
-        assert {m.kind for m in outcome.messages} == {
-            "welcome",
-            "subscription_confirmed",
-            "first_feed_timing",
-        }
+        assert {m.kind for m in outcome.messages} == {"onboarding"}
+        assert len(outcome.messages) == 1, "one recipient gets exactly one onboarding email"
         assert all(m.ok for m in outcome.messages)
 
-    def test_every_onboarding_message_is_written_where_it_can_be_read(
+    def test_the_onboarding_message_is_written_where_it_can_be_read(
         self, db_session, customer, tmp_path
     ):
         on_subscription_started(db_session, customer, sender=_sender(tmp_path))
         written = sorted((tmp_path / "outbox").glob("*.html"))
-        assert len(written) == 3, "three messages must not overwrite each other"
-        assert len({p.name for p in written}) == 3
+        assert len(written) == 1, "onboarding is one email, not three"
 
     def test_onboarding_twice_prepares_nothing_twice(self, db_session, customer, tmp_path):
         sender = _sender(tmp_path)
         on_subscription_started(db_session, customer, sender=sender)
         second = on_subscription_started(db_session, customer, sender=sender)
         assert all(m.status == "already_prepared" for m in second.messages)
-        assert len(list((tmp_path / "outbox").glob("*.html"))) == 3
+        assert len(list((tmp_path / "outbox").glob("*.html"))) == 1
+
+    def test_the_onboarding_email_carries_all_three_old_messages(self):
+        rendered = render_onboarding(
+            "Pouchworks Ltd", recipients=["ops@pouchworks.test"], first_feed=date(2026, 3, 6)
+        )
+        # Subscription confirmed ...
+        assert "payment has gone through" in rendered.html
+        # ... what happens next ...
+        assert "every friday" in rendered.html.lower()
+        # ... and the specific first Friday.
+        assert "6 March 2026" in rendered.html
 
     def test_a_customer_with_no_recipient_is_reported_not_silently_accepted(
         self, db_session, tmp_path
@@ -91,8 +98,8 @@ class TestOnboarding:
         on_subscription_started(db_session, customer, sender=_sender(tmp_path))
         assert customer in active_customers(db_session)
 
-    def test_the_welcome_names_a_real_friday(self):
-        rendered = render_welcome("Pouchworks Ltd", first_feed=date(2026, 3, 6))
+    def test_the_onboarding_email_names_a_real_friday(self):
+        rendered = render_onboarding("Pouchworks Ltd", first_feed=date(2026, 3, 6))
         assert "6 March 2026" in rendered.html
         assert "£79" in rendered.html
         assert next_friday(date(2026, 3, 6)) == date(2026, 3, 13), (
@@ -171,7 +178,7 @@ class TestCancellation:
 
     def test_every_transactional_message_offers_an_opt_out(self):
         for rendered in (
-            render_welcome("Pouchworks Ltd"),
+            render_onboarding("Pouchworks Ltd"),
             render_payment_failed("Pouchworks Ltd"),
             render_cancellation_confirmed("Pouchworks Ltd"),
         ):
@@ -425,9 +432,5 @@ class TestDeliveryRespectsSubscriptionState:
     ):
         on_subscription_started(db_session, customer, sender=_sender(tmp_path))
         rows = db_session.query(Delivery).filter_by(customer_id=customer.id).all()
-        assert {row.kind for row in rows} == {
-            "welcome",
-            "subscription_confirmed",
-            "first_feed_timing",
-        }
+        assert {row.kind for row in rows} == {"onboarding"}
         assert all(row.idempotency_key for row in rows)

@@ -35,11 +35,13 @@ Additive only. No existing clause was weakened.
 something the old table did not cover:
 
 * `lead_feedback` — customer opinions about brands, [24] months.
-* `outreach/prospects.csv` — the tracker, [24] months from last interaction.
+* the `prospect_state` table — the live tracker, [24] months from last
+  interaction. It is deliberately not in git, so a retention deletion is a real
+  deletion.
   It can now hold `named_contact` and `decision_maker_role`, which is new
   personal data, so rule 7 was added: **only where the operator already knew
   them; do not go looking.**
-* `outreach/suppressions.csv` — indefinite, like the database suppression list.
+* the `prospect_suppressions` table — indefinite, like the in-feed suppression list.
 * Generated drafts, previews and samples — working files, delete freely.
 
 Three new rules were added, each enforced in code rather than only written down:

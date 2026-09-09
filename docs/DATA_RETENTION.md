@@ -20,8 +20,9 @@ system enforces them.**
 | Suppression list | `suppression_rules` | **Indefinite** | The only way to guarantee an opted-out contact is never contacted again. Deleting it would defeat its purpose. |
 | Stripe webhook events | `webhook_events` | [24] months | Idempotency guard and payment audit trail. |
 | Customer lead feedback | `lead_feedback` | [24] months | Evidence for tuning scoring. Free-text notes are written by a customer about a *brand*, not about a person. |
-| Supplier prospect tracker | `outreach/prospects.csv` | [24] months from last interaction | LaunchTrace's own sales pipeline. Holds corporate contact details, plus a named contact and role **only where the operator already knew them** — nothing is inferred or looked up. |
-| Prospect suppression list | `outreach/suppressions.csv` | **Indefinite** | Records opt-outs by email, domain and company name. Never deleted, for the same reason as `suppression_rules`. |
+| Supplier prospect tracker | `prospect_state` | [24] months from last interaction | LaunchTrace's own sales pipeline. Holds corporate contact details, plus a named contact and role **only where the operator already knew them** — nothing is inferred or looked up. Deliberately **not** in git, so a retention deletion is a real deletion rather than a commit that still contains the data. |
+| Prospect suppression list | `prospect_suppressions` | **Indefinite** | Records opt-outs by email, domain and company name. Insert-only and never deleted, for the same reason as `suppression_rules`. |
+| Supplier prospect research | `outreach/prospects_seed.csv`, in git | Kept | Company name, website, sector and why they fit. Business information about a company, not personal data about a person — which is why this half can be committed. |
 | Generated drafts, previews and samples | `reports/outreach_drafts/`, `reports/previews/`, `reports/samples/` | Delete freely; regenerate on demand | Working files containing prospect names and lead data. They are outputs, not records — nothing depends on keeping them. |
 
 ## Rules that do not change
@@ -68,18 +69,20 @@ this scale; do not build a retention framework for a few thousand rows.
 1. `python -m src.admin prospects opt-out --prospect-id <id> --reason "<what they said>"`
 
    This is one command on purpose. It sets their status to `OPTED_OUT`, and
-   adds them to `outreach/suppressions.csv` by email, domain **and** company
-   name, so they cannot return through a future import under a different
-   spelling.
-2. If they ask for erasure rather than just an opt-out, clear their research
-   fields in `outreach/prospects.csv` by hand but **leave the row and the
-   suppression entry in place** — a deleted row is a row that gets re-added.
+   adds them to `prospect_suppressions` by email, domain **and** company name,
+   so they cannot return through a future import under a different spelling.
+2. If they ask for erasure rather than just an opt-out, clear the personal
+   fields on their `prospect_state` row — contact address, named contact, role,
+   reply notes — but **leave the row and the suppression entry in place**: a
+   deleted row is a row that gets re-added. Because this half is not in git,
+   clearing it actually removes the data.
 3. Confirm to the requester in writing.
 
 ## Backups
 
-`python -m src.admin backup` copies the prospect tracker, the suppression list,
-customer records, feedback and configuration into one dated folder. Retention
+`python -m src.admin backup` exports the live outreach state and the
+suppression list from the database, and copies the prospect research, customer
+records, feedback and configuration, into one dated folder. Retention
 applies to backups too: do not keep a backup longer than the data in it.
 
 See `docs/BACKUP_AND_RECOVERY.md` for what is source of truth for each file.

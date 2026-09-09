@@ -32,6 +32,7 @@ reports/samples/
 reports/outreach_drafts/
 reports/backups/
 
-# Copy-on-write safety copies of the prospect and suppression lists. The
-# tracked files are the record; these are the undo button for the last write.
+# Live outreach state and the suppression list are in the application
+# database, never in git. Exports of them, from `python -m src.admin backup`,
+# land in reports/backups/ which is already ignored above.
 outreach/backups/

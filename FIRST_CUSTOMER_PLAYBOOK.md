@@ -18,8 +18,13 @@ outreach.
 ### 1. You have run a real week
 
 The examples in your first email must be brands from a recent journal, not from
-the historical validation. A supplier who checks a date and finds 2018 will
-stop reading, correctly.
+the January 2018 historical sanity test. A supplier who checks a date and finds
+2018 will stop reading, correctly. Those four weeks show the machinery works;
+they cannot show what the product is worth now, because current web enrichment
+applied to a 2018 brand describes what it became, not what was knowable then.
+The number that matters comes from a current run: current journal, current
+goods/services text, current Companies House evidence, current Tavily
+enrichment, current classification.
 
 ```bash
 python -m src.pipeline weekly
@@ -61,7 +66,7 @@ python -m src.admin prospects show --prospect-id P012
 ```
 
 If a reason looks wrong, it probably is — the score reads text a human wrote.
-Edit `outreach/prospects.csv` and re-run
+Edit the `icp_reason` in `outreach/prospects_seed.csv` and re-run
 `python -m src.admin prospects rescore`.
 
 ### 2. Find a real contact address for each
@@ -70,8 +75,13 @@ Edit `outreach/prospects.csv` and re-run
 About an hour for ten.
 
 For each company: open their website, find the real `sales@` or `enquiries@`
-address, and paste it into the `generic_contact_email` column in
-`outreach/prospects.csv`. Set `email_source` to `website_verified`.
+address, and record it. It goes into the database, not into git — contact
+details are personal data and do not belong in a commit history.
+
+```bash
+python -m src.admin prospects set-contact --prospect-id P012 \
+  --email sales@example.co.uk --source website_verified
+```
 
 **Never guess an address.** A pattern like `firstname@company.co.uk` that
 happens to be wrong costs you the prospect and damages your sending
@@ -216,8 +226,9 @@ python -m src.pipeline add-customer --company "Their Company" \
 python -m src.admin customer-lifecycle --customer-id 1 --event start
 ```
 
-That records the customer, enables delivery, and prepares their welcome,
-confirmation and first-feed-timing emails. Connect Stripe properly afterwards —
+That records the customer, enables delivery, and prepares their onboarding
+email — one message carrying the confirmation, what happens next and the first
+Friday date. Connect Stripe properly afterwards —
 a paying customer is a much better reason to open the account than a hypothesis.
 
 Then:
@@ -232,7 +243,8 @@ When payment succeeds, this happens automatically:
 
 * the customer record is created and the recipient address stored;
 * subscription status becomes active and delivery is enabled;
-* welcome, subscription-confirmed and first-feed-timing emails are prepared;
+* one onboarding email per recipient is prepared — confirmation, what happens
+  next, and the first Friday date;
 * they are included in the next Friday run.
 
 Confirm it:

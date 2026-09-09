@@ -1,8 +1,9 @@
 """The prospect record and its lifecycle.
 
-One row per supplier company in ``outreach/prospects.csv``. That file is the
-source of truth: it is git-tracked, an operator can edit it in a spreadsheet,
-and no code writes to it except the deliberate save in ``src/sales/store.py``.
+One record per supplier company, assembled from two halves: the research in
+``outreach/prospects_seed.csv`` (git-tracked, no personal data) and the live
+outreach state in the ``prospect_state`` table. ``src/sales/store.py`` is the
+only code that reads or writes either.
 """
 
 from __future__ import annotations

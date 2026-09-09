@@ -41,11 +41,11 @@ Built, tested, and working right now with no external account of any kind.
 - **Billing.** Stripe checkout, billing portal, cancellation, signature-verified webhooks with per-event idempotency, and the full subscription state machine. Runs in stub mode without a key so the whole flow is testable
 - **Operator CLI.** 20 commands covering runs, approval, sending, CSV regeneration, customers, suppression, errors and diagnostics
 - **Container.** Dockerfile **built and run in this session**: 369 MB, non-root, health-checked, serving the site
-- **Tests.** 526 tests, no test touching a live external API
+- **Tests.** 531 tests, no test touching a live external API
 - **Quality gates.** `ruff check`, `ruff format --check` and `mypy src` all clean
 - **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and validation, and a deploy workflow that is a build check until you opt in
 - **Documentation.** README written for a non-technical owner, plus privacy notice, terms, data-source attribution, legitimate interests assessment and a retention note — all labelled as drafts needing your review
-- **Prospecting.** 60 researched UK supplier companies with the reason each one fits, a defined schema, and three editable email templates. **No code in this repository can send any of it**
+- **Prospecting.** 60 researched UK supplier companies with the reason each one fits, a defined schema, and three editable email templates. The research is in git; every live contact detail, reply and opt-out is in the database instead. **No code in this repository can send any of it**
 
 ### The commercial layer
 
@@ -53,7 +53,7 @@ Built in a second pass, on top of the above, with no credential of any kind:
 
 | | |
 | --- | --- |
-| **Prospect tracker** | 32-field lifecycle schema in `outreach/prospects.csv`. Checked status transitions, so the funnel numbers mean what they say |
+| **Prospect tracker** | Research in `outreach/prospects_seed.csv` (git); live outreach state and opt-outs in the `prospect_state` and `prospect_suppressions` tables. Checked status transitions, so the funnel numbers mean what they say |
 | **ICP scoring** | Explainable keyword model, weights in `config/icp_scoring.json`. Every score returns its reasons. Priority A/B/C/Suppress — currently 11 A, 38 B, 10 C, 1 suppressed |
 | **Duplicate protection** | The same business cannot enter twice by name, domain, company number or email. Found and resolved a real duplicate in the existing 60 |
 | **Suppression** | Opt-out recorded against email, domain **and** company name. Copy-on-write, and a save can never shorten the list |
@@ -70,7 +70,7 @@ Built in a second pass, on top of the above, with no credential of any kind:
 Commands: `python -m src.admin --help`. Detail:
 [`COMMERCIAL_READINESS.md`](COMMERCIAL_READINESS.md).
 
-### The four-week validation
+### The four-week historical sanity test (January 2018)
 
 Ran on **real UKIPO data**: four consecutive real journal weeks (5,319 real
 trade mark records), matched against a **real Companies House snapshot of
@@ -87,9 +87,27 @@ trade mark records), matched against a **real Companies House snapshot of
 | Band | **QUESTIONABLE** (4–7 per week) |
 
 **Read `reports/validation/4_week_summary.md` before drawing conclusions.** The
-number is real but it is a floor, not a ceiling: it was produced with no web
-enrichment and no goods-and-services text. Section 4 explains what to do about
-that.
+number is real, and it was produced with no web enrichment and no
+goods-and-services text.
+
+**What these four weeks are.** An engineering and historical sanity test.
+They prove that parsing, company matching, scoring and weekly volume behave
+correctly across four consecutive weeks of real UKIPO data, and the rejection
+reasons are real. That is worth having and it is not nothing.
+
+**What they are not.** They are not the 2026 commercial validation, and
+re-running them with web enrichment switched on will not turn them into it.
+Applying today's web to a brand published in January 2018 tells you what that
+brand became over the following eight years, not what was knowable about it in
+the week it appeared. That is the wrong question in both directions: it
+flatters brands that later succeeded and says nothing about the ones that were
+genuinely early at the time.
+
+**The decisive product test is a current one:** current UKIPO weekly journal +
+current goods/services text + current Companies House evidence + current
+Tavily/web enrichment + current classification — one live Friday run, scored on
+what is knowable in that week.
+
 
 ---
 
@@ -240,15 +258,17 @@ python -m src.pipeline weekly
 The system was built so this cannot stop you: three working sources, and a
 fail-closed run that tells you what it tried.
 
-### 3.2 The validation result is genuinely marginal, and that is the finding
+### 3.2 The historical result is marginal, and the real test has not been run
 
 **5.5 good opportunities per week falls in the QUESTIONABLE band.** That is not
-a failure of the build, and it should not be explained away. It is the number,
-and here is what is actually behind it:
+a failure of the build, and it should not be explained away. It is the number
+the January 2018 weeks produced, and here is what is actually behind it:
 
 - **No web enrichment ran.** Without it, no record can reach the HIGH band at
   all — the 0 HIGH in the report is structural, not a discovery about the
-  signal. This is the single change most likely to move the result.
+  signal. Note what this does *not* mean: switching enrichment on and re-running
+  2018 does not fix it, because current web evidence about a 2018 brand is not
+  the evidence that was available in 2018.
 - **No goods and services text.** The Open Data release does not publish it, so
   product categorisation fell back to Nice class, SIC codes and the brand name.
   **The live weekly journal XML does carry goods text**, so a real Friday run
@@ -260,10 +280,19 @@ and here is what is actually behind it:
   decision, not a technical one.
 
 **Do not conclude the business is validated, and do not conclude it is dead.**
-The next test is not technical. Send `reports/validation/top_opportunities.csv`
-to five real suppliers and ask whether these are companies they would want to
-reach. If five suppliers say yes to 5 brands a week, you have a business at
-£79/month. If they need 20 a week, you have a different product to build.
+
+The decisive product test is the current-data one: **current UKIPO weekly
+journal + current goods/services text + current Companies House evidence +
+current Tavily/web enrichment + current classification.** Connect Tavily, run
+one live Friday, and read that week's numbers. Only that run answers what the
+product is worth, because only that run scores brands on what is knowable about
+them in the week they are published.
+
+The commercial test follows it and is not technical: send that week's
+opportunities to five real suppliers and ask whether these are companies they
+would want to reach. If five suppliers say yes to 5 brands a week, you have a
+business at £79/month. If they need 20 a week, you have a different product to
+build.
 
 ---
 
@@ -286,9 +315,11 @@ show to a supplier. Everything after that is optional until someone says yes.
    ```
 3. **Prove it works**: `python -m src.pipeline smoke-test`
    You should see `SMOKE TEST: PASS`.
-4. **Read the evidence**: open `reports/validation/4_week_summary.md`, then
-   `reports/validation/top_opportunities.csv`. Those 22 brands are real
-   companies from real UKIPO journals. **That CSV is your sales sample.**
+4. **Read the historical evidence**: open `reports/validation/4_week_summary.md`,
+   then `reports/validation/top_opportunities.csv`. Those 22 brands are real
+   companies from real January 2018 UKIPO journals. It is a sanity test of the
+   machinery, not the commercial answer, and it is dated — see the note in
+   `FIRST_CUSTOMER_PLAYBOOK.md` before showing it to anyone.
 
 ### Make the feed as good as it can get (about 20 minutes)
 
@@ -299,9 +330,14 @@ show to a supplier. Everything after that is optional until someone says yes.
    key after the `=`. Save.
 8. **Build the free company index** (about 10 minutes, downloads ~500 MB):
    `python -m src.pipeline build-company-index --download`
-9. **Re-run the validation**: `python -m src.pipeline validate --weeks 4`
-10. **Compare** the new `4_week_summary.md` with the old figure of 5.5/week.
-    This tells you what the product is really worth.
+9. **Run one current week** — this is the decisive test:
+   `python -m src.pipeline weekly`. Current journal, current
+   goods/services text, current Companies House evidence, current web
+   enrichment, current classification.
+10. **Read that week's numbers.** They are what the product is worth. Re-running
+    the January 2018 weeks with enrichment on is not the same measurement and
+    should not be used as one: today's web cannot recreate what was knowable
+    about a 2018 brand in 2018.
 
 ### Talk to suppliers (this is the actual next step)
 
@@ -312,10 +348,11 @@ Full detail, with the stop/adjust points, is in
     already scored by fit. Check any one with
     `python -m src.admin prospects show --prospect-id P012`.
 12. **Find a real contact address for each.** Open their website, find the real
-    `sales@` or `enquiries@`, paste it into `generic_contact_email` in
-    `outreach/prospects.csv` and set `email_source` to `website_verified`.
-    About an hour for ten. **Never guess an address** — nothing in this system
-    will generate one for you, and a wrong one costs you the prospect.
+    `sales@` or `enquiries@`, then record it:
+    `python -m src.admin prospects set-contact --prospect-id P012 --email sales@example.co.uk --source website_verified`
+    It goes into the database, not into git. About an hour for ten. **Never
+    guess an address** — nothing in this system will generate one for you, a
+    source is required, and a wrong one costs you the prospect.
     Then: `python -m src.admin prospects set-status --prospect-id P012 --status READY`
 13. **Generate each preview.**
     `python -m src.admin prospect-preview --prospect-id P012 --draft-email`
@@ -357,8 +394,9 @@ python -m src.pipeline add-customer --company "Their Company" \
 python -m src.admin customer-lifecycle --customer-id 1 --event start
 ```
 
-That records the customer, enables delivery and prepares their welcome,
-confirmation and first-feed-timing emails (to `reports/outbox/` until Resend is
+That records the customer, enables delivery and prepares their onboarding
+email — one message with the confirmation, what happens next and the first
+Friday date (written to `reports/outbox/` until Resend is
 connected). Invoice them however you normally would, and open the Stripe
 account afterwards — a paying customer is a much better reason than a
 hypothesis.

@@ -13,8 +13,9 @@ disagree, the one named here wins.
 
 | Data | Source of truth | Can it be rebuilt? |
 | --- | --- | --- |
-| **Prospect suppression list** | `outreach/suppressions.csv` | **No. Never. Losing it means contacting people who asked you not to.** |
-| Supplier prospect tracker | `outreach/prospects.csv` | No — it is hand-researched. Losing it costs weeks. |
+| **Prospect suppression list** | `prospect_suppressions` table | **No. Never. Losing it means contacting people who asked you not to.** |
+| Live outreach state — addresses, contacts, replies, dates, funnel position | `prospect_state` table | No — it is what people told you and what you did. |
+| Supplier prospect research | `outreach/prospects_seed.csv`, in git | Yes — git history. It is hand-researched, but it is committed. |
 | Customer records and subscription state | `customers` table | Partly: Stripe holds the authoritative subscription state and can be re-synced. The recipient addresses are only here. |
 | Stripe subscription and customer ids | Stripe | Yes — Stripe is authoritative. The local copy is a convenience. |
 | In-feed suppressions (companies removed on request) | `suppression_rules` table | **No.** Same reason as the prospect list. |
@@ -40,7 +41,10 @@ python -m src.admin backup
 
 Writes a dated folder under `reports/backups/` containing:
 
-* `prospects.csv` and `suppressions.csv`
+* `prospects_seed.csv` — the researched list
+* `prospect_state.csv` — the live outreach state, exported from the database
+* `prospect_suppressions.csv` — every opt-out and suppression, exported from
+  the database. **This is the file that must never be lost.**
 * `config/` — every business rule and weighting
 * `customers.csv` — companies, plans, subscription status, Stripe ids
 * `db_suppression_rules.csv` — in-feed suppressions
@@ -72,22 +76,22 @@ git push
 
 ## 3. Restoring
 
-### The prospect list or suppression list
+### The prospect research
 
-Every write takes a copy first:
+It is in git. `git log -- outreach/prospects_seed.csv`, then
+`git checkout <commit> -- outreach/prospects_seed.csv`.
 
-```bash
-cp outreach/backups/prospects.previous.csv outreach/prospects.csv
-cp outreach/backups/suppressions.previous.csv outreach/suppressions.csv
-```
+### The live outreach state and the suppression list
 
-That recovers the state before the **last** write only. For anything older, use
-git (`git log -- outreach/prospects.csv`, then `git checkout <commit> --
-outreach/prospects.csv`) or a dated backup folder.
+Both are in the database, so restoring them means restoring the database (see
+below) or re-importing `prospect_state.csv` and `prospect_suppressions.csv`
+from a dated backup folder.
 
-The suppression list has a second protection: saving it merges with what is
-already on disk and **refuses to write a shorter list**. A bug or a bad edit
-cannot silently shrink it.
+The suppression list has a second protection: it is **insert-only**. There is
+no code path in `src/sales/store.py` that deletes from `prospect_suppressions`,
+and it is a separate table from `prospect_state`, so removing a prospect can
+never remove the record of their opt-out. A bug or a bad edit cannot silently
+shrink it.
 
 ### The database
 

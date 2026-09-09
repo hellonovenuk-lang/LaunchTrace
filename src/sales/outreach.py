@@ -143,7 +143,8 @@ def _action_for(prospect: Prospect, reference: date) -> DueAction | None:
                     + " and ".join(missing)
                     + ". Open "
                     + (prospect.website or "their website")
-                    + ", find the real address, and put it in outreach/prospects.csv"
+                    + ", find the real address, then record it with "
+                    "prospects set-contact"
                 ),
                 command=f"python -m src.admin prospects show --prospect-id {pid}",
             )

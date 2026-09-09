@@ -19,7 +19,7 @@ Every item works today, with no account of any kind.
 
 | | |
 | --- | --- |
-| **Prospect tracker** | 60 researched UK suppliers in `outreach/prospects.csv`, with a 32-field schema covering the full lifecycle: research, contact route, status, priority, every milestone date, reply state, opt-out and suppression reason. An operator can open it in a spreadsheet. |
+| **Prospect tracker** | 60 researched UK suppliers. The research — who they are, what they supply, why LaunchTrace suits them — is in `outreach/prospects_seed.csv` and git. The live outreach state — verified addresses, named contacts, reply notes, milestone dates, reply state, opt-outs and funnel position — is in `prospect_state` and `prospect_suppressions` in the application database, because it is personal data and does not belong in a commit history. |
 | **ICP scoring** | An explainable keyword model over the research text. Every score comes back with the reasons that produced it, and every weight is editable in `config/icp_scoring.json`. Output: Priority A / B / C / Suppress. Currently 11 A, 38 B, 10 C, 1 suppressed. |
 | **Duplicate protection** | The same business cannot enter the list twice by name, domain, company number or contact email. This found and resolved a real duplicate in the existing 60. |
 | **Suppression** | An opt-out is recorded against email, domain **and** company name, in a file that is copy-on-write and cannot be shortened by a save. A suppressed business cannot be re-imported under a different spelling. |
@@ -44,7 +44,7 @@ Every item works today, with no account of any kind.
 
 | | |
 | --- | --- |
-| **Onboarding** | A successful subscription creates the customer, records recipients and supplier preferences, enables delivery, includes them in the next Friday run, and prepares welcome, subscription-confirmed and first-feed-timing messages. |
+| **Onboarding** | A successful subscription creates the customer, records recipients and supplier preferences, enables delivery, includes them in the next Friday run, and prepares **one** onboarding email per recipient: confirmation, what happens next, and the first expected Friday delivery date. Idempotent — a redelivered webhook or a re-run command prepares nothing twice. |
 | **Payment failure** | Marks past due, warns once per invoice, and keeps the feed running for a 14-day grace period before pausing it. It is never cancelled by us, and the same invoice is never chased twice. |
 | **Cancellation** | Stops delivery immediately and confirms it. |
 | **Delivery gating** | One function decides whether a customer receives the next feed, used by both the pipeline and the operator CLI — so what the operator sees is what actually happens. |
@@ -69,7 +69,7 @@ opt-outs. Contract: `docs/WEBSITE_INTEGRATION.md`.
 
 ### Quality
 
-526 tests pass. `ruff check`, `ruff format --check` and `mypy src` are clean.
+531 tests pass. `ruff check`, `ruff format --check` and `mypy src` are clean.
 The smoke test passes end to end on fixture data with no network access.
 
 ---
@@ -79,7 +79,7 @@ The smoke test passes end to end on fixture data with no network access.
 **In dependency order.** Each entry says what it unlocks, what happens without
 it, and what it blocks. Nothing here blocks the first ten outreach emails.
 
-### 1. Tavily — web enrichment · **blocks validation**
+### 1. Tavily — web enrichment · **blocks the real validation**
 
 * **What it does:** finds each brand's website and checks how established it
   already is.
@@ -90,8 +90,10 @@ it, and what it blocks. Nothing here blocks the first ten outreach emails.
 * **Test:** `python -m src.pipeline check-config` shows `Web enrichment tavily`.
 * **Without it:** the pipeline runs, but cannot tell an early-stage brand from
   an established one, so **no record can reach the HIGH band**. This is why the
-  historical validation shows 0 HIGH.
-* **Blocks:** validation. Do this before drawing any conclusion about the
+  January 2018 historical sanity test shows 0 HIGH.
+* **Blocks:** the real validation — a **current** week with enrichment
+  connected. Connecting Tavily and re-running the 2018 weeks is not that test
+  and must not be read as it. Do this before drawing any conclusion about the
   signal, and before sending a sample you want to be judged on.
 
 ### 2. Companies House API — optional · **blocks nothing**
@@ -103,7 +105,8 @@ it, and what it blocks. Nothing here blocks the first ten outreach emails.
 * **Goes in:** `.env` as `COMPANIES_HOUSE_API_KEY=…`.
 * **Test:** `check-config` shows `Company registry companies_house_api`.
 * **Without it:** run `python -m src.pipeline build-company-index --download`
-  monthly. Free, no account, and this is what produced the existing validation.
+  monthly. Free, no account, and this is what produced the January 2018
+  historical figures.
 * **Blocks:** nothing. Genuinely optional.
 
 ### 3. Supabase — hosted database · **blocks the scheduled run**
@@ -201,21 +204,36 @@ classification, which is more conservative. Blocks nothing.
 **Be honest about this section. It is the part that decides whether there is a
 business here.**
 
-### The signal number is marginal, and that is the finding
+### The January 2018 weeks are a sanity test, not the validation
 
-Four real journal weeks produced **22 good opportunities, 5.5 per week** —
-the QUESTIONABLE band. That number is real, and it is a floor rather than a
-ceiling, because it was produced:
+Four real journal weeks — 5 to 26 January 2018 — produced **22 good
+opportunities, 5.5 per week**, the QUESTIONABLE band. That number is real and
+it is reported unchanged. What it is:
+
+* an engineering and historical check that parsing, company matching, scoring
+  and weekly volume behave correctly on real data.
+
+What it is **not**: the 2026 commercial validation. It was produced
 
 * with **no web enrichment**, so nothing could reach the HIGH band at all —
   the 0 HIGH is structural, not a discovery;
 * with **no goods-and-services text**, because the Open Data release does not
   publish it. The live weekly journal does, so a real Friday run has strictly
-  more evidence than this validation had;
+  more evidence than these four weeks had;
 * with **rule-only classification**.
 
-Connecting Tavily and running a live week are the two things that change it.
-Neither has been done. Until both are, **the volume figure is not known**.
+**Re-running those four weeks with Tavily connected does not fix this and must
+not be treated as the measurement.** Current web enrichment applied to a brand
+published in January 2018 recovers what that brand became over the following
+eight years, not what was knowable about it in the week it was published — so
+it flatters the brands that later succeeded and says nothing about the ones
+that were genuinely early at the time.
+
+**The decisive product test is a current one:** current UKIPO weekly journal +
+current goods/services text + current Companies House evidence + current
+Tavily/web enrichment + current classification — one live
+`python -m src.pipeline weekly`, scored on what is knowable that week. Until
+that has run, **the volume figure is not known**.
 
 ### Nothing has been tested on a real supplier
 
@@ -273,9 +291,14 @@ The order that gets to revenue fastest, with the cheapest steps first.
 **This week — free, no accounts**
 
 1. Connect Tavily (5 minutes, free).
-2. Run a live week: `python -m src.pipeline weekly`.
-3. Re-run validation: `python -m src.pipeline validate --weeks 4`. Compare with
-   5.5/week. **This tells you what the product is actually worth.**
+2. **Run a live week: `python -m src.pipeline weekly`.** Current journal,
+   current goods/services text, current Companies House evidence, current
+   enrichment, current classification. **This is the measurement. It tells you
+   what the product is actually worth.**
+3. Read that week's numbers. Do not compare them against 5.5/week as if the two
+   were the same measurement — the January 2018 figure is a sanity test of the
+   machinery, and re-running those weeks with enrichment on would not make it
+   comparable.
 4. Read `reports/samples/` output as a customer would.
 
 **Next week — one hour of research, then ten emails**
@@ -323,4 +346,5 @@ The order that gets to revenue fastest, with the cheapest steps first.
 | What happens if I lose the laptop? | `docs/BACKUP_AND_RECOVERY.md` |
 | What was built and why? | `BUILD_REPORT.md` |
 | What does each command do? | `python -m src.admin --help` |
-| Is the signal real? | `reports/validation/4_week_summary.md` |
+| Does the machinery work on real data? | `reports/validation/4_week_summary.md` (January 2018) |
+| Is the signal real? | Not yet answered. Connect Tavily, run `python -m src.pipeline weekly`, read that week. |
