@@ -548,7 +548,7 @@ that cannot be attributed to the applicant now treated as evidence of nothing,
 those records fall to the top of MEDIUM, where the cap says what is actually
 known. No threshold was changed to produce this.
 
-## Four failure classes this pass corrected
+## What this pass corrected
 
 **Websites that belonged to someone else.** Enrichment took the best-looking
 search result as the brand's site. Across the two weeks the old code would have
@@ -585,6 +585,15 @@ a general rule that reads the goods and services text rather than the Nice
 class. 17 out-of-scope records were removed across the two weeks, including
 Applied Nutrition, Veya Labs, Soul Herbals and four BRIVA marks. No exclusion
 is keyed to any brand name.
+
+**One company appearing several times.** A supplier buys from a company, not
+from a trade mark, and a feed built straight from register rows showed the same
+prospect two and three times over. Qualifying marks belonging to one company
+are now collapsed into a single opportunity with the other filings kept beneath
+it: HIVE with Hive Chocolate, TOSS with "your everyday squeeze", two GOLDEN
+ROOTS marks, two identical LOMA marks. Four marks folded into four companies
+across the two weeks, and the weekly headline now counts companies worth
+contacting rather than rows the register published.
 
 **New companies fronting established brands.** Hawkstone Farms Ltd was
 incorporated in November 2025 and scored 88. The brand it fronts is the UK's
