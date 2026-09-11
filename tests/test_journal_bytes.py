@@ -1,10 +1,9 @@
-"""The browser-backed journal fetch.
+"""Shrinking and vetting a downloaded journal.
 
-The network call itself is not tested here — it depends on a third party's bot
-policy and would make the suite flaky. What *is* tested is everything that
-decides whether a response is believed, because the failure that matters is not
-"the fetch failed". It is "the fetch returned an error page and the pipeline
-scored it as a quiet week".
+The network call is not tested here; what matters is everything that decides
+whether a response is believed and how big it is on disk. The failure that
+matters is not "the fetch failed" — it is "the fetch returned an error page and
+the pipeline scored it as a quiet week".
 """
 
 from __future__ import annotations
@@ -12,10 +11,10 @@ from __future__ import annotations
 import pytest
 
 from src.errors import JournalRetrievalError
-from src.ingest.browser_fetch import (
+from src.ingest.journal_bytes import (
     MIN_PLAUSIBLE_BYTES,
-    _validate,
     strip_image_blobs,
+    validate_journal_bytes,
 )
 from src.parse.journal_xml import parse_journal_xml
 
@@ -35,28 +34,34 @@ def _big(payload: bytes) -> bytes:
 
 class TestResponseValidation:
     def test_real_xml_is_accepted(self):
-        _validate("https://example.test/jnl.xml", 200, "application/xml", _big(JOURNAL_XML))
+        validate_journal_bytes(
+            "https://example.test/jnl.xml", 200, "application/xml", _big(JOURNAL_XML)
+        )
 
     def test_an_html_error_page_is_refused_even_with_status_200(self):
         """A soft 404 served as 200 must never reach the parser."""
         with pytest.raises(JournalRetrievalError, match="not XML"):
-            _validate("https://example.test/jnl.xml", 200, "text/html", _big(IPO_404_PAGE))
+            validate_journal_bytes(
+                "https://example.test/jnl.xml", 200, "text/html", _big(IPO_404_PAGE)
+            )
 
     def test_a_404_is_refused(self):
         with pytest.raises(JournalRetrievalError, match="HTTP 404"):
-            _validate("https://example.test/jnl.xml", 404, "text/html", IPO_404_PAGE)
+            validate_journal_bytes("https://example.test/jnl.xml", 404, "text/html", IPO_404_PAGE)
 
     def test_a_403_is_refused(self):
         with pytest.raises(JournalRetrievalError, match="HTTP 403"):
-            _validate("https://example.test/jnl.xml", 403, "text/html", b"")
+            validate_journal_bytes("https://example.test/jnl.xml", 403, "text/html", b"")
 
     def test_xml_that_is_too_small_to_be_a_journal_is_refused(self):
         """A truncated download is a failure, not a quiet week."""
         with pytest.raises(JournalRetrievalError, match="too small"):
-            _validate("https://example.test/jnl.xml", 200, "application/xml", JOURNAL_XML)
+            validate_journal_bytes(
+                "https://example.test/jnl.xml", 200, "application/xml", JOURNAL_XML
+            )
 
     def test_leading_whitespace_does_not_break_detection(self):
-        _validate(
+        validate_journal_bytes(
             "https://example.test/jnl.xml", 200, "application/xml", _big(b"\n  " + JOURNAL_XML)
         )
 

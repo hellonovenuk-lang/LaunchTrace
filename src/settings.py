@@ -59,12 +59,6 @@ class Settings(BaseSettings):
     ukipo_journal_index_url: str = Field(
         default="https://www.ipo.gov.uk/t-tmj.htm", alias="UKIPO_JOURNAL_INDEX_URL"
     )
-    # ipo.gov.uk refuses ordinary HTTP clients but serves Chromium. Without
-    # this the weekly run cannot fetch its own input unattended.
-    ukipo_browser_fallback: bool = Field(default=True, alias="UKIPO_BROWSER_FALLBACK")
-    # Only needed where the Chromium on disk does not match the Playwright
-    # version, e.g. a pre-provisioned image. Empty means "use Playwright's own".
-    chromium_executable_path: str = Field(default="", alias="CHROMIUM_EXECUTABLE_PATH")
     ukipo_user_agent: str = Field(
         default="LaunchTrace/0.1 (+https://launchtrace.co.uk; weekly trade marks journal ingest)",
         alias="UKIPO_USER_AGENT",

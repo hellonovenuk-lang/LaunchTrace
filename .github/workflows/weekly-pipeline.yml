@@ -57,14 +57,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ipo.gov.uk serves Chromium and refuses httpx, so the live journal fetch
-      # needs a real browser engine. Skipped when running from a local file.
-      - name: Install the browser used to fetch the journal
-        if: github.event.inputs.source != 'local'
-        run: |
-          pip install playwright
-          playwright install --with-deps chromium
-
       # Company evidence is one of the five legs of a meaningful run. Without
       # either this index or a Companies House API key the registry resolves to
       # 'none', nothing matches, and every record is capped below the HIGH

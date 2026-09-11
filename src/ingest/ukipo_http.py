@@ -34,11 +34,6 @@ import httpx
 
 from src.errors import JournalNotYetPublishedError, JournalRetrievalError
 from src.ingest.base import JournalSource
-from src.ingest.browser_fetch import (
-    BrowserUnavailableError,
-    browser_available,
-    fetch_via_browser,
-)
 from src.ingest.cache import FileCache, sha256_file
 from src.ingest.discovery import (
     date_for_journal_number,
@@ -47,6 +42,7 @@ from src.ingest.discovery import (
     previous_journal_dates,
 )
 from src.ingest.http_client import HttpClient
+from src.ingest.journal_bytes import strip_image_blobs
 from src.logging_setup import get_logger
 from src.models import JournalArtifact, JournalRef
 from src.settings import Settings
@@ -137,41 +133,6 @@ class UkipoJournalHttpSource(JournalSource):
             log.info("ukipo.index.links", url=index_url, count=len(found))
         return found
 
-    def _fetch_via_browser(self, ref: JournalRef, cache_key: str) -> JournalArtifact | None:
-        """Retry the candidate URLs through a real browser engine.
-
-        Returns None rather than raising, so a browser failure falls through to
-        the ordinary "could not retrieve" error with all the context in it.
-        """
-        if not browser_available():
-            log.info("ukipo.browser.unavailable", journal=ref.journal_number)
-            return None
-        for url in self.candidate_urls(ref):
-            if url.lower().endswith(".zip"):
-                continue  # the browser path serves the XML directly
-            dest = self.cache.path_for(cache_key, ".xml")
-            try:
-                result = fetch_via_browser(
-                    url,
-                    dest,
-                    timeout_seconds=self.settings.ukipo_request_timeout_seconds * 10,
-                    executable_path=self.settings.chromium_executable_path or None,
-                )
-            except BrowserUnavailableError:
-                return None
-            except JournalRetrievalError as exc:
-                log.info("ukipo.browser.rejected", url=url, error=str(exc)[:160])
-                dest.unlink(missing_ok=True)
-                continue
-            return JournalArtifact(
-                ref=ref.model_copy(update={"source_url": url}),
-                local_path=str(result.path),
-                byte_size=result.stripped_bytes,
-                sha256=sha256_file(result.path),
-                content_type="application/xml",
-            )
-        return None
-
     def fetch(self, ref: JournalRef) -> JournalArtifact:
         cache_key = f"{ref.source_name}-{ref.journal_number}"
         cached = self.cache.get(cache_key, ".xml") or self.cache.get(cache_key, ".zip")
@@ -201,6 +162,11 @@ class UkipoJournalHttpSource(JournalSource):
             except httpx.HTTPError:
                 continue
             if dest.exists() and dest.stat().st_size > 1024:
+                # The embedded artwork is most of the download and nothing
+                # reads it. Dropping it here keeps a week's cache in megabytes
+                # rather than hundreds of them.
+                if suffix == ".xml":
+                    dest.write_bytes(strip_image_blobs(dest.read_bytes()))
                 return JournalArtifact(
                     ref=ref.model_copy(update={"source_url": url}),
                     local_path=str(dest),
@@ -209,14 +175,6 @@ class UkipoJournalHttpSource(JournalSource):
                     content_type="application/zip" if suffix == ".zip" else "application/xml",
                 )
             dest.unlink(missing_ok=True)
-
-        # Every plain HTTP attempt failed. If they were refused rather than
-        # missing, the block is on the client, so try again from Chromium --
-        # this is what makes an unattended Friday run possible at all.
-        if self.settings.ukipo_browser_fallback and last_status in {401, 403, 429}:
-            artifact = self._fetch_via_browser(ref, cache_key)
-            if artifact is not None:
-                return artifact
 
         detail = (
             f"journal={ref.journal_number} publication_date={ref.publication_date} "
@@ -230,6 +188,8 @@ class UkipoJournalHttpSource(JournalSource):
         raise JournalRetrievalError(
             f"Could not retrieve the UKIPO journal ({detail}). "
             f"First URL tried: {attempted[0] if attempted else 'none'}. "
-            "If ipo.gov.uk is returning a captcha/403 for this network, download the "
-            "journal manually and re-run with JOURNAL_SOURCE=local."
+            "Note that ipo.gov.uk answers 403, not 404, for a file that does not "
+            "exist, so a 403 here usually means the URL is wrong rather than blocked. "
+            "If it really is blocking this network, download the journal manually "
+            "and re-run with JOURNAL_SOURCE=local."
         )

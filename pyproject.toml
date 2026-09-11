@@ -22,9 +22,6 @@ dependencies = [
 
 [project.optional-dependencies]
 postgres = ["psycopg[binary]>=3.1"]
-# ipo.gov.uk refuses ordinary HTTP clients, so the unattended weekly fetch
-# needs a real browser engine. Optional: JOURNAL_SOURCE=local works without it.
-browser = ["playwright>=1.40"]
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "mypy>=1.9", "types-requests"]
 
 [project.scripts]
