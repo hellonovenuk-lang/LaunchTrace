@@ -258,6 +258,13 @@ That writes `reports/validation/`:
 
 Read `4_week_summary.md` before you draw any conclusion from these numbers.
 
+The current-data test has since been run, on journals 2026-036 and 2026-037:
+[`reports/validation/CURRENT_PRECISION_AUDIT.md`](reports/validation/CURRENT_PRECISION_AUDIT.md).
+Every opportunity the two weeks would send a paying supplier was inspected by
+hand against its real-world evidence. Useful precision came out at **67.6%**
+against a desired benchmark of roughly 80%, and the audit says exactly which
+records fail and why. Read it before showing the feed to a customer.
+
 ## 7. Generating and approving a report
 
 By default `SEND_MODE=review`, which means **nothing is ever emailed to a
@@ -801,6 +808,9 @@ including the questions still open.
 - [`BUILD_REPORT.md`](BUILD_REPORT.md) — what works, what was tested, and how
 - [`reports/validation/4_week_summary.md`](reports/validation/4_week_summary.md)
   — the January 2018 four-week historical sanity test
+- [`reports/validation/CURRENT_PRECISION_AUDIT.md`](reports/validation/CURRENT_PRECISION_AUDIT.md)
+  — the current-data precision audit of journals 2026-036 and 2026-037, and the
+  honest measurement of how much of the feed is worth sending
 - [`docs/PRIVACY.md`](docs/PRIVACY.md), [`docs/TERMS.md`](docs/TERMS.md),
   [`docs/LEGITIMATE_INTERESTS_ASSESSMENT.md`](docs/LEGITIMATE_INTERESTS_ASSESSMENT.md),
   [`docs/DATA_RETENTION.md`](docs/DATA_RETENTION.md) — operational drafts for
