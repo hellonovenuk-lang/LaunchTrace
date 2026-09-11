@@ -140,6 +140,16 @@ def build_qa_report(
             "max_score": max(scores) if scores else None,
             "mean_score": round(sum(scores) / len(scores), 1) if scores else None,
         },
+        "customer_facing_quality": {
+            "companies_delivered": counts.customer_facing_companies or len(deliverable),
+            "verified_websites": counts.verified_websites,
+            "unverified_websites": counts.unverified_websites,
+            "delivered_with_a_verified_website": sum(1 for o in deliverable if o.web.website),
+            "out_of_scope_products_removed": counts.out_of_scope_products,
+            "established_brands_suppressed": counts.established_brands_suppressed,
+            "companies_consolidated": counts.companies_consolidated,
+            "marks_consolidated": counts.marks_consolidated,
+        },
         "top_rejection_reasons": sorted(
             counts.rejection_reasons.items(), key=lambda kv: kv[1], reverse=True
         )[:12],
@@ -173,6 +183,13 @@ def format_qa_report(report: dict[str, Any]) -> str:
         f"  matched to Companies House  {f['company_matched']}",
         f"  emerging-brand candidates   {f['emerging_candidates']}",
         f"  web enriched                {f['web_enriched']}",
+        f"  out-of-scope products       {f['out_of_scope_products']}",
+        f"  established brands removed  {f['established_brands_suppressed']}",
+        f"  verified websites           {f['verified_websites']}",
+        f"  unverified websites         {f['unverified_websites']}",
+        f"  marks consolidated          {f['marks_consolidated']} into "
+        f"{f['companies_consolidated']} company(ies)",
+        f"  customer-facing companies   {f['customer_facing_companies']}",
         f"  HIGH                        {f['high']}",
         f"  MEDIUM                      {f['medium']}",
         f"  suppressed                  {f['suppressed']}",

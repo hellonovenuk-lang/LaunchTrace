@@ -7,13 +7,31 @@ the pipeline that costs money per record.
 The rule throughout: evidence or 'unknown'.  If no website is found we record
 that no website was found -- we never assert an early-stage brand on the basis
 of a failed search, and we never assert a fact we did not see a URL for.
+
+Two things follow from that, and they are the whole design of this module:
+
+*Nothing is published without proof.*  ``src/enrich/entity_verification.py``
+decides whether a domain is really the applicant's.  Until it says VERIFIED, the
+customer-facing website stays blank and the guess stays internal.
+
+*Nothing is measured over the wrong company.*  Retail presence, launch signals
+and maturity are read only from the results attributed to this applicant.  A
+search for a new food brand that returns a smart-heating company of the same
+name now yields no maturity evidence at all -- which is the truth -- instead of
+lending that company's retail footprint to this one's score.
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from urllib.parse import urlparse
 
+from src.enrich.entity_verification import (
+    DomainClass,
+    EntityContext,
+    EntityVerifier,
+    VerificationStatus,
+    get_entity_verifier,
+)
 from src.enrich.providers import (
     BraveSearchProvider,
     FixtureSearchProvider,
@@ -26,69 +44,10 @@ from src.enrich.providers import (
 from src.logging_setup import get_logger
 from src.models import RetailPresence, WebEnrichment
 from src.parse.normalise import normalise_text
-from src.settings import Settings, get_settings
+from src.settings import Settings, get_settings, load_config
 
 log = get_logger(__name__)
 
-MAJOR_RETAILER_DOMAINS = {
-    "tesco.com",
-    "sainsburys.co.uk",
-    "asda.com",
-    "morrisons.com",
-    "waitrose.com",
-    "ocado.com",
-    "aldi.co.uk",
-    "lidl.co.uk",
-    "coop.co.uk",
-    "iceland.co.uk",
-    "marksandspencer.com",
-    "boots.com",
-    "hollandandbarrett.com",
-    "wholefoodsmarket.com",
-    "costco.co.uk",
-    "bmstores.co.uk",
-    "poundland.co.uk",
-    "spar.co.uk",
-    "budgens.co.uk",
-}
-MARKETPLACE_DOMAINS = {
-    "amazon.co.uk",
-    "amazon.com",
-    "ebay.co.uk",
-    "etsy.com",
-    "notonthehighstreet.com",
-    "ocadoretail.com",
-    "thewhiskyexchange.com",
-    "faire.com",
-    "ankorstore.com",
-}
-SOCIAL_DOMAINS = {
-    "instagram.com",
-    "facebook.com",
-    "linkedin.com",
-    "tiktok.com",
-    "x.com",
-    "twitter.com",
-    "youtube.com",
-}
-DIRECTORY_DOMAINS = {
-    "companieshouse.gov.uk",
-    "find-and-update.company-information.service.gov.uk",
-    "endole.co.uk",
-    "companycheck.co.uk",
-    "opencorporates.com",
-    "bizdb.co.uk",
-    "ipo.gov.uk",
-    "trademarks.ipo.gov.uk",
-    "tmdn.org",
-    "wipo.int",
-    "crunchbase.com",
-    "bloomberg.com",
-    "dnb.com",
-    "yell.com",
-    "192.com",
-    "wikipedia.org",
-}
 LAUNCH_PHRASES = (
     "coming soon",
     "launching soon",
@@ -106,18 +65,6 @@ LAUNCH_PHRASES = (
     "wholesale enquiries",
     "trade enquiries",
     "sample pack",
-)
-ESTABLISHED_PHRASES = (
-    "since 18",
-    "since 19",
-    "nationwide",
-    "available in over",
-    "our factories",
-    "global brand",
-    "worldwide",
-    "annual revenue",
-    "plc",
-    "distributors in",
 )
 SHOP_PHRASES = ("add to basket", "add to cart", "shop now", "buy now", "our shop", "£")
 CONTACT_PATHS = ("/contact", "/contact-us", "/get-in-touch", "/wholesale", "/trade", "/stockists")
@@ -141,17 +88,26 @@ def get_search_provider(settings: Settings | None = None) -> SearchProvider:
 
 class WebEnricher:
     def __init__(
-        self, provider: SearchProvider | None = None, settings: Settings | None = None
+        self,
+        provider: SearchProvider | None = None,
+        settings: Settings | None = None,
+        verifier: EntityVerifier | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.provider = provider or get_search_provider(self.settings)
+        self.verifier = verifier or get_entity_verifier()
         self.calls = 0
 
     @property
     def available(self) -> bool:
         return self.provider.available
 
-    def enrich(self, brand_name: str | None, company_name: str | None = None) -> WebEnrichment:
+    def enrich(
+        self,
+        brand_name: str | None,
+        company_name: str | None = None,
+        context: EntityContext | None = None,
+    ) -> WebEnrichment:
         if not self.available:
             return WebEnrichment(attempted=False, provider=self.provider.name)
         if self.calls >= self.settings.search_max_candidates_per_run:
@@ -159,10 +115,13 @@ class WebEnricher:
                 attempted=False, provider=self.provider.name, error="search_budget_exhausted"
             )
         query_name = brand_name or company_name
+        if context is not None:
+            query_name = context.brand_name or query_name
         if not query_name:
             return WebEnrichment(
                 attempted=False, provider=self.provider.name, error="no_brand_name"
             )
+        ctx = context or EntityContext.for_brand(query_name, company_name)
 
         self.calls += 1
         try:
@@ -177,68 +136,88 @@ class WebEnricher:
                 error=str(exc)[:400],
                 enriched_at=datetime.now(UTC),
             )
-        return self.assess(query_name, results, provider=self.provider.name)
+        return self.assess(query_name, results, provider=self.provider.name, context=ctx)
 
     # -- assessment --------------------------------------------------------
     @staticmethod
-    def assess(brand_name: str, results: list[SearchResult], provider: str) -> WebEnrichment:
+    def assess(
+        brand_name: str,
+        results: list[SearchResult],
+        provider: str,
+        context: EntityContext | None = None,
+    ) -> WebEnrichment:
+        ctx = context or EntityContext.for_brand(brand_name)
+        verifier = get_entity_verifier()
         enrichment = WebEnrichment(attempted=True, provider=provider, enriched_at=datetime.now(UTC))
+        enrichment.evidence_urls = [r.url for r in results[:10] if r.url]
+
+        verification = verifier.verify(results, ctx)
+        enrichment.verification_status = verification.status.value
+        enrichment.verification_evidence = verification.evidence
+        enrichment.rejected_candidates = verification.rejected
+        enrichment.candidate_website = verification.candidate_website
+        enrichment.website = verification.website if verification.publishable else None
+
+        # Only a verified domain is trusted wholesale. A merely probable one has
+        # to earn each of its pages through the same evidence test as anyone
+        # else's, or an unproven guess would quietly become the brand's history.
+        accepted = (
+            _domain_of(verification.website)
+            if verification.status == VerificationStatus.VERIFIED
+            else None
+        )
+        attributed = verifier.attribute(results, ctx, accepted)
+        enrichment.attributed_urls = [r.url for r in attributed if r.url]
+
         if not results:
             enrichment.retail_presence = RetailPresence.NONE_FOUND
             enrichment.website_maturity = "unknown"
-            enrichment.launch_evidence = []
             return enrichment
 
-        brand_tokens = set(normalise_text(brand_name).split())
-        corpus = " ".join(f"{r.title} {r.snippet}" for r in results).lower()
-        enrichment.evidence_urls = [r.url for r in results[:10] if r.url]
+        if not attributed:
+            # Searched, found nothing provably about this applicant. Everything
+            # stays unknown: 'we did not find it' must never read as 'it is new'.
+            enrichment.website_maturity = "unknown"
+            enrichment.retail_presence = RetailPresence.UNKNOWN
+            return enrichment
 
-        official: SearchResult | None = None
-        for r in results:
-            domain = r.domain
-            if not domain or domain in DIRECTORY_DOMAINS or domain in SOCIAL_DOMAINS:
-                continue
-            if domain in MAJOR_RETAILER_DOMAINS or domain in MARKETPLACE_DOMAINS:
-                continue
-            stem = domain.split(".")[0]
-            if brand_tokens and any(t in stem or stem in t for t in brand_tokens if len(t) > 2):
-                official = r
-                break
-        if official is None:
-            for r in results:
-                d = r.domain
-                if (
-                    d
-                    and d not in DIRECTORY_DOMAINS
-                    and d not in SOCIAL_DOMAINS
-                    and d not in MAJOR_RETAILER_DOMAINS
-                    and d not in MARKETPLACE_DOMAINS
-                ):
-                    official = r
-                    break
+        corpus = normalise_text(" ".join(f"{r.title} {r.snippet}" for r in attributed))
+        raw_corpus = " ".join(f"{r.title} {r.snippet}" for r in attributed).lower()
 
-        if official:
-            parsed = urlparse(official.url)
-            enrichment.website = (
-                f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else official.url
-            )
-            enrichment.brand_description = (official.snippet or "").strip()[:400] or None
-            for r in results:
-                if r.domain == official.domain and any(p in r.url.lower() for p in CONTACT_PATHS):
-                    enrichment.contact_page = r.url
-                    break
-
-        enrichment.major_retailer_presence = any(
-            r.domain in MAJOR_RETAILER_DOMAINS for r in results
+        retailers = sorted(
+            {
+                r.domain
+                for r in attributed
+                if verifier.classify_domain(r.domain) == DomainClass.MAJOR_RETAILER
+            }
         )
-        enrichment.marketplace_presence = any(r.domain in MARKETPLACE_DOMAINS for r in results)
-        enrichment.social_presence = any(r.domain in SOCIAL_DOMAINS for r in results)
+        marketplaces = {
+            r.domain
+            for r in attributed
+            if verifier.classify_domain(r.domain) == DomainClass.MARKETPLACE
+        }
+        socials = {
+            r.domain for r in attributed if verifier.classify_domain(r.domain) == DomainClass.SOCIAL
+        }
+
+        enrichment.distinct_retailers = retailers
+        enrichment.major_retailer_presence = bool(retailers)
+        enrichment.marketplace_presence = bool(marketplaces)
+        enrichment.social_presence = bool(socials)
+
+        if enrichment.website:
+            enrichment.brand_description = _description_for(attributed, accepted)
+            enrichment.contact_page = _contact_page(attributed, accepted)
+
         enrichment.products_on_sale = (
-            any(p in corpus for p in SHOP_PHRASES) if enrichment.website else None
+            any(p in raw_corpus for p in SHOP_PHRASES) if enrichment.website else None
         )
         enrichment.launch_evidence = sorted({p for p in LAUNCH_PHRASES if p in corpus})[:6]
 
-        established_hits = [p for p in ESTABLISHED_PHRASES if p in corpus]
+        established_cfg = load_config("web_verification.json")["established_brand_evidence"]
+        established_hits = [p for p in established_cfg["established_phrases"] if p in corpus]
+        enrichment.established_evidence = established_hits[:6]
+
         if enrichment.major_retailer_presence or len(established_hits) >= 2:
             enrichment.website_maturity = "established"
         elif enrichment.website and (enrichment.launch_evidence or not established_hits):
@@ -257,6 +236,28 @@ class WebEnricher:
         else:
             enrichment.retail_presence = RetailPresence.UNKNOWN
         return enrichment
+
+
+def _domain_of(url: str | None) -> str | None:
+    if not url:
+        return None
+    from urllib.parse import urlparse
+
+    return (urlparse(url).netloc or "").lower().removeprefix("www.") or None
+
+
+def _description_for(results: list[SearchResult], domain: str | None) -> str | None:
+    for r in results:
+        if domain and r.domain == domain and r.snippet:
+            return r.snippet.strip()[:400]
+    return None
+
+
+def _contact_page(results: list[SearchResult], domain: str | None) -> str | None:
+    for r in results:
+        if domain and r.domain == domain and any(p in r.url.lower() for p in CONTACT_PATHS):
+            return r.url
+    return None
 
 
 def get_web_enricher(settings: Settings | None = None) -> WebEnricher:

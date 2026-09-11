@@ -147,9 +147,19 @@ def make_assessment(**overrides) -> ProductAssessment:  # type: ignore[no-untype
 
 
 def make_web(**overrides) -> WebEnrichment:  # type: ignore[no-untyped-def]
+    """Web evidence for a record.
+
+    When a test says the search ran, it means the search found this applicant,
+    so ``attributed_urls`` is populated by default. Tests for the case where a
+    search returns only somebody else's company pass ``attributed_urls=[]``
+    explicitly -- that is a different situation and scores differently.
+    """
     base = {"attempted": False, "provider": "none"}
     base.update(overrides)
-    return WebEnrichment(**base)  # type: ignore[arg-type]
+    web = WebEnrichment(**base)  # type: ignore[arg-type]
+    if web.attempted and "attributed_urls" not in overrides:
+        web.attributed_urls = [web.website or "https://evidence.test/found"]
+    return web
 
 
 # ---------------------------------------------------------------------------

@@ -350,7 +350,10 @@
     "manually_suppressed",
     "score_below_band",
     "no_brand_name",
-    "incorporated_after_filing"
+    "incorporated_after_filing",
+    "out_of_scope_product",
+    "established_brand_footprint",
+    "consolidated_into_company_opportunity"
   ],
   "require_brand_name": true,
   "require_brand_name_note": "A record with no word mark cannot be sold to a supplier as a named brand opportunity, and LaunchTrace does not redistribute trade mark images. Such records are suppressed.",
@@ -379,5 +382,7 @@
       "4799"
     ]
   },
-  "non_product_sic_action": "downrank"
+  "non_product_sic_action": "downrank",
+  "suppress_established_brands": true,
+  "suppress_established_brands_note": "A brand with corroborated national retail distribution, or that describes itself in established terms, is not an emerging brand however recently its company was incorporated. Suppressing it is the same mechanism already used for a company that is too old; what changed is that the test is now the brand's evidence rather than the company's birthday."
 }

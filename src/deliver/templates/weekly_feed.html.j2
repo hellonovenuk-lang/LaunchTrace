@@ -43,6 +43,12 @@
       {% if opp.company.company_name %}{{ opp.company.company_name }}{% else %}{{ opp.applicant_name }}{% endif %}
       {% if opp.company.region %} · {{ opp.company.region }}{% endif %}
     </p>
+    {% if opp.related_marks %}
+    <p style="margin:0 0 8px;font-size:13px;color:#57534e;">
+      Also filed this week by the same company:
+      {% for mark in opp.related_marks %}{{ mark.brand_name or mark.trademark_number }}{% if not loop.last %}, {% endif %}{% endfor %}
+    </p>
+    {% endif %}
     <ul style="margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.6;color:#44403c;">
       {% for reason in opp.score.reason_texts[:3] %}<li>{{ reason }}</li>{% endfor %}
     </ul>
@@ -52,7 +58,7 @@
     </p>
     <p style="margin:8px 0 0;font-size:12px;">
       <a href="{{ opp.source_url }}" style="color:#0369a1;">Trade mark {{ opp.trademark_number }}</a>
-      {% if opp.web.website %} · <a href="{{ opp.web.website }}" style="color:#0369a1;">{{ opp.web.website }}</a>{% endif %}
+      {% if opp.web.website %} · <a href="{{ opp.web.website }}" style="color:#0369a1;">{{ opp.web.website }}</a>{% else %} · <span style="color:#78716c;">no website we could confirm belongs to this company</span>{% endif %}
     </p>
   </div>
   {% endfor %}

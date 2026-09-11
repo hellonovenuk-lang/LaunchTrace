@@ -36,6 +36,19 @@ class RetailPresence(str, Enum):
     UNKNOWN = "unknown"
 
 
+class BrandMaturity(str, Enum):
+    """How established the *consumer brand* is, which is not how old its company is.
+
+    A brand can be decades old inside a company incorporated last month, and a
+    company can be five years old and launching its first product this week.
+    Treating incorporation date as brand age is the mistake this separates out.
+    """
+
+    EMERGING = "emerging"
+    ESTABLISHED = "established"
+    UNKNOWN = "unknown"
+
+
 class Relevance(str, Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -192,7 +205,13 @@ class CompanyMatch(BaseModel):
 
 
 class WebEnrichment(BaseModel):
-    """What public web evidence says about the brand.  Absence stays absence."""
+    """What public web evidence says about the brand.  Absence stays absence.
+
+    ``website`` is the customer-facing field and is populated only when the
+    domain has been verified as the applicant's.  ``candidate_website`` keeps
+    the best unproven guess for internal review, so a failed verification can be
+    audited rather than merely disappearing.
+    """
 
     attempted: bool = False
     provider: str = "none"
@@ -209,6 +228,24 @@ class WebEnrichment(BaseModel):
     evidence_urls: list[str] = Field(default_factory=list)
     error: str | None = None
     enriched_at: datetime | None = None
+
+    # -- entity verification (internal evidence, never customer-facing) -----
+    verification_status: str = "not_attempted"
+    verification_evidence: list[str] = Field(default_factory=list)
+    rejected_candidates: list[str] = Field(default_factory=list)
+    candidate_website: str | None = None
+    attributed_urls: list[str] = Field(default_factory=list)
+    distinct_retailers: list[str] = Field(default_factory=list)
+    established_evidence: list[str] = Field(default_factory=list)
+
+    @property
+    def entity_evidence_available(self) -> bool:
+        """Whether anything we found is provably about this applicant.
+
+        When nothing is, every maturity signal stays unknown -- a search that
+        found only an unrelated company has told us nothing about this one.
+        """
+        return self.attempted and bool(self.attributed_urls)
 
 
 class ScoreReason(BaseModel):
@@ -263,6 +300,23 @@ class BuyingIntent(BaseModel):
         return {k: v.value for k, v in self.model_dump().items()}
 
 
+class RelatedMark(BaseModel):
+    """Another mark filed by the same company, carried under one opportunity.
+
+    A supplier buys from a company once, not once per trade mark, so the marks
+    are consolidated -- but none of the source detail is thrown away.
+    """
+
+    trademark_number: str
+    brand_name: str | None = None
+    product_category: str | None = None
+    product_category_label: str | None = None
+    nice_classes: list[int] = Field(default_factory=list)
+    filing_date: date | None = None
+    goods_summary: str | None = None
+    source_url: str | None = None
+
+
 class Opportunity(BaseModel):
     """The commercial object delivered to customers."""
 
@@ -287,7 +341,11 @@ class Opportunity(BaseModel):
 
     launch_stage: LaunchStage = LaunchStage.UNKNOWN
     retail_presence: RetailPresence = RetailPresence.UNKNOWN
+    brand_maturity: BrandMaturity = BrandMaturity.UNKNOWN
+    brand_maturity_evidence: list[str] = Field(default_factory=list)
     company_age_years_at_filing: float | None = None
+
+    related_marks: list[RelatedMark] = Field(default_factory=list)
 
     source_url: str | None = None
     evidence_urls: list[str] = Field(default_factory=list)
@@ -296,6 +354,20 @@ class Opportunity(BaseModel):
     delivered: bool = False
     suppressed: bool = False
     suppression_reason: str | None = None
+
+    @property
+    def company_mark_count(self) -> int:
+        """Marks this one customer-facing opportunity represents."""
+        return 1 + len(self.related_marks)
+
+    @property
+    def company_key(self) -> str:
+        """Identity used to collapse several marks into one company opportunity."""
+        from src.parse.normalise import company_name_key
+
+        if self.company.matched and self.company.company_number:
+            return f"ch:{self.company.company_number.strip().upper()}"
+        return f"name:{company_name_key(self.applicant_name)}"
 
 
 class RejectedRecord(BaseModel):
@@ -326,6 +398,16 @@ class FunnelCounts(BaseModel):
     duplicates_dropped: int = 0
     enrichment_failures: int = 0
     llm_failures: int = 0
+
+    # -- customer-facing quality -------------------------------------------
+    verified_websites: int = 0
+    unverified_websites: int = 0
+    out_of_scope_products: int = 0
+    established_brands_suppressed: int = 0
+    companies_consolidated: int = 0
+    marks_consolidated: int = 0
+    customer_facing_companies: int = 0
+
     rejection_reasons: dict[str, int] = Field(default_factory=dict)
 
     def add_rejection(self, reason: str, n: int = 1) -> None:

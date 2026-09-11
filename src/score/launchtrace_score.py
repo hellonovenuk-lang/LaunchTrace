@@ -95,6 +95,12 @@ class LaunchTraceScorer:
         if not ctx.web.attempted:
             missing.update(self.evidence_groups.get("web", []))
             notes.append("web enrichment did not run")
+        elif not ctx.web.entity_evidence_available:
+            # The search ran but nothing it returned could be shown to belong to
+            # this applicant. That is the same evidential position as not having
+            # searched, and must be scored the same way rather than as a pass.
+            missing.update(self.evidence_groups.get("web", []))
+            notes.append("nothing found on the web could be attributed to this applicant")
         if not missing:
             return 1.0, notes
         full = self._achievable_weight(set())
@@ -174,7 +180,7 @@ class LaunchTraceScorer:
         else:
             negatives.append("no_company_match")
 
-        if ctx.web.attempted:
+        if ctx.web.entity_evidence_available:
             if ctx.web.website_maturity == "early_stage":
                 positives.append("early_stage_website")
                 facts["website"] = ctx.web.website or ""
@@ -282,7 +288,7 @@ class LaunchTraceScorer:
             )
 
         web_cap = self.cfg.get("score_cap_without_web_evidence")
-        if web_cap is not None and not ctx.web.attempted and value > int(web_cap):
+        if web_cap is not None and not ctx.web.entity_evidence_available and value > int(web_cap):
             value = int(web_cap)
             capped = True
             cap_reason = (

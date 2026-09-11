@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.enrich.entity_verification import EntityContext
 from src.enrich.providers import FixtureSearchProvider, NullSearchProvider, SearchResult
 from src.enrich.web import WebEnricher, get_search_provider
 from src.models import LaunchStage, RetailPresence
@@ -57,11 +58,20 @@ class TestAssessment:
                     "https://find-and-update.company-information.service.gov.uk/company/1",
                     "",
                 ),
-                SearchResult("Nibbly", "https://nibbly.co.uk/", "Our story"),
+                SearchResult(
+                    "Nibbly", "https://nibbly.co.uk/", "Our story. Nibbly Ltd, Bristol snacks."
+                ),
             ],
             provider="test",
+            context=EntityContext(
+                brand_name="NIBBLY",
+                applicant_name="Nibbly Ltd",
+                company_name="NIBBLY LTD",
+                post_town="BRISTOL",
+            ),
         )
         assert enrichment.website == "https://nibbly.co.uk"
+        assert any("register listing" in r for r in enrichment.rejected_candidates)
 
     def test_keeps_evidence_urls(self, web_enricher):
         assert web_enricher.enrich("CRUMBLEDGE").evidence_urls

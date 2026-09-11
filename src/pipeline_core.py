@@ -21,10 +21,12 @@ from pathlib import Path
 from typing import Any
 
 from src.classify.pipeline import ProductClassifier
+from src.deliver.consolidation import consolidate
 from src.deliver.csv_export import write_opportunities_csv
 from src.deliver.email_render import render_weekly_email, write_email_html
 from src.deliver.qa_report import build_qa_report, write_qa_report
 from src.enrich.companies_house import CompanyRegistry, get_company_registry
+from src.enrich.entity_verification import EntityContext
 from src.enrich.web import WebEnricher, get_web_enricher
 from src.errors import (
     EnrichmentFailureError,
@@ -39,6 +41,7 @@ from src.ingest.base import JournalSource, get_source
 from src.logging_setup import get_logger
 from src.models import (
     ApplicantType,
+    BrandMaturity,
     CompanyMatch,
     JournalArtifact,
     JournalRef,
@@ -53,7 +56,7 @@ from src.models import (
 from src.parse.registry import parse_artifact
 from src.score.buying_intent import map_buying_intent
 from src.score.launchtrace_score import LaunchTraceScorer, ScoringContext
-from src.score.maturity import assess_launch_stage, resolve_retail_presence
+from src.score.maturity import assess_brand_maturity, assess_launch_stage, resolve_retail_presence
 from src.settings import REPORTS_DIR, Settings, get_settings, load_config
 
 log = get_logger(__name__)
@@ -268,6 +271,8 @@ class Pipeline:
                 continue
             outcome = self.filter.assess(record)
             if not outcome.candidate:
+                if outcome.rejection_reason == "out_of_scope_product":
+                    counts.out_of_scope_products += 1
                 counts.add_rejection(outcome.rejection_reason or "unknown")
                 result.rejected.append(
                     RejectedRecord(
@@ -429,7 +434,11 @@ class Pipeline:
             web = WebEnrichment(attempted=False, provider=self.web.provider.name)
             if self.web.available:
                 try:
-                    web = self.web.enrich(record.mark_text, match.company_name)
+                    web = self.web.enrich(
+                        record.mark_text,
+                        match.company_name,
+                        context=self._entity_context(record, outcome, match),
+                    )
                     if web.attempted and not web.error:
                         counts.web_enriched += 1
                 except Exception as exc:
@@ -475,21 +484,85 @@ class Pipeline:
                 continue
             seen.add(opportunity.dedupe_key)
             counts.scored += 1
-            if opportunity.score.band == ScoreBand.HIGH:
-                counts.high += 1
-            elif opportunity.score.band == ScoreBand.MEDIUM:
-                counts.medium += 1
-            else:
-                counts.suppressed += 1
-                opportunity.suppressed = True
-                opportunity.suppression_reason = "score_below_band"
-                counts.add_rejection("score_below_band")
             result.opportunities.append(opportunity)
 
         if with_web and scoring_failures / max(len(with_web), 1) > 0.5:
             raise ScoringFailureError(
                 f"Scoring failed for {scoring_failures} of {len(with_web)} records."
             )
+
+        # Stage 8: decide what a customer actually receives.
+        self._finalise(result)
+
+    def _finalise(self, result: PipelineResult) -> None:
+        """Suppress, consolidate, and count what a subscriber would really see.
+
+        The headline numbers are deliberately taken after consolidation: a week's
+        figure should be the number of companies worth contacting, not the number
+        of rows the register happened to publish.
+        """
+        counts = result.counts
+        suppress_established = bool(self.exclusions.get("suppress_established_brands", True))
+
+        for opp in result.opportunities:
+            if opp.web.attempted:
+                if opp.web.website:
+                    counts.verified_websites += 1
+                elif opp.web.candidate_website:
+                    counts.unverified_websites += 1
+
+            if opp.score.band == ScoreBand.SUPPRESS:
+                opp.suppressed = True
+                opp.suppression_reason = "score_below_band"
+                counts.add_rejection("score_below_band")
+                continue
+
+            if suppress_established and opp.brand_maturity == BrandMaturity.ESTABLISHED:
+                opp.suppressed = True
+                opp.suppression_reason = "established_brand_footprint"
+                counts.established_brands_suppressed += 1
+                counts.add_rejection("established_brand_footprint")
+                result.rejected.append(
+                    RejectedRecord(
+                        trademark_number=opp.trademark_number,
+                        mark_text=opp.brand_name,
+                        applicant_name=opp.applicant_name,
+                        stage="brand_maturity",
+                        reason="established_brand_footprint",
+                        detail="; ".join(opp.brand_maturity_evidence)[:300],
+                    )
+                )
+
+        survivors = [o for o in result.opportunities if not o.suppressed]
+        outcome = consolidate(survivors)
+        counts.companies_consolidated = outcome.companies_consolidated
+        counts.marks_consolidated = outcome.marks_consolidated
+
+        delivered = outcome.opportunities
+        counts.high = sum(1 for o in delivered if o.score.band == ScoreBand.HIGH)
+        counts.medium = sum(1 for o in delivered if o.score.band == ScoreBand.MEDIUM)
+        counts.customer_facing_companies = len(delivered)
+        counts.suppressed = sum(1 for o in result.opportunities if o.suppressed)
+
+    def _entity_context(
+        self, record: TrademarkRecord, outcome: Any, match: CompanyMatch
+    ) -> EntityContext:
+        """What the verifier needs to tell this applicant apart from a namesake."""
+        from src.parse.normalise import normalise_text
+
+        product = outcome.assessment
+        terms: list[str] = list(product.matched_keywords or [])
+        if product.product_category_label:
+            terms.extend(normalise_text(product.product_category_label).split())
+        return EntityContext(
+            brand_name=record.mark_text or "",
+            applicant_name=record.applicant_name,
+            company_name=match.company_name if match.matched else None,
+            company_number=match.company_number if match.matched else None,
+            post_town=match.post_town,
+            region=match.region,
+            product_terms=tuple(dict.fromkeys(t for t in terms if len(t) > 3)),
+        )
 
     def _reject_post_dated_match(
         self, record: TrademarkRecord, match: CompanyMatch, max_after_months: int
@@ -553,6 +626,7 @@ class Pipeline:
                 ).strip("; ")
 
         launch_stage = assess_launch_stage(match, web, age)
+        brand_maturity, maturity_evidence = assess_brand_maturity(web)
         intent = map_buying_intent(product.product_category, launch_stage)
         sic_summary = self._food_sic_summary(match)
 
@@ -593,6 +667,8 @@ class Pipeline:
             buying_intent=intent,
             launch_stage=launch_stage,
             retail_presence=resolve_retail_presence(web),
+            brand_maturity=brand_maturity,
+            brand_maturity_evidence=maturity_evidence,
             company_age_years_at_filing=age,
             source_url=record.source_url,
             evidence_urls=(web.evidence_urls or [])[:8],
