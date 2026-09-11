@@ -239,6 +239,12 @@
     "location_match",
     "third_party_corroboration"
   ],
+  "brand_link_signals": [
+    "exact_domain_brand_match",
+    "partial_domain_brand_match",
+    "brand_in_title"
+  ],
+  "brand_link_note": "A website published as a brand's own must carry that brand somewhere -- in the domain, or in a page title. Location, sector and a fragment of the registered name corroborate a domain; they can never be the only thing connecting it to the brand, or a company registered in Birmingham verifies 'Spirit of Birmingham'.",
   "verified_min_weight": 4,
   "probable_min_weight": 3,
   "verification_note": "VERIFIED needs enough weight AND a tie to the actual legal entity -- or, for a brand name distinctive enough that a domain match is not a coincidence, an exact domain match corroborated by the right sector. A name match on its own is never enough, because generic brand names collide with unrelated companies.",

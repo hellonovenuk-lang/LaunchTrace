@@ -184,6 +184,7 @@ class EntityVerifier:
         self.article_markers = tuple(self.cfg["article_path_markers"])
         self.max_depth = int(self.cfg["max_candidate_path_depth"])
         self.min_distinctive_length = int(self.cfg["distinctive_single_token_min_length"])
+        self.brand_link_signals = set(self.cfg["brand_link_signals"])
 
     # -- domain classification --------------------------------------------
     def classify_domain(self, domain: str) -> DomainClass:
@@ -227,9 +228,15 @@ class EntityVerifier:
         return Signal(key=key, weight=int(self.weights.get(key, 0)), text=text)
 
     def _company_name_present(self, text: str, ctx: EntityContext) -> bool:
-        """The legal name, or a leading word of it distinctive enough to stand alone."""
+        """The legal name, or a leading word of it distinctive enough to stand alone.
+
+        A registered name identical to the brand name is not independent
+        evidence -- it is the brand name a second time -- so it never counts as a
+        tie to the entity. Without that guard a company registered as "<BRAND>
+        LTD" would verify any domain that merely mentions the brand.
+        """
         legal = ctx.legal_name_key
-        if not legal:
+        if not legal or legal == ctx.brand_key:
             return False
         if legal in text:
             return True
@@ -419,6 +426,13 @@ class EntityVerifier:
     def _qualifies(self, assessment: DomainAssessment, brand_is_distinctive: bool) -> bool:
         if assessment.weight < int(self.cfg["verified_min_weight"]):
             return False
+        # The brand has to appear on the site, in its domain or its title. A
+        # domain that merely matches the applicant's town, sector or a fragment
+        # of its registered name is somebody else's: "Spirit of Birmingham" is
+        # not a Birmingham company's website, and "Whole Earth Brands" is not
+        # Earth Brands Ltd.
+        if not assessment.keys & self.brand_link_signals:
+            return False
         if assessment.keys & self.tie_signals:
             return True
         return (
@@ -431,10 +445,15 @@ class EntityVerifier:
     def attribute(
         self, results: list[SearchResult], ctx: EntityContext, accepted_domain: str | None
     ) -> list[SearchResult]:
-        """The subset of results that genuinely describe this applicant's brand.
+        """The subset of results that genuinely describe this applicant.
 
         Only these may influence maturity, retail presence or the score.  A
         result that merely shares a word with the brand contributes nothing.
+
+        Evidence about the *company* counts as well as evidence about the brand.
+        A new brand name from a business that has been supplying supermarkets
+        for thirty years is not an emerging opportunity, and searching only for
+        the new name would never find that out.
         """
         distinctive = self.is_distinctive(ctx.brand_name)
         out: list[SearchResult] = []
@@ -443,7 +462,10 @@ class EntityVerifier:
                 out.append(r)
                 continue
             text = normalise_text(f"{r.title} {r.snippet}")
-            if not ctx.brand_key or ctx.brand_key not in text:
+            if self._registered_company_present(text, ctx):
+                out.append(r)
+                continue
+            if not self._brand_present(text, ctx):
                 continue
             if self._company_name_present(text, ctx) or self._location_present(text, ctx):
                 out.append(r)
@@ -451,6 +473,33 @@ class EntityVerifier:
             if distinctive and self._sector_present(text, ctx):
                 out.append(r)
         return out
+
+    def _brand_present(self, text: str, ctx: EntityContext) -> bool:
+        """The brand, or the distinctive first word it trades under.
+
+        A mark filed as "<NAME> FARMS" sells as "<NAME>", and the market knows
+        it by the short form. Insisting on the full phrase would find none of
+        its retail listings or press, and the brand would read as unknown when
+        it is in fact everywhere.
+        """
+        if not ctx.brand_key:
+            return False
+        if ctx.brand_key in text:
+            return True
+        tokens = ctx.brand_tokens
+        if len(tokens) < 2:
+            return False
+        lead = tokens[0]
+        if len(lead) < self.min_distinctive_length or lead in self.common_words:
+            return False
+        return f" {lead} " in f" {text} "
+
+    def _registered_company_present(self, text: str, ctx: EntityContext) -> bool:
+        """The applicant's registered name, in full, and distinctive enough to mean it."""
+        legal = ctx.legal_name_key
+        if not legal or not self.is_distinctive(legal):
+            return False
+        return legal in text
 
 
 def _site_root(url: str) -> str:

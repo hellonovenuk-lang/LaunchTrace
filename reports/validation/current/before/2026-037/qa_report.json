@@ -1,0 +1,102 @@
+{
+  "run_id": "run_20260911T151356_60c485",
+  "generated_on": "2026-09-11",
+  "journal_number": "2026-037",
+  "publication_date": "2026-09-11",
+  "source": "ukipo_journal_xml",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 3973,
+    "food_class_candidates": 350,
+    "packaged_food_candidates": 97,
+    "uk_corporate_applicants": 56,
+    "company_matched": 68,
+    "emerging_candidates": 77,
+    "web_enriched": 77,
+    "scored": 77,
+    "high": 14,
+    "medium": 13,
+    "suppressed": 50,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "rejection_reasons": {
+      "no_food_class": 3083,
+      "service_only_retail": 96,
+      "pharma_supplement_only": 98,
+      "service_only_hospitality": 32,
+      "supporting_class_only": 113,
+      "no_brand_name": 362,
+      "excluded_goods_keyword": 80,
+      "raw_agricultural_only": 10,
+      "major_brand_owner": 2,
+      "company_too_established": 20,
+      "score_below_band": 50
+    }
+  },
+  "score_summary": {
+    "delivered": 27,
+    "high": 14,
+    "medium": 13,
+    "suppressed": 50,
+    "min_score": 60,
+    "max_score": 92,
+    "mean_score": 78.4
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      3083
+    ],
+    [
+      "no_brand_name",
+      362
+    ],
+    [
+      "supporting_class_only",
+      113
+    ],
+    [
+      "pharma_supplement_only",
+      98
+    ],
+    [
+      "service_only_retail",
+      96
+    ],
+    [
+      "excluded_goods_keyword",
+      80
+    ],
+    [
+      "score_below_band",
+      50
+    ],
+    [
+      "service_only_hospitality",
+      32
+    ],
+    [
+      "company_too_established",
+      20
+    ],
+    [
+      "raw_agricultural_only",
+      10
+    ],
+    [
+      "major_brand_owner",
+      2
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00004391793 — Greencore Group Plc (greencore)",
+    "UK00004437346 — PLADIS NORTH AMERICA, INC. (pladis)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

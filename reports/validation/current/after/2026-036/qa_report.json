@@ -1,0 +1,123 @@
+{
+  "run_id": "run_20260911T151741_baa601",
+  "generated_on": "2026-09-11",
+  "journal_number": "2026-036",
+  "publication_date": "2026-09-04",
+  "source": "ukipo_journal_xml",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 2946,
+    "food_class_candidates": 274,
+    "packaged_food_candidates": 79,
+    "uk_corporate_applicants": 45,
+    "company_matched": 35,
+    "emerging_candidates": 64,
+    "web_enriched": 64,
+    "scored": 64,
+    "high": 2,
+    "medium": 12,
+    "suppressed": 50,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "verified_websites": 3,
+    "unverified_websites": 18,
+    "out_of_scope_products": 5,
+    "established_brands_suppressed": 1,
+    "companies_consolidated": 2,
+    "marks_consolidated": 2,
+    "customer_facing_companies": 14,
+    "rejection_reasons": {
+      "no_food_class": 2347,
+      "supporting_class_only": 86,
+      "service_only_hospitality": 25,
+      "no_brand_name": 209,
+      "service_only_retail": 65,
+      "excluded_goods_keyword": 65,
+      "raw_agricultural_only": 12,
+      "pharma_supplement_only": 52,
+      "major_brand_owner": 1,
+      "out_of_scope_product": 5,
+      "company_too_established": 15,
+      "score_below_band": 48
+    }
+  },
+  "score_summary": {
+    "delivered": 14,
+    "high": 2,
+    "medium": 12,
+    "suppressed": 50,
+    "min_score": 65,
+    "max_score": 83,
+    "mean_score": 77.7
+  },
+  "customer_facing_quality": {
+    "companies_delivered": 14,
+    "verified_websites": 3,
+    "unverified_websites": 18,
+    "delivered_with_a_verified_website": 2,
+    "out_of_scope_products_removed": 5,
+    "established_brands_suppressed": 1,
+    "companies_consolidated": 2,
+    "marks_consolidated": 2
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      2347
+    ],
+    [
+      "no_brand_name",
+      209
+    ],
+    [
+      "supporting_class_only",
+      86
+    ],
+    [
+      "service_only_retail",
+      65
+    ],
+    [
+      "excluded_goods_keyword",
+      65
+    ],
+    [
+      "pharma_supplement_only",
+      52
+    ],
+    [
+      "score_below_band",
+      48
+    ],
+    [
+      "service_only_hospitality",
+      25
+    ],
+    [
+      "company_too_established",
+      15
+    ],
+    [
+      "raw_agricultural_only",
+      12
+    ],
+    [
+      "out_of_scope_product",
+      5
+    ],
+    [
+      "major_brand_owner",
+      1
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00004423730 — J Sainsbury plc (sainsbury)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

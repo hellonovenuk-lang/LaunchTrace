@@ -237,6 +237,8 @@ class WebEnrichment(BaseModel):
     attributed_urls: list[str] = Field(default_factory=list)
     distinct_retailers: list[str] = Field(default_factory=list)
     established_evidence: list[str] = Field(default_factory=list)
+    encyclopaedia_entry: str | None = None
+    press_mentions: int = 0
 
     @property
     def entity_evidence_available(self) -> bool:

@@ -372,3 +372,69 @@ class TestEnrichmentUsesOnlyAttributedEvidence:
         assert enrichment.entity_evidence_available is True
         assert enrichment.major_retailer_presence is False
         assert "coming soon" in enrichment.launch_evidence
+
+
+class TestEvidenceMustBeIndependent:
+    def test_a_company_registered_as_the_brand_name_is_not_a_second_witness(self, verifier):
+        """'<BRAND> LTD' matching a page that says '<BRAND>' proves nothing new.
+
+        Without this, any company named after its brand would verify whichever
+        unrelated domain happened to mention the word.
+        """
+        results = [
+            SearchResult(
+                "Hive | Smart Thermostats and Home Heating",
+                "https://www.hive.com/",
+                "Hive Active Heating. Control your home from your phone.",
+            )
+        ]
+        out = verifier.verify(
+            results,
+            ctx(
+                brand_name="HIVE",
+                applicant_name="Hive Ltd",
+                company_name="HIVE LTD",
+                company_number=None,
+                post_town=None,
+                product_terms=(),
+            ),
+        )
+        assert out.status != VerificationStatus.VERIFIED
+        assert out.website is None
+
+
+class TestEvidenceAboutTheCompanyCounts:
+    def test_an_established_company_behind_a_new_brand_name_is_still_found(self, verifier):
+        """The reverse of the new-company problem, and just as misleading.
+
+        A thirty-year-old supplier launching a new sub-brand is not an emerging
+        opportunity. Searching only for the new name would never discover that,
+        so evidence about the registered company is attributed too.
+        """
+        results = [
+            SearchResult(
+                "Pennine Ferments halal range | Morrisons",
+                "https://groceries.morrisons.com/products/pennine-ferments-range/1",
+                "Pennine Ferments products, available in store and online.",
+            ),
+            SearchResult(
+                "Pennine Ferments - Wikipedia",
+                "https://en.wikipedia.org/wiki/Pennine_Ferments",
+                "Pennine Ferments is a British food manufacturer founded in 1990.",
+            ),
+        ]
+        context = ctx(
+            brand_name="FAST EATS",
+            applicant_name="Pennine Ferments Ltd",
+            company_name="PENNINE FERMENTS LTD",
+            product_terms=(),
+        )
+        attributed = verifier.attribute(results, context, None)
+        assert len(attributed) == 2
+
+    def test_a_short_generic_registered_name_does_not_attribute_everything(self, verifier):
+        results = [
+            SearchResult("Nest thermostats", "https://nest.test/", "Smart home heating."),
+        ]
+        context = ctx(brand_name="SOMETHING", applicant_name="Nest Ltd", company_name="NEST LTD")
+        assert verifier.attribute(results, context, None) == []

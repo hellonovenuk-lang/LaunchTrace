@@ -1,0 +1,101 @@
+{
+  "run_id": "run_20260911T151335_3e874a",
+  "generated_on": "2026-09-11",
+  "journal_number": "2026-036",
+  "publication_date": "2026-09-04",
+  "source": "ukipo_journal_xml",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 2946,
+    "food_class_candidates": 274,
+    "packaged_food_candidates": 84,
+    "uk_corporate_applicants": 49,
+    "company_matched": 62,
+    "emerging_candidates": 62,
+    "web_enriched": 62,
+    "scored": 62,
+    "high": 14,
+    "medium": 7,
+    "suppressed": 41,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "rejection_reasons": {
+      "no_food_class": 2347,
+      "supporting_class_only": 86,
+      "service_only_hospitality": 25,
+      "no_brand_name": 209,
+      "service_only_retail": 65,
+      "excluded_goods_keyword": 65,
+      "raw_agricultural_only": 12,
+      "pharma_supplement_only": 52,
+      "major_brand_owner": 1,
+      "company_too_established": 22,
+      "score_below_band": 41
+    }
+  },
+  "score_summary": {
+    "delivered": 21,
+    "high": 14,
+    "medium": 7,
+    "suppressed": 41,
+    "min_score": 61,
+    "max_score": 92,
+    "mean_score": 80.8
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      2347
+    ],
+    [
+      "no_brand_name",
+      209
+    ],
+    [
+      "supporting_class_only",
+      86
+    ],
+    [
+      "service_only_retail",
+      65
+    ],
+    [
+      "excluded_goods_keyword",
+      65
+    ],
+    [
+      "pharma_supplement_only",
+      52
+    ],
+    [
+      "score_below_band",
+      41
+    ],
+    [
+      "service_only_hospitality",
+      25
+    ],
+    [
+      "company_too_established",
+      22
+    ],
+    [
+      "raw_agricultural_only",
+      12
+    ],
+    [
+      "major_brand_owner",
+      1
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00004423730 — J Sainsbury plc (sainsbury)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

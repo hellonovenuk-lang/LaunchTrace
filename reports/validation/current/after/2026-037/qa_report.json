@@ -1,0 +1,124 @@
+{
+  "run_id": "run_20260911T151755_9b175a",
+  "generated_on": "2026-09-11",
+  "journal_number": "2026-037",
+  "publication_date": "2026-09-11",
+  "source": "ukipo_journal_xml",
+  "status": "completed",
+  "send_mode": "review",
+  "blocked_reason": null,
+  "funnel": {
+    "raw_records": 3973,
+    "food_class_candidates": 350,
+    "packaged_food_candidates": 85,
+    "uk_corporate_applicants": 47,
+    "company_matched": 39,
+    "emerging_candidates": 73,
+    "web_enriched": 73,
+    "scored": 73,
+    "high": 2,
+    "medium": 18,
+    "suppressed": 53,
+    "duplicates_dropped": 0,
+    "enrichment_failures": 0,
+    "llm_failures": 0,
+    "verified_websites": 4,
+    "unverified_websites": 16,
+    "out_of_scope_products": 12,
+    "established_brands_suppressed": 1,
+    "companies_consolidated": 2,
+    "marks_consolidated": 2,
+    "customer_facing_companies": 20,
+    "rejection_reasons": {
+      "no_food_class": 3083,
+      "service_only_retail": 96,
+      "pharma_supplement_only": 98,
+      "service_only_hospitality": 32,
+      "supporting_class_only": 113,
+      "no_brand_name": 362,
+      "excluded_goods_keyword": 80,
+      "out_of_scope_product": 12,
+      "raw_agricultural_only": 10,
+      "major_brand_owner": 2,
+      "company_too_established": 12,
+      "score_below_band": 51
+    }
+  },
+  "score_summary": {
+    "delivered": 20,
+    "high": 2,
+    "medium": 18,
+    "suppressed": 53,
+    "min_score": 64,
+    "max_score": 88,
+    "mean_score": 75.4
+  },
+  "customer_facing_quality": {
+    "companies_delivered": 20,
+    "verified_websites": 4,
+    "unverified_websites": 16,
+    "delivered_with_a_verified_website": 2,
+    "out_of_scope_products_removed": 12,
+    "established_brands_suppressed": 1,
+    "companies_consolidated": 2,
+    "marks_consolidated": 2
+  },
+  "top_rejection_reasons": [
+    [
+      "no_food_class",
+      3083
+    ],
+    [
+      "no_brand_name",
+      362
+    ],
+    [
+      "supporting_class_only",
+      113
+    ],
+    [
+      "pharma_supplement_only",
+      98
+    ],
+    [
+      "service_only_retail",
+      96
+    ],
+    [
+      "excluded_goods_keyword",
+      80
+    ],
+    [
+      "score_below_band",
+      51
+    ],
+    [
+      "service_only_hospitality",
+      32
+    ],
+    [
+      "out_of_scope_product",
+      12
+    ],
+    [
+      "company_too_established",
+      12
+    ],
+    [
+      "raw_agricultural_only",
+      10
+    ],
+    [
+      "major_brand_owner",
+      2
+    ]
+  ],
+  "major_brand_detections": [
+    "UK00004391793 — Greencore Group Plc (greencore)",
+    "UK00004437346 — PLADIS NORTH AMERICA, INC. (pladis)"
+  ],
+  "data_quality_concerns": [],
+  "warnings": [],
+  "errors": [],
+  "requires_approval": true
+}

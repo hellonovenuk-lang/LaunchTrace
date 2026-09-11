@@ -199,8 +199,23 @@ class WebEnricher:
         socials = {
             r.domain for r in attributed if verifier.classify_domain(r.domain) == DomainClass.SOCIAL
         }
+        encyclopaedia = next(
+            (
+                r.url
+                for r in attributed
+                if verifier.classify_domain(r.domain) == DomainClass.ENCYCLOPAEDIA
+            ),
+            None,
+        )
+        press = {
+            r.url
+            for r in attributed
+            if verifier.classify_domain(r.domain) == DomainClass.NEWS_OR_TRADE_PRESS
+        }
 
         enrichment.distinct_retailers = retailers
+        enrichment.encyclopaedia_entry = encyclopaedia
+        enrichment.press_mentions = len(press)
         enrichment.major_retailer_presence = bool(retailers)
         enrichment.marketplace_presence = bool(marketplaces)
         enrichment.social_presence = bool(socials)
@@ -218,7 +233,11 @@ class WebEnricher:
         established_hits = [p for p in established_cfg["established_phrases"] if p in corpus]
         enrichment.established_evidence = established_hits[:6]
 
-        if enrichment.major_retailer_presence or len(established_hits) >= 2:
+        if (
+            enrichment.major_retailer_presence
+            or len(established_hits) >= 2
+            or enrichment.encyclopaedia_entry
+        ):
             enrichment.website_maturity = "established"
         elif enrichment.website and (enrichment.launch_evidence or not established_hits):
             enrichment.website_maturity = "early_stage"

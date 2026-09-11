@@ -81,6 +81,20 @@ def assess_brand_maturity(
     elif retailers:
         evidence.append("Listed by " + ", ".join(retailers[:4]))
 
+    if web.encyclopaedia_entry:
+        established = True
+        evidence.append(
+            "Has an encyclopaedia entry of its own — a brand nobody has heard of does not "
+            f"({web.encyclopaedia_entry})"
+        )
+
+    press_floor = int(cfg["min_press_mentions"])
+    if web.press_mentions >= press_floor:
+        established = True
+        evidence.append(f"Covered by {web.press_mentions} separate news or trade publications")
+    elif web.press_mentions:
+        evidence.append(f"{web.press_mentions} press mention(s) found")
+
     phrases = web.established_evidence or []
     if len(phrases) >= int(cfg["min_established_phrases"]):
         established = True

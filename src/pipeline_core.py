@@ -511,13 +511,21 @@ class Pipeline:
                 elif opp.web.candidate_website:
                     counts.unverified_websites += 1
 
+            established = opp.brand_maturity == BrandMaturity.ESTABLISHED
+
             if opp.score.band == ScoreBand.SUPPRESS:
                 opp.suppressed = True
                 opp.suppression_reason = "score_below_band"
                 counts.add_rejection("score_below_band")
+                # Counted wherever it was removed. Usually the mature-brand
+                # indicators have already pushed it below the band, and a metric
+                # that only counted the backstop would report zero established
+                # brands removed on a week where it removed several.
+                if established:
+                    counts.established_brands_suppressed += 1
                 continue
 
-            if suppress_established and opp.brand_maturity == BrandMaturity.ESTABLISHED:
+            if suppress_established and established:
                 opp.suppressed = True
                 opp.suppression_reason = "established_brand_footprint"
                 counts.established_brands_suppressed += 1
