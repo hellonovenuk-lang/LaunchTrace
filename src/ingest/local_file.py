@@ -32,7 +32,9 @@ class LocalJournalSource(JournalSource):
 
     def __init__(self, settings: Settings | None = None) -> None:
         super().__init__(settings)
-        self.dir = Path(self.settings.journal_local_dir or (DATA_DIR / "journals"))
+        # Resolved, because a relative JOURNAL_LOCAL_DIR cannot be expressed as
+        # the file:// URI recorded as each artifact's source.
+        self.dir = Path(self.settings.journal_local_dir or (DATA_DIR / "journals")).resolve()
         self.dir.mkdir(parents=True, exist_ok=True)
 
     def _files(self) -> dict[str, Path]:

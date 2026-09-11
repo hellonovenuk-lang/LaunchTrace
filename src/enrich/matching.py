@@ -4,6 +4,15 @@ Trade mark applicant names and Companies House registered names rarely match
 character for character.  This module normalises both sides, scores candidates,
 and -- importantly -- refuses to claim a match it is not confident about.  An
 uncertain match is recorded as uncertain, not silently promoted.
+
+The rule that matters most here is about *partial* names.  A company whose
+distinctive words are a subset of the applicant's used to score as a strong
+match however small that subset was, so "Melissa Bent" matched "MELISSA 27
+LIMITED" and "The Secretary of State for Defence" matched "SECRETARY LTD".
+Those are not near-misses to be shown with a caveat: they attach a stranger's
+company number, registered office and incorporation date to the record, and the
+incorporation date is what the score reads as the brand's age.  A shared word is
+now weighed against how much of the whole name it accounts for.
 """
 
 from __future__ import annotations
@@ -21,9 +30,15 @@ from src.parse.normalise import (
 
 EXACT_CONFIDENCE = 98
 NORMALISED_CONFIDENCE = 92
+TOKEN_SET_CONFIDENCE = 88
 STRONG_TOKEN_CONFIDENCE = 78
 WEAK_TOKEN_CONFIDENCE = 55
 MIN_ACCEPTABLE_CONFIDENCE = 55
+
+# How much of the longer name a subset must account for before it is a match
+# rather than a shared word. Below this, an extra distinctive word means a
+# different company on the register, and usually is one.
+SUBSET_STRONG_SIMILARITY = 0.6
 
 # Words that carry no distinguishing power, so a match on them alone is not one.
 STOPWORDS = {"the", "and", "of", "uk", "gb", "great", "britain", "london", "group", "holdings"}
@@ -85,9 +100,32 @@ def score_candidate(applicant_name: str, candidate: CandidateCompany) -> tuple[i
         f"(token similarity {jaccard:.2f})"
     )
 
-    if a_tokens <= c_tokens or c_tokens <= a_tokens:
-        confidence = STRONG_TOKEN_CONFIDENCE + int(jaccard * 10)
-        return min(confidence, 90), "token_subset", evidence
+    if a_tokens == c_tokens:
+        return (
+            TOKEN_SET_CONFIDENCE,
+            "token_set_match",
+            evidence + ["Every distinctive word matches, in either order"],
+        )
+
+    if a_tokens < c_tokens or c_tokens < a_tokens:
+        # A subset is only worth as much as the share of the longer name it
+        # accounts for. One word in common is a coincidence, not an identity:
+        # treating it as one attaches a stranger's incorporation date, company
+        # number and SIC codes to this applicant, and everything downstream then
+        # reasons about the wrong company.
+        if jaccard >= SUBSET_STRONG_SIMILARITY:
+            return STRONG_TOKEN_CONFIDENCE, "token_subset", evidence
+        missing = sorted((a_tokens | c_tokens) - (a_tokens & c_tokens))
+        return (
+            int(jaccard * 60),
+            "partial_name_only",
+            evidence
+            + [
+                f"Rejected: '{candidate.company_name}' shares only part of the applicant's name "
+                f"(missing {', '.join(missing)}), which is a different registered company"
+            ],
+        )
+
     if jaccard >= 0.7:
         return STRONG_TOKEN_CONFIDENCE, "token_similarity", evidence
     if jaccard >= 0.5:

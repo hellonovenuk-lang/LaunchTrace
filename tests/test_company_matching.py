@@ -160,3 +160,56 @@ class TestFixtureRegistry:
     def test_unknown_company_is_unmatched(self, company_registry):
         match = company_registry.match("Definitely Not A Real Company Ltd")
         assert match.matched is False
+
+
+class TestPartialNamesAreNotIdentities:
+    """A shared word is a coincidence; a company number is a claim about a real firm.
+
+    These are the shapes that actually went wrong on live journal data. Each one
+    attached a stranger's incorporation date to a record, and the score read
+    that date as the brand's age.
+    """
+
+    @pytest.mark.parametrize(
+        "applicant,registered",
+        [
+            ("Melissa Bent", "MELISSA 27 LIMITED"),
+            ("Cameron Hunter", "CAMERON & CAMERON LIMITED"),
+            ("Anthony Philip Stratton", "ANTHONY & ANTHONY LIMITED"),
+            ("The Secretary of State for Defence", "SECRETARY LTD"),
+            ("Fresh Essential Limited", "FRESH & CO GROUP LIMITED"),
+            ("Nomad Caviar Limited", "NOMAD 3 LTD"),
+            ("Lion's Gate Hot Sauce Ltd", "LION & CO., LTD."),
+            ("Wonderful Pistachios & Almonds LLC", "WONDERFUL 1 LTD"),
+        ],
+    )
+    def test_a_single_shared_word_is_not_a_match(self, applicant, registered):
+        match = best_match(applicant, [candidate(registered)], provider="test")
+        assert match.matched is False
+        assert match.company_number is None
+        assert match.incorporation_date is None
+
+    def test_the_rejection_says_which_words_were_missing(self):
+        match = best_match(
+            "Fresh Essential Limited", [candidate("FRESH & CO GROUP LIMITED")], provider="test"
+        )
+        assert any("shares only part" in e for e in match.match_evidence)
+
+    @pytest.mark.parametrize(
+        "applicant,registered",
+        [
+            ("Hawkstone Farms LTD", "HAWKSTONE FARMS LTD"),
+            ("Sushi Factory & Beyond Limited", "THE SUSHI FACTORY & BEYOND LTD"),
+            ("Heavenly Foods and Beverages Ltd", "HEAVENLY FOODS & BEVERAGES LTD"),
+            ("Crumbledge Foods Ltd", "CRUMBLEDGE FOODS (UK) LIMITED"),
+            ("Moorfoot Granola Ltd", "MOORFOOT GRANOLA HOLDINGS LIMITED"),
+        ],
+    )
+    def test_genuine_matches_are_untouched(self, applicant, registered):
+        match = best_match(applicant, [candidate(registered)], provider="test")
+        assert match.matched is True
+
+    def test_an_extra_distinctive_word_means_a_different_company(self):
+        """'ACME LTD' and 'ACME FOODS LTD' are two companies, not one."""
+        match = best_match("Acme Ltd", [candidate("ACME FOODS LTD")], provider="test")
+        assert match.matched is False
