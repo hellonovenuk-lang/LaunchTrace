@@ -169,6 +169,7 @@ class ProductAssessment(BaseModel):
     contract_manufacturing_relevance: Relevance = Relevance.NONE
     distribution_relevance: Relevance = Relevance.NONE
     reasoning_summary: str = ""
+    goods_profile_summary: str = ""
     matched_keywords: list[str] = Field(default_factory=list)
     rejection_reasons: list[str] = Field(default_factory=list)
     classifier: str = "rules"
@@ -235,6 +236,7 @@ class WebEnrichment(BaseModel):
     rejected_candidates: list[str] = Field(default_factory=list)
     candidate_website: str | None = None
     attributed_urls: list[str] = Field(default_factory=list)
+    attributed_text: str = ""
     distinct_retailers: list[str] = Field(default_factory=list)
     established_evidence: list[str] = Field(default_factory=list)
     encyclopaedia_entry: str | None = None
@@ -343,6 +345,8 @@ class Opportunity(BaseModel):
 
     launch_stage: LaunchStage = LaunchStage.UNKNOWN
     retail_presence: RetailPresence = RetailPresence.UNKNOWN
+    commercial_mode: str = "uncertain"
+    commercial_mode_reasons: list[str] = Field(default_factory=list)
     brand_maturity: BrandMaturity = BrandMaturity.UNKNOWN
     brand_maturity_evidence: list[str] = Field(default_factory=list)
     company_age_years_at_filing: float | None = None
@@ -405,6 +409,8 @@ class FunnelCounts(BaseModel):
     verified_websites: int = 0
     unverified_websites: int = 0
     out_of_scope_products: int = 0
+    food_service_removed: int = 0
+    incidental_food_removed: int = 0
     established_brands_suppressed: int = 0
     companies_consolidated: int = 0
     marks_consolidated: int = 0

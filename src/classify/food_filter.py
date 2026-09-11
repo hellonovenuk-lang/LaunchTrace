@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from src.classify.goods_analysis import GoodsProfile, get_goods_analyser
 from src.models import ProductAssessment, Relevance, TrademarkRecord
 from src.parse.normalise import normalise_text
 from src.settings import load_config
@@ -34,6 +35,9 @@ class FilterOutcome:
     rejection_reason: str | None = None
     rejection_detail: str | None = None
     warnings: list[str] = field(default_factory=list)
+    # The parsed goods list, so the commercial-mode assessment can read it
+    # without splitting the same text a second time.
+    goods_profile: GoodsProfile | None = None
 
 
 class FoodFilter:
@@ -51,6 +55,8 @@ class FoodFilter:
         self.out_of_scope_ratio = float(self.taxonomy.get("out_of_scope_dominance_ratio", 0.5))
         self.out_of_scope_min_hits = int(self.taxonomy.get("out_of_scope_min_hits", 2))
         self.pharma_class = int(self.taxonomy.get("out_of_scope_pharma_class", 5))
+        self.analyser = get_goods_analyser()
+        self.commercial = load_config("commercial_mode.json")
         self.major_brands = [b.lower() for b in self.exclusions["major_brand_owners"]]
         self.goods_exclusions = [
             k.lower() for k in self.exclusions["goods_text_exclusion_keywords"]
@@ -85,7 +91,14 @@ class FoodFilter:
         return bool(tokens & set(self.person_cfg["corporate_suffixes"]))
 
     def match_product_group(self, text: str) -> tuple[str | None, str | None, list[str]]:
-        """Best-matching product group for some goods/brand text."""
+        """Best-matching product group for some goods/brand text.
+
+        Used where there is no goods list to read -- a brand name, or a source
+        with no goods text. Where a real goods list exists,
+        ``dominant_product_group`` reads it properly instead, because counting
+        keyword hits across a whole filing lets an incidental word beat the main
+        product line.
+        """
         best_key: str | None = None
         best_label: str | None = None
         best_hits: list[str] = []
@@ -94,6 +107,31 @@ class FoodFilter:
             if len(hits) > len(best_hits):
                 best_key, best_label, best_hits = group["key"], group["label"], hits
         return best_key, best_label, best_hits
+
+    def group_label(self, key: str | None) -> str | None:
+        for group in self.groups:
+            if group["key"] == key:
+                return str(group["label"])
+        return None
+
+    def dominant_product_group(
+        self, profile: GoodsProfile
+    ) -> tuple[str | None, str | None, list[str]]:
+        """The product group that owns most of the goods actually filed."""
+        if not profile.dominant_group:
+            return None, None, []
+        key = profile.dominant_group
+        label = self.group_label(key)
+        if profile.multi_category:
+            others = sorted(
+                (k for k in profile.group_counts if k != key),
+                key=lambda k: profile.group_counts[k],
+                reverse=True,
+            )
+            named = [self.group_label(k) or k for k in [key, *others][:3]]
+            label = "Several packaged-food categories: " + ", ".join(n.lower() for n in named)
+        hits = [i.matched for i in profile.items if i.group == key and i.matched]
+        return key, label, sorted(set(hits))[:12]
 
     def match_out_of_scope(self, text: str) -> tuple[str | None, str | None, list[str]]:
         """The out-of-scope group that best describes this goods text, if any."""
@@ -214,7 +252,11 @@ class FoodFilter:
             assessment.rejection_reasons.append("non_uk_applicant")
             return FilterOutcome(False, assessment, "non_uk_applicant", record.applicant_country)
 
-        group_key, group_label, hits = self.match_product_group(search_text)
+        profile = self.analyser.analyse(record.goods_text)
+        if profile.food_items:
+            group_key, group_label, hits = self.dominant_product_group(profile)
+        else:
+            group_key, group_label, hits = self.match_product_group(search_text)
 
         # Broad class profiles are portfolio-shaped, not launch-shaped.
         warnings: list[str] = []
@@ -231,6 +273,12 @@ class FoodFilter:
         assessment.product_category_label = group_label
         assessment.packaged_product_probability = packaged_prob
         assessment.matched_keywords = hits[:12]
+        assessment.goods_profile_summary = (
+            f"{profile.food_items} food, {profile.hospitality_items} service, "
+            f"{profile.non_food_items} non-food goods"
+            if profile.total
+            else ""
+        )
         assessment.packaging_relevance = (
             Relevance.HIGH
             if packaged_prob >= 0.7
@@ -243,7 +291,7 @@ class FoodFilter:
             Relevance.HIGH if packaged_prob >= 0.6 else Relevance.MEDIUM
         )
         assessment.reasoning_summary = self._summary(record, classes, group_label, hits)
-        return FilterOutcome(True, assessment, warnings=warnings)
+        return FilterOutcome(True, assessment, warnings=warnings, goods_profile=profile)
 
     def _packaged_probability(
         self,

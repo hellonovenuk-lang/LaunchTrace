@@ -47,7 +47,13 @@
         "trail mix",
         "nuts, prepared",
         "roasted nuts",
-        "seeds, prepared"
+        "seeds, prepared",
+        "nuts",
+        "seeds",
+        "dried fruit",
+        "fruit and nut",
+        "nut mix",
+        "nut mixes"
       ],
       "default_packaging_format": "flexible"
     },

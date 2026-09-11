@@ -168,6 +168,12 @@ class WebEnricher:
         )
         attributed = verifier.attribute(results, ctx, accepted)
         enrichment.attributed_urls = [r.url for r in attributed if r.url]
+        # Kept because what the attributed pages actually say is evidence in its
+        # own right: a menu, an address or a delivery listing is how a takeaway
+        # gives itself away when its filing and SIC codes do not.
+        enrichment.attributed_text = " ".join(f"{r.title} {r.snippet}" for r in attributed).strip()[
+            :2000
+        ]
 
         if not results:
             enrichment.retail_presence = RetailPresence.NONE_FOUND

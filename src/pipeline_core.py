@@ -20,6 +20,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from src.classify.commercial_mode import CommercialMode, get_commercial_mode_assessor
+from src.classify.goods_analysis import get_goods_analyser
 from src.classify.pipeline import ProductClassifier
 from src.deliver.consolidation import consolidate
 from src.deliver.csv_export import write_opportunities_csv
@@ -82,6 +84,8 @@ class Pipeline:
         self.web = web or get_web_enricher(self.settings)
         self.scorer = scorer or LaunchTraceScorer()
         self.filter = self.classifier.filter
+        self.commercial_assessor = get_commercial_mode_assessor()
+        self.goods_analyser = get_goods_analyser()
         self.taxonomy = load_config("food_taxonomy.json")
         self.exclusions = load_config("exclusions.json")
         self.output_dir = output_dir or (REPORTS_DIR / "runs")
@@ -508,6 +512,7 @@ class Pipeline:
         """
         counts = result.counts
         suppress_established = bool(self.exclusions.get("suppress_established_brands", True))
+        delivered_modes = set(load_config("commercial_mode.json")["delivered_modes"])
 
         for opp in result.opportunities:
             if opp.web.attempted:
@@ -517,6 +522,8 @@ class Pipeline:
                     counts.unverified_websites += 1
 
             established = opp.brand_maturity == BrandMaturity.ESTABLISHED
+            mode = CommercialMode(opp.commercial_mode)
+            product_relevant = mode.value in delivered_modes
 
             if opp.score.band == ScoreBand.SUPPRESS:
                 opp.suppressed = True
@@ -528,6 +535,30 @@ class Pipeline:
                 # brands removed on a week where it removed several.
                 if established:
                     counts.established_brands_suppressed += 1
+                continue
+
+            if not product_relevant:
+                opp.suppressed = True
+                opp.suppression_reason = (
+                    "incidental_food_goods"
+                    if mode == CommercialMode.NON_PRODUCT
+                    else "not_a_packaged_product_business"
+                )
+                if mode == CommercialMode.NON_PRODUCT:
+                    counts.incidental_food_removed += 1
+                else:
+                    counts.food_service_removed += 1
+                counts.add_rejection(opp.suppression_reason)
+                result.rejected.append(
+                    RejectedRecord(
+                        trademark_number=opp.trademark_number,
+                        mark_text=opp.brand_name,
+                        applicant_name=opp.applicant_name,
+                        stage="commercial_mode",
+                        reason=opp.suppression_reason,
+                        detail="; ".join(opp.commercial_mode_reasons)[:400],
+                    )
+                )
                 continue
 
             if suppress_established and established:
@@ -638,6 +669,11 @@ class Pipeline:
                     f"{product.reasoning_summary}; category inferred from {evidence}"
                 ).strip("; ")
 
+        profile = getattr(outcome, "goods_profile", None) or self.goods_analyser.analyse(
+            record.goods_text
+        )
+        commercial = self.commercial_assessor.assess(profile, record.nice_classes, match, web)
+
         launch_stage = assess_launch_stage(match, web, age)
         brand_maturity, maturity_evidence = assess_brand_maturity(web)
         intent = map_buying_intent(product.product_category, launch_stage)
@@ -680,6 +716,12 @@ class Pipeline:
             buying_intent=intent,
             launch_stage=launch_stage,
             retail_presence=resolve_retail_presence(web),
+            commercial_mode=commercial.mode.value,
+            commercial_mode_reasons=(
+                [commercial.verdict_reason]
+                + commercial.product_reasons
+                + commercial.service_reasons
+            ),
             brand_maturity=brand_maturity,
             brand_maturity_evidence=maturity_evidence,
             company_age_years_at_filing=age,
