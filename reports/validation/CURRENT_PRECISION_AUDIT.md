@@ -642,7 +642,8 @@ that the goods list was incoherent.
 genuine trading spice business whose site was withheld because the registered
 name spells the brand differently from the mark ("Arravali" against
 "Aravalli"). This is the intended trade-off — blank beats wrong — but it is a
-cost, and it is why 27 of 34 delivered records ship with no website.
+cost, and it is why 30 of the 34 delivered records ship with no website
+at all.
 
 ## Customer-facing sample
 
