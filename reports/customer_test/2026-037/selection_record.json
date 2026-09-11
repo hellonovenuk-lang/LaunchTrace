@@ -1,0 +1,311 @@
+{
+  "P009": {
+    "company": "Digimock",
+    "profile": "Flexible packaging manufacturer",
+    "qualified": 9,
+    "considered": 14,
+    "email_1": [
+      "UK00004435554",
+      "UK00004437089",
+      "UK00004435320"
+    ],
+    "sample_rows": 9,
+    "fit": {
+      "UK00004435554": [
+        "kWh Coffee",
+        18.58
+      ],
+      "UK00004435509": [
+        "Sami's Superfoods",
+        18.11
+      ],
+      "UK00004437089": [
+        "BULLITT",
+        14.96
+      ],
+      "UK00004437597": [
+        "GIGGLECHOC",
+        14.96
+      ],
+      "UK00004437844": [
+        "LEAH'S",
+        7.26
+      ],
+      "UK00004436191": [
+        "AE ARAVALLI ESSENCE",
+        5.92
+      ],
+      "UK00004433315": [
+        "Rose & Grind",
+        15.27
+      ],
+      "UK00004435320": [
+        "چاى مامه CHAI MAMA",
+        15.27
+      ],
+      "UK00004435549": [
+        "GOLDEN ROOTS",
+        14.89
+      ]
+    }
+  },
+  "P001": {
+    "company": "National Flexible",
+    "profile": "Flexible packaging manufacturer",
+    "qualified": 9,
+    "considered": 14,
+    "email_1": [
+      "UK00004435509",
+      "UK00004435549",
+      "UK00004437089"
+    ],
+    "sample_rows": 9,
+    "fit": {
+      "UK00004435554": [
+        "kWh Coffee",
+        18.58
+      ],
+      "UK00004435509": [
+        "Sami's Superfoods",
+        18.11
+      ],
+      "UK00004437089": [
+        "BULLITT",
+        14.96
+      ],
+      "UK00004437597": [
+        "GIGGLECHOC",
+        14.96
+      ],
+      "UK00004437844": [
+        "LEAH'S",
+        7.26
+      ],
+      "UK00004436191": [
+        "AE ARAVALLI ESSENCE",
+        5.92
+      ],
+      "UK00004433315": [
+        "Rose & Grind",
+        15.27
+      ],
+      "UK00004435320": [
+        "چاى مامه CHAI MAMA",
+        15.27
+      ],
+      "UK00004435549": [
+        "GOLDEN ROOTS",
+        14.89
+      ]
+    }
+  },
+  "P022": {
+    "company": "Wholebake",
+    "profile": "Food contract manufacturer",
+    "qualified": 14,
+    "considered": 14,
+    "email_1": [
+      "UK00004437089",
+      "UK00004435509"
+    ],
+    "sample_rows": 4,
+    "fit": {
+      "UK00004435936": [
+        "Cray Sauces",
+        14.96
+      ],
+      "UK00004437089": [
+        "BULLITT",
+        14.96
+      ],
+      "UK00004437844": [
+        "LEAH'S",
+        12.96
+      ],
+      "UK00004435554": [
+        "kWh Coffee",
+        12.28
+      ],
+      "UK00004435509": [
+        "Sami's Superfoods",
+        12.1
+      ],
+      "UK00004437597": [
+        "GIGGLECHOC",
+        8.96
+      ],
+      "UK00004436958": [
+        "BEAKY",
+        14.96
+      ],
+      "UK00004437777": [
+        "TOSS",
+        14.96
+      ],
+      "UK00004437400": [
+        "PITHY",
+        14.96
+      ],
+      "UK00004425387": [
+        "NAJORA",
+        14.44
+      ],
+      "UK00004436191": [
+        "AE ARAVALLI ESSENCE",
+        12.61
+      ],
+      "UK00004433315": [
+        "Rose & Grind",
+        8.96
+      ],
+      "UK00004435320": [
+        "چاى مامه CHAI MAMA",
+        8.96
+      ],
+      "UK00004435549": [
+        "GOLDEN ROOTS",
+        8.89
+      ]
+    }
+  },
+  "P039": {
+    "company": "Sauce Master",
+    "profile": "Food contract manufacturer",
+    "qualified": 14,
+    "considered": 14,
+    "email_1": [
+      "UK00004435936",
+      "UK00004436958",
+      "UK00004437777"
+    ],
+    "sample_rows": 5,
+    "fit": {
+      "UK00004435936": [
+        "Cray Sauces",
+        14.96
+      ],
+      "UK00004437089": [
+        "BULLITT",
+        14.96
+      ],
+      "UK00004437844": [
+        "LEAH'S",
+        12.96
+      ],
+      "UK00004435554": [
+        "kWh Coffee",
+        12.28
+      ],
+      "UK00004435509": [
+        "Sami's Superfoods",
+        12.1
+      ],
+      "UK00004437597": [
+        "GIGGLECHOC",
+        8.96
+      ],
+      "UK00004436958": [
+        "BEAKY",
+        14.96
+      ],
+      "UK00004437777": [
+        "TOSS",
+        14.96
+      ],
+      "UK00004437400": [
+        "PITHY",
+        14.96
+      ],
+      "UK00004425387": [
+        "NAJORA",
+        14.44
+      ],
+      "UK00004436191": [
+        "AE ARAVALLI ESSENCE",
+        12.61
+      ],
+      "UK00004433315": [
+        "Rose & Grind",
+        8.96
+      ],
+      "UK00004435320": [
+        "چاى مامه CHAI MAMA",
+        8.96
+      ],
+      "UK00004435549": [
+        "GOLDEN ROOTS",
+        8.89
+      ]
+    }
+  },
+  "P038": {
+    "company": "Cotswold Fayre",
+    "profile": "Food distributor or wholesaler",
+    "qualified": 14,
+    "considered": 14,
+    "email_1": [
+      "UK00004435554",
+      "UK00004435509",
+      "UK00004437777"
+    ],
+    "sample_rows": 14,
+    "fit": {
+      "UK00004435509": [
+        "Sami's Superfoods",
+        17.3
+      ],
+      "UK00004435554": [
+        "kWh Coffee",
+        17.08
+      ],
+      "UK00004435936": [
+        "Cray Sauces",
+        13.96
+      ],
+      "UK00004437597": [
+        "GIGGLECHOC",
+        13.96
+      ],
+      "UK00004437089": [
+        "BULLITT",
+        9.16
+      ],
+      "UK00004437844": [
+        "LEAH'S",
+        5.16
+      ],
+      "UK00004436958": [
+        "BEAKY",
+        13.96
+      ],
+      "UK00004437777": [
+        "TOSS",
+        13.96
+      ],
+      "UK00004437400": [
+        "PITHY",
+        13.96
+      ],
+      "UK00004435549": [
+        "GOLDEN ROOTS",
+        13.89
+      ],
+      "UK00004425387": [
+        "NAJORA",
+        13.44
+      ],
+      "UK00004433315": [
+        "Rose & Grind",
+        12.77
+      ],
+      "UK00004435320": [
+        "چاى مامه CHAI MAMA",
+        12.77
+      ],
+      "UK00004436191": [
+        "AE ARAVALLI ESSENCE",
+        10.02
+      ]
+    }
+  }
+}
