@@ -34,6 +34,11 @@ import httpx
 
 from src.errors import JournalNotYetPublishedError, JournalRetrievalError
 from src.ingest.base import JournalSource
+from src.ingest.browser_fetch import (
+    BrowserUnavailableError,
+    browser_available,
+    fetch_via_browser,
+)
 from src.ingest.cache import FileCache, sha256_file
 from src.ingest.discovery import (
     date_for_journal_number,
@@ -51,6 +56,9 @@ log = get_logger(__name__)
 # Filename patterns the IPO has used for the machine-readable journal.
 # ``{n}`` = journal number (2025-052), ``{c}`` = compact form (2025052).
 XML_FILENAME_PATTERNS: tuple[str, ...] = (
+    # The name the IPO actually uses. It was absent from this list, which is
+    # the other half of why every automated fetch failed.
+    "jnl.xml",
     "{n}.xml",
     "{c}.xml",
     "journal.xml",
@@ -129,6 +137,41 @@ class UkipoJournalHttpSource(JournalSource):
             log.info("ukipo.index.links", url=index_url, count=len(found))
         return found
 
+    def _fetch_via_browser(self, ref: JournalRef, cache_key: str) -> JournalArtifact | None:
+        """Retry the candidate URLs through a real browser engine.
+
+        Returns None rather than raising, so a browser failure falls through to
+        the ordinary "could not retrieve" error with all the context in it.
+        """
+        if not browser_available():
+            log.info("ukipo.browser.unavailable", journal=ref.journal_number)
+            return None
+        for url in self.candidate_urls(ref):
+            if url.lower().endswith(".zip"):
+                continue  # the browser path serves the XML directly
+            dest = self.cache.path_for(cache_key, ".xml")
+            try:
+                result = fetch_via_browser(
+                    url,
+                    dest,
+                    timeout_seconds=self.settings.ukipo_request_timeout_seconds * 10,
+                    executable_path=self.settings.chromium_executable_path or None,
+                )
+            except BrowserUnavailableError:
+                return None
+            except JournalRetrievalError as exc:
+                log.info("ukipo.browser.rejected", url=url, error=str(exc)[:160])
+                dest.unlink(missing_ok=True)
+                continue
+            return JournalArtifact(
+                ref=ref.model_copy(update={"source_url": url}),
+                local_path=str(result.path),
+                byte_size=result.stripped_bytes,
+                sha256=sha256_file(result.path),
+                content_type="application/xml",
+            )
+        return None
+
     def fetch(self, ref: JournalRef) -> JournalArtifact:
         cache_key = f"{ref.source_name}-{ref.journal_number}"
         cached = self.cache.get(cache_key, ".xml") or self.cache.get(cache_key, ".zip")
@@ -166,6 +209,14 @@ class UkipoJournalHttpSource(JournalSource):
                     content_type="application/zip" if suffix == ".zip" else "application/xml",
                 )
             dest.unlink(missing_ok=True)
+
+        # Every plain HTTP attempt failed. If they were refused rather than
+        # missing, the block is on the client, so try again from Chromium --
+        # this is what makes an unattended Friday run possible at all.
+        if self.settings.ukipo_browser_fallback and last_status in {401, 403, 429}:
+            artifact = self._fetch_via_browser(ref, cache_key)
+            if artifact is not None:
+                return artifact
 
         detail = (
             f"journal={ref.journal_number} publication_date={ref.publication_date} "
