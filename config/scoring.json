@@ -28,17 +28,17 @@
     {
       "key": "company_incorporated_within_12m",
       "weight": 12,
-      "reason_template": "UK company incorporated {company_age_months} months before this filing"
+      "reason_template": "UK company incorporated {company_age_phrase} this filing"
     },
     {
       "key": "company_incorporated_within_24m",
       "weight": 8,
-      "reason_template": "UK company incorporated {company_age_months} months before this filing"
+      "reason_template": "UK company incorporated {company_age_phrase} this filing"
     },
     {
       "key": "company_incorporated_within_48m",
       "weight": 4,
-      "reason_template": "UK company incorporated {company_age_months} months before this filing"
+      "reason_template": "UK company incorporated {company_age_phrase} this filing"
     },
     {
       "key": "first_trademark_for_applicant",

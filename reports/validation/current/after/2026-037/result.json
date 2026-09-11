@@ -1,5 +1,5 @@
 {
- "run_id": "run_20260911T151755_9b175a",
+ "run_id": "run_20260911T152717_d3633f",
  "journal": {
   "journal_number": "2026-037",
   "publication_date": "2026-09-11",
@@ -7,8 +7,8 @@
   "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz"
  },
  "status": "completed",
- "started_at": "2026-09-11T15:17:55.762412Z",
- "finished_at": "2026-09-11T15:18:07.414218Z",
+ "started_at": "2026-09-11T15:27:17.691689Z",
+ "finished_at": "2026-09-11T15:27:29.579143Z",
  "counts": {
   "raw_records": 3973,
   "food_class_candidates": 350,
@@ -52,7 +52,7 @@
    "trademark_number": "UK00004433315",
    "brand_name": "Rose & Grind",
    "filing_date": "2026-08-20",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Drinkware; Mugs; Coffee mugs; Travel mugs; Insulated mugs; Cups and mugs; Coffee cups; Drinking vessels; Tumblers; Insulated bottles [flasks]; Water bottles. Clothing; T-shirts; sweatshirts; hoodies; polo shirts; jackets; gilets; caps; hats; beanies. Coffee; coffee beans; roasted coffee beans; ground coffee; coffee in whole-bean form; flavoured coffee; decaffeinated coffee; coffee bags; coffee pods; coffee capsules.",
    "product_category": "coffee_tea",
@@ -110,7 +110,7 @@
      "https://zimmermansonline.com/product/columbian-medium-grind-rose-garden-coffee/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.373787Z",
+    "enriched_at": "2026-09-11T15:27:29.537414Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -157,7 +157,7 @@
     "reasons": [
      {
       "key": "company_incorporated_within_12m",
-      "text": "UK company incorporated 0 months before this filing",
+      "text": "UK company incorporated in the same month as this filing",
       "weight": 16
      },
      {
@@ -232,7 +232,7 @@
     "https://roserockcoffee.com/collections/our-blends",
     "https://zimmermansonline.com/product/columbian-medium-grind-rose-garden-coffee/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.389929Z",
+   "enriched_at": "2026-09-11T15:27:29.553665Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -243,7 +243,7 @@
    "trademark_number": "UK00004435688",
    "brand_name": "WAGH BAKRI SINCE 1892 PREMIUM BLACK TEA",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tea and tea products namely, Dust tea, Leaf tea, Tea powder, Tea mix, Iced tea, Flavored tea, Tea-based beverages, Ready-to-use tea bags.",
    "product_category": "coffee_tea",
@@ -293,7 +293,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374161Z",
+    "enriched_at": "2026-09-11T15:27:29.537855Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -384,7 +384,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.390336Z",
+   "enriched_at": "2026-09-11T15:27:29.554072Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -395,7 +395,7 @@
    "trademark_number": "UK00004435770",
    "brand_name": "WAGH BAKRI SINCE 1892 PREMIUM BLACK TEA",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tea and tea products namely, Dust tea, Leaf tea, Tea powder, Tea mix, Iced tea, Flavored tea, Tea-based beverages, Ready-to-use tea bags.",
    "product_category": "coffee_tea",
@@ -445,7 +445,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374196Z",
+    "enriched_at": "2026-09-11T15:27:29.537894Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -536,7 +536,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.390679Z",
+   "enriched_at": "2026-09-11T15:27:29.554447Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -547,7 +547,7 @@
    "trademark_number": "UK00004435334",
    "brand_name": "PROJECT FROYO SIGNATURE",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Yogurt; Desserts of yogurt. Frozen yogurt; Dairy ice cream; Ice cream desserts; Ice cream cones. Frozen fruit drinks; Fruit smoothies. Retail services in relation to frozen yogurts; Retail services in relation to ice creams.",
    "product_category": "chilled_frozen",
@@ -604,7 +604,7 @@
      "https://en.wikipedia.org/wiki/Menchie%27s_Frozen_Yogurt"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374237Z",
+    "enriched_at": "2026-09-11T15:27:29.537936Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -720,7 +720,7 @@
     "https://www.tiktok.com/discover/froyo-glasgow",
     "https://en.wikipedia.org/wiki/Menchie%27s_Frozen_Yogurt"
    ],
-   "enriched_at": "2026-09-11T15:18:07.391070Z",
+   "enriched_at": "2026-09-11T15:27:29.554875Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -731,7 +731,7 @@
    "trademark_number": "UK00004435439",
    "brand_name": "LANLUIS",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Manuka honey; Honey; Honey [for food]; Herbal honey.",
    "product_category": "sauces_condiments",
@@ -779,7 +779,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374545Z",
+    "enriched_at": "2026-09-11T15:27:29.538223Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -884,7 +884,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.391371Z",
+   "enriched_at": "2026-09-11T15:27:29.555208Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -895,7 +895,7 @@
    "trademark_number": "UK00004435534",
    "brand_name": "GOLDEN ROOTS",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Preserved, frozen, dried and cooked fruits, vegetables and seaweeds; jellies, jams, compotes; eggs; milk, cheese, butter, yogurt; oils and fats for food; sweet potato chips; sweet potato based snack foods; root vegetable based snack foods; cassava chips; potato fries; pre-cooked frozen cassava fries; yuca fries; tri-colour sweet potato fries; frozen plantain fries; prepared root vegetables; potato crisps in the form of snack foods; vegetable crisps; cassava crisps in the form of snack foods; ready-to-eat meals comprised primarily of root vegetables and or potatoes.",
    "product_category": "snacks",
@@ -954,7 +954,7 @@
      "https://find-and-update.company-information.service.gov.uk/company/14547529"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374591Z",
+    "enriched_at": "2026-09-11T15:27:29.538312Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -1086,7 +1086,7 @@
     "https://www.amazon.com/ROOTS-FOODS-servings-antioxidant-beverage/dp/B08NWDQLDN",
     "https://find-and-update.company-information.service.gov.uk/company/14547529"
    ],
-   "enriched_at": "2026-09-11T15:18:07.391744Z",
+   "enriched_at": "2026-09-11T15:27:29.555585Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -1097,7 +1097,7 @@
    "trademark_number": "UK00004435554",
    "brand_name": "kWh Coffee",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee; Decaffeinated coffee; Iced coffee; Coffee drinks; Coffee beans; Coffee beverages; Unroasted coffee; Coffee beverages with milk; Coffee bags; Unroasted coffee beans; Roasted coffee beans; Espresso; Ground coffee; Coffee based drinks; Coffee in whole-bean form; Ground coffee beans; Drip bag coffee; Coffee based beverages; Cappuccino; Coffee in brewed form; Coffee concentrates; Coffee [roasted, powdered, granulated, or in drinks].",
    "product_category": "coffee_tea",
@@ -1153,7 +1153,7 @@
      "https://skinnedcartree.com/best-coffee-in-york.html"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.374889Z",
+    "enriched_at": "2026-09-11T15:27:29.538728Z",
     "verification_status": "verified",
     "verification_evidence": [
      "the domain is the brand name (kwhcoffee.com)",
@@ -1289,7 +1289,7 @@
     "https://balancecoffee.co.uk/pages/buy-coffee-beans-york-uk",
     "https://skinnedcartree.com/best-coffee-in-york.html"
    ],
-   "enriched_at": "2026-09-11T15:18:07.392071Z",
+   "enriched_at": "2026-09-11T15:27:29.555942Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -1300,7 +1300,7 @@
    "trademark_number": "WO0000001163546",
    "brand_name": "Pingummi",
    "filing_date": "2013-05-06",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Confectionery consisting of or containing fruit gum and/or foam sugar and/or jelly and/or liquorice, all the aforesaid goods not for medical purposes.",
    "product_category": "confectionery",
@@ -1356,7 +1356,7 @@
      "https://www.ebay.com/itm/326297125426"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.375551Z",
+    "enriched_at": "2026-09-11T15:27:29.539480Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -1481,7 +1481,7 @@
     "https://candyfunhouse.com/products/trolli-pingummi-germany-150g",
     "https://www.ebay.com/itm/326297125426"
    ],
-   "enriched_at": "2026-09-11T15:18:07.392385Z",
+   "enriched_at": "2026-09-11T15:27:29.556303Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -1492,7 +1492,7 @@
    "trademark_number": "UK00004435511",
    "brand_name": "Matcha society",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Japanese green tea; Tea mix powders.",
    "product_category": "coffee_tea",
@@ -1548,7 +1548,7 @@
      "https://balancejournal.co/wellness/best-matcha-brands"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.375950Z",
+    "enriched_at": "2026-09-11T15:27:29.539941Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the brand name appears in the page title",
@@ -1682,7 +1682,7 @@
     "https://luxurylondon.co.uk/taste/drink/best-matcha-in-london-bars-cafes/",
     "https://balancejournal.co/wellness/best-matcha-brands"
    ],
-   "enriched_at": "2026-09-11T15:18:07.392719Z",
+   "enriched_at": "2026-09-11T15:27:29.556673Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -1693,7 +1693,7 @@
    "trademark_number": "UK00004435549",
    "brand_name": "GOLDEN ROOTS",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Preserved, frozen, dried and cooked fruits, vegetables and seaweeds; jellies, jams, compotes; eggs; milk, cheese, butter, yogurt; oils and fats for food; sweet potato chips; sweet potato based snack foods; root vegetable based snack foods; cassava chips; potato fries; pre-cooked frozen cassava fries; yuca fries; tri-colour sweet potato fries; frozen plantain fries; prepared root vegetables; potato crisps in the form of snack foods; vegetable crisps; cassava crisps in the form of snack foods; ready-to-eat meals comprised primarily of root vegetables and or potatoes.",
    "product_category": "snacks",
@@ -1752,7 +1752,7 @@
      "https://find-and-update.company-information.service.gov.uk/company/14547529"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.376786Z",
+    "enriched_at": "2026-09-11T15:27:29.540720Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -1896,7 +1896,7 @@
     "https://www.amazon.com/ROOTS-FOODS-servings-antioxidant-beverage/dp/B08NWDQLDN",
     "https://find-and-update.company-information.service.gov.uk/company/14547529"
    ],
-   "enriched_at": "2026-09-11T15:18:07.393033Z",
+   "enriched_at": "2026-09-11T15:27:29.557010Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -1907,7 +1907,7 @@
    "trademark_number": "UK00004435490",
    "brand_name": "BON & ROSE FARM-MADE ARTISAN GELATO",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice-cream; Sorbet; Vegan ice cream.",
    "product_category": "chilled_frozen",
@@ -1957,7 +1957,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.377169Z",
+    "enriched_at": "2026-09-11T15:27:29.540971Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -2059,7 +2059,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.393326Z",
+   "enriched_at": "2026-09-11T15:27:29.557345Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -2070,7 +2070,7 @@
    "trademark_number": "UK00004435509",
    "brand_name": "Sami's Superfoods",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Candied nuts; Roasted nuts; Salted nuts; Blanched nuts; Edible nuts; Spiced nuts; Dried nuts; Nuts being dried; Candied pine nuts; Shelled nuts; Flavoured nuts; Flavored nuts; Cashew nuts (Prepared -); Roast nuts; Prepared macadamia nuts; Nuts being cooked; Ground nuts; Prepared pine nuts; Processed nuts; Seasoned nuts; Prepared nuts; Nuts, prepared; Mixtures of fruit and nuts; Processed betel nuts; Nuts being preserved; Preserved nuts; Butter made of nuts; Processed tiger nuts; Pastes made from nuts; Prepared torreya nuts; Cashew nut butter; Nut toppings; Nut oils; Powdered nut butters; Butter (Chocolate nut -); Chocolate nut butter; Processed fruits, fungi, vegetables, nuts and pulses; Candied walnuts; Nut oils for food; Snack mixes consisting of dehydrated fruit and processed nuts; Nut and seed-based snack bars; Snack foods based on nuts; Organic nut and seed-based snack bars; Snack mixes consisting of processed fruits and processed nuts; Olives stuffed with almonds; Nut paste spreads; Salted cashews; Roasted peanuts; Coated peanuts; Raisins; Canned peanuts; Honeyed peanuts; Walnuts, prepared; Prepared walnuts; Candied fruits; Candied fruit snacks; Candied fruit; Coffee creamer; Coffee creamers; Savory butters; Yoghurt desserts; Fruit flavoured yoghurts; Fruit-based fillings for cakes and pies; Flavoured yoghurts; Fruit desserts; Sweet corn-based snack foods; Potato-based salads; Milk-based beverages flavored with chocolate; Butter (Cocoa -); Cocoa butter; Cocoa flavored milk beverages; Cocoa butter for food. Food seasonings; Starch for food; Food flavourings; Glucose for food; Flour for food; Mustard for food; Turmeric for food; Honey [for food]; Fructose for food; Snack food (Rice-based -); Rice-based snack food; Snack food (Cereal-based -); Cerealbased snack food; Syrup for food; Oat-based food; Glutamate for food; Molasses for food; Maltose for food; Wafers [food]; Savory food flavourings for food [other than essential oils]; Starch products for food;\u2026",
    "product_category": "sauces_condiments",
@@ -2133,7 +2133,7 @@
      "https://www.instagram.com/samissuperfoods/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.377230Z",
+    "enriched_at": "2026-09-11T15:27:29.541020Z",
     "verification_status": "verified",
     "verification_evidence": [
      "the domain is the brand name (samissuperfoods.com)",
@@ -2284,7 +2284,7 @@
     "https://www.dnb.com/business-directory/company-profiles.samis_superfoods_ltd.93736a3411e0c69d703746a36542cde5.html",
     "https://www.instagram.com/samissuperfoods/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.393668Z",
+   "enriched_at": "2026-09-11T15:27:29.557749Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -2295,7 +2295,7 @@
    "trademark_number": "UK00004435651",
    "brand_name": "baklavac\u0131 kadir usta kadir ko\u00e7ak",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee, cocoa; coffee or cocoa based beverages, chocolate based beverages; pasta, stuffed dumplings, noodles; pastries and bakery products based on flour; desserts based on flour and chocolate; bread, simit [Turkish ring-shaped bagel covered with sesame seeds], po\u011fa\u00e7a [Turkish bagel], pita, sandwiches, katmer [Turkish pastry], pies, cakes, baklava [Turkish dessert based on dough coated with syrup], kaday\u0131f [Turkish dessert based on dough]; desserts based on dough coated with syrup; puddings, custard, kazandibi [Turkish pudding], rice pudding, ke\u015fk\u00fcl [Turkish pudding]; honey, bee glue for human consumption, propolis for food purposes; condiments for foodstuff, vanilla (flavoring), spices, sauces (condiments), tomato sauce; yeast, baking powder; flour, semolina, starch for food; sugar, cube sugar, powdered sugar; tea, iced tea; confectionery, chocolate, biscuits, crackers, wafers; chewing gums; ice-cream, edible ices; salt; cereal-based snack food, popcorn, crushed oats, corn chips, breakfast cereals, processed wheat for human consumption, crushed barley for human consumption, processed oats for human consumption, processed rye for human consumption, rice; molasses for food.",
    "product_category": "biscuits_bakery",
@@ -2352,7 +2352,7 @@
      "https://en.wikipedia.org/wiki/Abd%C3%BClkadir_Ko%C3%A7ak"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.378375Z",
+    "enriched_at": "2026-09-11T15:27:29.541947Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No corroborating evidence for kocakbaklava.com.",
@@ -2468,7 +2468,7 @@
     "https://www.kocakbaklava.com.tr/",
     "https://en.wikipedia.org/wiki/Abd%C3%BClkadir_Ko%C3%A7ak"
    ],
-   "enriched_at": "2026-09-11T15:18:07.393975Z",
+   "enriched_at": "2026-09-11T15:27:29.558071Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -2479,7 +2479,7 @@
    "trademark_number": "UK00004366651",
    "brand_name": "ETS",
    "filing_date": "2026-03-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares, fancy dress costumes, aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": null,
@@ -2549,7 +2549,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379000Z",
+    "enriched_at": "2026-09-11T15:27:29.542621Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -2647,7 +2647,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.394332Z",
+   "enriched_at": "2026-09-11T15:27:29.558461Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -2658,7 +2658,7 @@
    "trademark_number": "UK00004366973",
    "brand_name": "NEC ASPERA TERRENT",
    "filing_date": "2026-03-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares, fancy dress costumes, aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": null,
@@ -2728,7 +2728,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379023Z",
+    "enriched_at": "2026-09-11T15:27:29.542645Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -2826,7 +2826,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.394674Z",
+   "enriched_at": "2026-09-11T15:27:29.558827Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -2837,7 +2837,7 @@
    "trademark_number": "UK00004367170",
    "brand_name": "RANGER",
    "filing_date": "2026-03-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares, fancy dress costumes, aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": null,
@@ -2907,7 +2907,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379043Z",
+    "enriched_at": "2026-09-11T15:27:29.542665Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -3005,7 +3005,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.395000Z",
+   "enriched_at": "2026-09-11T15:27:29.559175Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -3016,7 +3016,7 @@
    "trademark_number": "UK00004367369",
    "brand_name": "QUEEN ELIZABETH ER",
    "filing_date": "2026-03-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares; fancy dress costumes; aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": null,
@@ -3084,7 +3084,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379061Z",
+    "enriched_at": "2026-09-11T15:27:29.542683Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -3182,7 +3182,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.395305Z",
+   "enriched_at": "2026-09-11T15:27:29.559552Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -3193,7 +3193,7 @@
    "trademark_number": "UK00004367472",
    "brand_name": "STEADFAST",
    "filing_date": "2026-03-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. . Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares; fancy dress costumes; aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": "coffee_tea",
@@ -3264,7 +3264,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379083Z",
+    "enriched_at": "2026-09-11T15:27:29.542708Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -3369,7 +3369,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.395632Z",
+   "enriched_at": "2026-09-11T15:27:29.559870Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -3380,7 +3380,7 @@
    "trademark_number": "UK00004370899",
    "brand_name": "CR ROYAL MILITARY ACADEMY SANDHURST SERVE TO LEAD",
    "filing_date": "2026-04-09",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Works of art of metal; sculptures of metal; decorative plaques [ornaments] made of metal; car badges; metal identity discs for pets. Audio recordings; video recordings; computer game programs; publications (electronic \u2014), downloadable; magnets (decorative \u2014); phone covers [specifically adapted]; mouse pads; memory sticks. Watches; watch straps; clocks; figurines of precious metal; ornaments of precious metal; jewellery; badges of precious metal; lapel pins; tie pins; cuff links; coins; medals; key rings [trinkets or fobs]; trophies. Printed publications; stationery; diaries; greeting cards; paperweights; bookmarks; pens; pencils; rubber erasers; wrapping paper; postal stamps; tickets; calendars; planners including wall planners; certificates; postcards; stickers; posters; printed publications. Travelling bags; umbrellas; wallets; purses; trunks; keycases; collars, leads and harnesses for animals. Works of art of wood, wax, plaster or plastic; models [ornaments] made of wood, wax, plaster or plastic; decorative plaques [ornaments] made of wood, wax, plaster or plastic; picture frames; pillows; cushions. Glassware; pottery; porcelain ware; earthenware; containers for household or kitchen use; glass decanters; plates; crockery; cutting boards for the kitchen; tableware; drinking flasks; bottles; thermal mugs; mugs; cups; glasses; lunch boxes; vases; flower pots; domestic and kitchen utensils and containers; coasters; tankards; presentation glassware; plates for collectors; coin [money] boxes of non-metallic materials; tankards of precious metal; candle holders. Fabrics in tartan patterns; bed sheets; duvets; pillow cases; curtains; wall hangings; table linens; blankets; bath linen; flags; pennants; banners; covers for cushions; handkerchiefs of textile. Clothing; footwear; headgear for wear; sportswear; belts for clothing; neckties; pocket squares; fancy dress costumes; aprons. Badges for wear, not of precious metal; buckles [clothing accessories]; buttons;\u2026",
    "product_category": null,
@@ -3450,7 +3450,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379108Z",
+    "enriched_at": "2026-09-11T15:27:29.542734Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -3543,7 +3543,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.395939Z",
+   "enriched_at": "2026-09-11T15:27:29.560186Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -3554,7 +3554,7 @@
    "trademark_number": "UK00004434730",
    "brand_name": "GERTIE\u2019S ICE CREAM DELIGHTFULNESS SINCE 2020",
    "filing_date": "2026-08-24",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice cream; Ice milk [ice cream]; Non-dairy ice cream; Cones for ice cream; Ice cream cones; Ice cream desserts; Dairy ice cream; Ice cream sandwiches; Yoghurt based ice cream [ice cream predominating]; Sauces for ice cream; Ice cream with fruit; Vegan ice cream; Ice creams; Ice, ice creams, frozen yogurts and sorbets; Ice cream stick bars; Ice cream infused with alcohol; Ice creams flavoured with chocolate; Powders for making ice cream; Mixtures for making ice cream; Ice creams containing chocolate; Soya-based ice cream substitutes; Soy-based ice cream substitute; Substances for binding ice cream; Mixtures for making ice cream confections; Soya based ice cream products; Organic binding agents for ice cream; Ice lollies being milk flavoured; Mixtures for making ice cream products; Ice milk bars; Salad cream; Ice lollies containing milk; Mixtures for making ice creams; Ice pops; Ice-cream. Retail services in relation to ice creams.",
    "product_category": "chilled_frozen",
@@ -3605,7 +3605,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379140Z",
+    "enriched_at": "2026-09-11T15:27:29.542767Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -3709,7 +3709,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.396236Z",
+   "enriched_at": "2026-09-11T15:27:29.560485Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -3720,7 +3720,7 @@
    "trademark_number": "UK00004435936",
    "brand_name": "Cray Sauces",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Sauces; Sauces [condiments]; Mayonnaise-based sauces; Savory sauces used as condiments; Spicy sauces; Savoury sauces; Sauces for chicken; Ready-made sauces; Sauces for barbecued meat; Ketchup [sauce]; Sauce mixes; Condiments; Chili sauce; Salsas; Barbecue sauce; Sauce [edible]; Prepared foodstuffs in the form of sauces; Sriracha hot chili sauce; Kebab sauce; Hot sauce; Hot chili pepper sauce; Sauces for use with pasta; Sweet and sour sauce; Sauces for rice; Pizza sauces.",
    "product_category": "sauces_condiments",
@@ -3775,7 +3775,7 @@
      "https://baucebrothers.com/collections/hot-sauce"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379176Z",
+    "enriched_at": "2026-09-11T15:27:29.542803Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -3826,7 +3826,7 @@
     "reasons": [
      {
       "key": "company_incorporated_within_12m",
-      "text": "UK company incorporated 1 months before this filing",
+      "text": "UK company incorporated a month before this filing",
       "weight": 16
      },
      {
@@ -3896,7 +3896,7 @@
     "https://thehotsauceco.com/",
     "https://baucebrothers.com/collections/hot-sauce"
    ],
-   "enriched_at": "2026-09-11T15:18:07.396571Z",
+   "enriched_at": "2026-09-11T15:27:29.560814Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -3907,7 +3907,7 @@
    "trademark_number": "UK00004435701",
    "brand_name": "The Naughty Truffle",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Chocolate Truffles, Bon Bons, .",
    "product_category": "confectionery",
@@ -3958,7 +3958,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379499Z",
+    "enriched_at": "2026-09-11T15:27:29.543091Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -4063,7 +4063,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.396864Z",
+   "enriched_at": "2026-09-11T15:27:29.561140Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -4074,7 +4074,7 @@
    "trademark_number": "UK00004434343",
    "brand_name": "Rumba Peruvian Marinade",
    "filing_date": "2026-08-22",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Marinades. Window dressing.",
    "product_category": "sauces_condiments",
@@ -4125,7 +4125,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379532Z",
+    "enriched_at": "2026-09-11T15:27:29.543116Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -4231,7 +4231,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.397226Z",
+   "enriched_at": "2026-09-11T15:27:29.561554Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -4242,7 +4242,7 @@
    "trademark_number": "UK00004436012",
    "brand_name": "MADRID 27 FINAL",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Aluminum foil; metal rings and chains for keys; statues, statuettes, sculptures and trophies made of common metal; fixed metal towel dispensers; paper towel dispensers (of metal); metallic insignia for vehicles; vehicle number plates, of metal; badges of metal for vehicles; pins [metal hardware]; printed metal covers for collection purposes (pogs); all the above products made of common metals or their alloys. Exposed films, slides; video games; video game cassettes; video game disks; software (recorded programs), including software for games; computer programs and databases; recorded or downloaded sounds, images or data; videotapes, magnetic tapes, magnetic disks, DVDs, mini-disks, floppy disks, optical disks, compact disks, CD-ROMs, video disks, memory cards, USB mass storage devices, either blank or pre-recorded with music, sound or images (which may be animated cartoons); holograms; electronic publications provided via CD-ROMs, databases and the Internet; diving and swimming goggles; binoculars; magnets and ornamental magnets; directional compasses; sound and image recording, transmission and reproduction apparatus; satellite dishes; decoders, namely software and hardware capable of converting, supplying and transmitting sound and visual data; virtual reality game software; Graphic user interface software for computers; software related to value tokens, virtual currencies, digital tokens and crypto currencies; application software for mobile devices, in particular for mobile phones, tablets and laptops; television set-top boxes; battery chargers for use of mobile phones; computer software to enable uploading, downloading, accessing, posting, displaying, editing, blogging, and otherwise providing electronic media and information via computer and communication networks; software for sending and receiving electronic messages, graphics, images, audio and audio visual content via global communication networks; computer software for the collection, editing,\u2026",
    "product_category": "coffee_tea",
@@ -4309,7 +4309,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379558Z",
+    "enriched_at": "2026-09-11T15:27:29.543141Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -4409,7 +4409,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.397558Z",
+   "enriched_at": "2026-09-11T15:27:29.561888Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -4420,7 +4420,7 @@
    "trademark_number": "UK00004436222",
    "brand_name": "FRANKFURT FINAL 2027",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Aluminum foil; metal rings and chains for keys; statues, statuettes, sculptures and trophies made of common metal; fixed metal towel dispensers; paper towel dispensers (of metal); metallic insignia for vehicles; vehicle number plates, of metal; badges of metal for vehicles; pins [metal hardware]; printed metal covers for collection purposes (pogs); all the above products made of common metals or their alloys. Exposed films, slides; video games; video game cassettes; video game disks; software (recorded programs), including software for games; computer programs and databases; recorded or downloaded sounds, images or data; videotapes, magnetic tapes, magnetic disks, DVDs, mini-disks, floppy disks, optical disks, compact disks, CD-ROMs, video disks, memory cards, USB mass storage devices, either blank or pre-recorded with music, sound or images (which may be animated cartoons); holograms; electronic publications provided via CD-ROMs, databases and the Internet; diving and swimming goggles; binoculars; magnets and ornamental magnets; directional compasses; sound and image recording, transmission and reproduction apparatus; satellite dishes; decoders, namely software and hardware capable of converting, supplying and transmitting sound and visual data; virtual reality game software; Graphic user interface software for computers; software related to value tokens, virtual currencies, digital tokens and crypto currencies; application software for mobile devices, in particular for mobile phones, tablets and laptops; television set-top boxes; battery chargers for use of mobile phones; computer software to enable uploading, downloading, accessing, posting, displaying, editing, blogging, and otherwise providing electronic media and information via computer and communication networks; software for sending and receiving electronic messages, graphics, images, audio and audio visual content via global communication networks; computer software for the collection, editing,\u2026",
    "product_category": "coffee_tea",
@@ -4487,7 +4487,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379582Z",
+    "enriched_at": "2026-09-11T15:27:29.543165Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -4587,7 +4587,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.397856Z",
+   "enriched_at": "2026-09-11T15:27:29.562228Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -4598,7 +4598,7 @@
    "trademark_number": "UK00004436240",
    "brand_name": "Istanbul FINAL 2027",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Aluminum foil; metal rings and chains for keys; statues, statuettes, sculptures and trophies made of common metal; fixed metal towel dispensers; paper towel dispensers (of metal); metallic insignia for vehicles; vehicle number plates, of metal; badges of metal for vehicles; pins [metal hardware]; printed metal covers for collection purposes (pogs); all the above products made of common metals or their alloys. Exposed films, slides; video games; video game cassettes; video game disks; software (recorded programs), including software for games; computer programs and databases; recorded or downloaded sounds, images or data; videotapes, magnetic tapes, magnetic disks, DVDs, mini-disks, floppy disks, optical disks, compact disks, CD-ROMs, video disks, memory cards, USB mass storage devices, either blank or pre-recorded with music, sound or images (which may be animated cartoons); holograms; electronic publications provided via CD-ROMs, databases and the Internet; diving and swimming goggles; binoculars; magnets and ornamental magnets; directional compasses; sound and image recording, transmission and reproduction apparatus; satellite dishes; decoders, namely software and hardware capable of converting, supplying and transmitting sound and visual data; virtual reality game software; Graphic user interface software for computers; software related to value tokens, virtual currencies, digital tokens and crypto currencies; application software for mobile devices, in particular for mobile phones, tablets and laptops; television set-top boxes; battery chargers for use of mobile phones; computer software to enable uploading, downloading, accessing, posting, displaying, editing, blogging, and otherwise providing electronic media and information via computer and communication networks; software for sending and receiving electronic messages, graphics, images, audio and audio visual content via global communication networks; computer software for the collection, editing,\u2026",
    "product_category": "coffee_tea",
@@ -4665,7 +4665,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379607Z",
+    "enriched_at": "2026-09-11T15:27:29.543189Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -4765,7 +4765,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.398150Z",
+   "enriched_at": "2026-09-11T15:27:29.562608Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -4776,7 +4776,7 @@
    "trademark_number": "UK00004436191",
    "brand_name": "AE ARAVALLI ESSENCE",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Spices; Curry spices; Edible spices; Mixed spices; Cardamom [spice]; Salts, seasonings, flavourings and condiments; Flavorings and seasonings; Flavourings and seasonings; Cloves [spice]; Seasonings; Peppers [seasonings]; Pepper spice; Nutmegs [spice]; Cinnamon [spice]; Chili seasonings; Curry spice mixes; Spices in the form of powders; Ginger [powdered spice]; Cinnamon powder [spice]; Pepper powder [spice]; Savory sauces used as condiments; Clove powder [spice]; Blends of seasonings; Food seasonings; Spice preparations; Curry powder [spice]; Dried coriander for use as seasoning; Sesame seeds [seasonings]; Spice mixes; Chutneys [condiments]; Sauces [condiments]; Spicy sauces; Hot pepper powder [spice]; Herb sauces; Curry [seasoning]; Savory sauces; Turmeric for use as a condiment; Mixed spice powder; Chili seasoning; Roasted and ground sesame seeds for use as a seasoning; Dried cumin seeds.",
    "product_category": "sauces_condiments",
@@ -4832,7 +4832,7 @@
      "https://en.wikipedia.org/wiki/Aravalli"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.379647Z",
+    "enriched_at": "2026-09-11T15:27:29.543224Z",
     "verification_status": "probable",
     "verification_evidence": [
      "the registered company name appears (ARRAVALI ESSENCE LTD)",
@@ -4966,7 +4966,7 @@
     "https://aravallifoods.com/",
     "https://en.wikipedia.org/wiki/Aravalli"
    ],
-   "enriched_at": "2026-09-11T15:18:07.398557Z",
+   "enriched_at": "2026-09-11T15:27:29.562939Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -4977,7 +4977,7 @@
    "trademark_number": "UK00004435307",
    "brand_name": "Melting Pots",
    "filing_date": "2026-08-24",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Candles; Tealight candles; Scented candles. Mugs; Bowls; Ceramic tableware. Chocolate fondue; Chocolate confectionery; Chocolate. Retail services in relation to chocolate; Retail services in relation to homeware; Retail services in relation to tableware; Retail services in relation to confectionery; Retail services in relation to foodstuffs; Retail services in relation to cups and glasses.",
    "product_category": "confectionery",
@@ -5030,7 +5030,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380326Z",
+    "enriched_at": "2026-09-11T15:27:29.543910Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -5131,7 +5131,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.398857Z",
+   "enriched_at": "2026-09-11T15:27:29.563251Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5142,7 +5142,7 @@
    "trademark_number": "UK00004436422",
    "brand_name": "Highview House",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Puddings; Christmas puddings; Cakes. Retail services relating to food; Retail services in relation to desserts; Retail services relating to bakery products; Retail services via global computer networks related to foodstuffs.",
    "product_category": "biscuits_bakery",
@@ -5194,7 +5194,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380359Z",
+    "enriched_at": "2026-09-11T15:27:29.543938Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -5301,7 +5301,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.399147Z",
+   "enriched_at": "2026-09-11T15:27:29.563596Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5312,7 +5312,7 @@
    "trademark_number": "UK00004436058",
    "brand_name": "RESTA COFFEE",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee; Iced coffee; Chocolate coffee; Coffee drinks; Coffee beans; Mixtures of malt coffee with coffee; Coffee beverages; Coffee beverages with milk; Flavoured coffee; Coffee bags; Instant coffee; Coffee flavourings; Beverages with coffee base; Beverages with a coffee base; Espresso; Ground coffee; Coffee based drinks; Coffee substitutes; Mixtures of coffee; Coffee mixtures; Cappuccino; Tea; Chai tea.",
    "product_category": "coffee_tea",
@@ -5360,7 +5360,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380385Z",
+    "enriched_at": "2026-09-11T15:27:29.543961Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -5471,7 +5471,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.400235Z",
+   "enriched_at": "2026-09-11T15:27:29.563917Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5482,7 +5482,7 @@
    "trademark_number": "UK00004400840",
    "brand_name": "HAMPSHIRE HARVEST",
    "filing_date": "2026-06-11",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Granola; breakfast cereals; processed grains; granola bars; cereal-based snack bars. Manufacture of foodstuffs for others; food processing.",
    "product_category": "cereal_granola",
@@ -5537,7 +5537,7 @@
      "https://www.britishcornershop.co.uk/cereals"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380413Z",
+    "enriched_at": "2026-09-11T15:27:29.543989Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -5649,7 +5649,7 @@
     "https://www.greatbritishfoodawards.com/best-british-food-and-drink/best-british-cereals",
     "https://www.britishcornershop.co.uk/cereals"
    ],
-   "enriched_at": "2026-09-11T15:18:07.400560Z",
+   "enriched_at": "2026-09-11T15:27:29.564230Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5660,7 +5660,7 @@
    "trademark_number": "WO0000001933825",
    "brand_name": "Yarra Valley Caviar",
    "filing_date": "2026-07-22",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Fish roe, prepared; fish roe, processed; caviar; salmon caviar.",
    "product_category": null,
@@ -5710,7 +5710,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380750Z",
+    "enriched_at": "2026-09-11T15:27:29.544284Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -5803,7 +5803,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.400867Z",
+   "enriched_at": "2026-09-11T15:27:29.564553Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5814,7 +5814,7 @@
    "trademark_number": "UK00004437014",
    "brand_name": "P PETRONDAS TEA MERCHANTS PURE LOOSE LEAF SINGLE ORIGINS",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tea; Tea beverages; Tea bags; Herbal teas [infusions].",
    "product_category": "coffee_tea",
@@ -5864,7 +5864,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380780Z",
+    "enriched_at": "2026-09-11T15:27:29.544313Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -5969,7 +5969,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.401171Z",
+   "enriched_at": "2026-09-11T15:27:29.564857Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -5980,7 +5980,7 @@
    "trademark_number": "UK00004436309",
    "brand_name": "Fast Eats",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ready cooked meals consisting primarily of meat; Ready cooked meals consisting primarily of chicken; Ready cooked meals consisting primarily of poultry; Prepared meals containing [principally] chicken; Prepared meals made from meat [meat predominating]; Prepared meals consisting primarily of meat; Prepared meals consisting primarily of chicken; Ready cooked meals consisting wholly or substantially wholly of meat; Prepared meals consisting primarily of poultry; Ready cooked meals consisting wholly or substantially wholly of poultry; Prepared meals made from poultry [poultry predominating]; Prepared dishes consisting principally of meat; Frozen meals consisting primarily of meat; Frozen meals consisting primarily of chicken. Noodle-based prepared meals; Rice-based prepared meals; Prepared rice dishes; Prepared meals containing [principally] rice; Prepared meals consisting primarily of rice; Frozen prepared rice; Snack food products made from rice; Frozen meals consisting primarily of rice.",
    "product_category": "snacks",
@@ -6040,7 +6040,7 @@
      "https://www.tariqhalalmeats.com/brands/isla-delice.html"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.380871Z",
+    "enriched_at": "2026-09-11T15:27:29.544402Z",
     "verification_status": "probable",
     "verification_evidence": [
      "the registered company name appears (ISLA DELICE LTD)",
@@ -6199,7 +6199,7 @@
     "https://epiceriecorner.co.uk/collections/isla-delice",
     "https://www.tariqhalalmeats.com/brands/isla-delice.html"
    ],
-   "enriched_at": "2026-09-11T15:18:07.401513Z",
+   "enriched_at": "2026-09-11T15:27:29.565177Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -6210,7 +6210,7 @@
    "trademark_number": "UK00004436415",
    "brand_name": "Farm 2 Family Meats",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Meat.",
    "product_category": null,
@@ -6260,7 +6260,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.381862Z",
+    "enriched_at": "2026-09-11T15:27:29.545438Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -6358,7 +6358,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.401838Z",
+   "enriched_at": "2026-09-11T15:27:29.565477Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -6369,7 +6369,7 @@
    "trademark_number": "UK00004436472",
    "brand_name": "PRESAL",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Salt; Seasonings.",
    "product_category": "sauces_condiments",
@@ -6427,7 +6427,7 @@
      "https://www.bellaitaliafoodstore.com/brand/caber"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.381901Z",
+    "enriched_at": "2026-09-11T15:27:29.545480Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -6545,7 +6545,7 @@
     "https://world.openfoodfacts.org/product/8000226999364/presal-caber",
     "https://www.bellaitaliafoodstore.com/brand/caber"
    ],
-   "enriched_at": "2026-09-11T15:18:07.402141Z",
+   "enriched_at": "2026-09-11T15:27:29.565802Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -6556,7 +6556,7 @@
    "trademark_number": "UK00004437057",
    "brand_name": "Two Little Giraffes",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice cream; Cream (Ice -); Ice milk [ice cream]; Non-dairy ice cream; Cones for ice cream; Ice cream cones; Ice cream desserts; Dairy ice cream; Ice cream sandwiches; Ice cream cakes; Ice cream confectionery; Sauces for ice cream; Ice cream drinks; Ice cream confections; Ice cream powder; Ice cream with fruit; Fruit ice cream; Vegan ice cream; Ice creams; Ice cream gateaux; Ice cream bars; Powders for ice cream; Ice cream powders; Imitation ice cream; Ice; Ice cream mixes; Ice cream substitute; Ice cream cone mixes; Ice, ice creams, frozen yogurts and sorbets; Fruit ice creams; Powder for making ice cream; Ice cream stick bars; Ice cream infused with alcohol; Frozen confectionery containing ice cream; Ice creams flavoured with chocolate; Powders for making ice cream; Mixtures for making ice cream; Ice creams containing chocolate; Substances for binding ice cream; Ice lollies; Binding agents for ice cream [edible ices]; Ice cream (Binding agents for -); Binding agents for ice cream; Mixtures for making ice cream confections; Coffee-based beverages containing ice cream (affogato); Binding preparations for ice cream [edible ices]; Ice candy; Ice confectionery; Ice confections; Ice cubes; Fruit ice; Organic binding agents for ice cream; Ice lollies being milk flavoured; Ice candies; Mixtures for making ice cream products; Ice beverages with a chocolate base; Ice milk bars; Ice for refreshment; Ice lollies containing milk; Edible ice; Mixtures for making ice creams; Ice pops; Ice-cream; Edible ice powder for use in icing machines; Ice beverages with a cocoa base. Retail services in relation to ice creams. Ice cream parlors; Ice cream parlour services.",
    "product_category": "confectionery",
@@ -6609,7 +6609,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382163Z",
+    "enriched_at": "2026-09-11T15:27:29.545770Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -6712,7 +6712,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.402485Z",
+   "enriched_at": "2026-09-11T15:27:29.566122Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -6723,7 +6723,7 @@
    "trademark_number": "UK00004436350",
    "brand_name": "WILD TABLE",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Meat, fish; meat extracts; stocks; preserved, dried and cooked fruits and vegetables, salads compotes; fruit purees; preserved, dried, cooked and stewed fruits; processed nuts; soups; sweet or salted appetizers made of potatoes, flavoured or natural, potato chips; preserved, dried, cooked, frozen or canned ready made dishes, partially or wholly made of meat, fish, ham, poultry or game; shellfish, seafood (mussels, crabmeat, clams, oysters); edible oils, olive oils, edible fats; eggs; gelatine; preserves, jams, marmalade, fruit and vegetable preserves, tinned foodstuffs, loaded vegetables in vinegars; pickles. Coffee, tea, sugar, rise, tapioca, sago, artificial coffee; snack foods; bread; honey, golden syrup, molasses syrups treacle; yeast, baking powder, salt; cake mixes; pizzas; unsweetened cereal preparations; cooking sauces; mustard, spices; pasta (plain or flavoured and/or filled); prepared meals totally or partially composed of pasta; vinegar, sauces, salad dressings (condiments), pasta sauces, spices, ice; fruit sauces; biscuits; shortbread; cookies; rusks; oat crunchies; nougat; caramels; confectionery; chocolate; honey; tea and herbal infusions, spices, baking mixes and prepared baking kits.",
    "product_category": "sauces_condiments",
@@ -6772,7 +6772,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382192Z",
+    "enriched_at": "2026-09-11T15:27:29.545798Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -6888,7 +6888,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.402789Z",
+   "enriched_at": "2026-09-11T15:27:29.566451Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -6899,7 +6899,7 @@
    "trademark_number": "UK00004437068",
    "brand_name": "Two Little Giraffes",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice cream; Cream (Ice -); Ice milk [ice cream]; Non-dairy ice cream; Dairy ice cream; Ice cream desserts; Cones for ice cream; Ice cream cones; Ice cream sandwiches; Ice cream confectionery; Ice cream cakes; Sauces for ice cream; Ice cream drinks; Ice cream confections; Ice cream powder; Ice cream with fruit; Fruit ice cream; Vegan ice cream; Ice creams; Ice cream gateaux; Ice cream bars; Powders for ice cream; Ice cream powders; Imitation ice cream; Ice cream mixes; Ice cream substitute; Ice cream cone mixes; Ice, ice creams, frozen yogurts and sorbets; Powder for making ice cream; Ice cream stick bars; Fruit ice creams; Ice cream infused with alcohol; Frozen confectionery containing ice cream; Ice creams flavoured with chocolate; Powders for making ice cream; Mixtures for making ice cream; Ice creams containing chocolate; Instant ice cream mixes; Soy-based ice cream substitute; Ice lollies; Substances for binding ice cream; Binding agents for ice cream [edible ices]; Coffee-based beverages containing ice cream (affogato); Mixtures for making ice cream confections; Binding preparations for ice cream [edible ices]; Binding agents for ice cream; Ice cream (Binding agents for -); Ice candy; Ice confectionery; Fruit ice; Ice lollies being milk flavoured; Organic binding agents for ice cream; Ice candies; Mixtures for making ice cream products; Ice beverages with a chocolate base; Ice milk bars; Ice lollies containing milk; Ice pops; Ice-cream; Mixtures for making ice creams; Ice beverages with a cocoa base. Retail services in relation to ice creams. Ice cream parlors; Ice cream parlour services.",
    "product_category": "confectionery",
@@ -6952,7 +6952,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382215Z",
+    "enriched_at": "2026-09-11T15:27:29.545822Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -7055,7 +7055,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.403080Z",
+   "enriched_at": "2026-09-11T15:27:29.566763Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -7066,7 +7066,7 @@
    "trademark_number": "UK00004437089",
    "brand_name": "BULLITT",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Energy Bar.",
    "product_category": "cereal_bars",
@@ -7120,7 +7120,7 @@
      "https://en.wikipedia.org/wiki/Marbo_Product"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382248Z",
+    "enriched_at": "2026-09-11T15:27:29.545854Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -7236,7 +7236,7 @@
     "https://en.wikipedia.org/wiki/Bell_Brand_Snack_Foods",
     "https://en.wikipedia.org/wiki/Marbo_Product"
    ],
-   "enriched_at": "2026-09-11T15:18:07.403388Z",
+   "enriched_at": "2026-09-11T15:27:29.567102Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -7247,7 +7247,7 @@
    "trademark_number": "UK00004436501",
    "brand_name": "FA\u00cfO",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Cookies; Cookie mixes; Frozen cookie dough; Brownies; Cupcakes; Wafers [biscuits]; Chocolate; Chocolate truffles; Chocolate fudge; Milk chocolate; Chocolate coffee; Chocolate desserts; Milk chocolate bars; Hot chocolate; Chocolate flavoured confectionery; Chocolate bars; Chocolate beverages; Chocolate powder; Chocolate sauces; Drinking chocolate; Chocolate for toppings; Chocolate beverages with milk; Chocolate topping; Drinks flavoured with chocolate; Ice creams flavoured with chocolate; Chocolate confectionery products; Chocolates; Chocolate decorations for cakes; Hot chocolate mixes; Beverages with a chocolate base; Cocoa; Ice beverages with a chocolate base; Beverages made with chocolate; Truffles [confectionery]; Ice creams containing chocolate; Chocolate coated nougat bars; Filled chocolate bars; Chocolate-based bars; Chocolate-coated bars; Chocolate confectionary; Confectionery bars; Cocoa drinks; Cereal bars; Chocolate syrups for the preparation of chocolate based beverages; Filled chocolate; Beverages containing chocolate; Oat bars; Cereal products in bar form; Chocolate-based ready-to-eat food bars; Biscuits having a chocolate coating; Chocolate candies; Chocolate wafers; Chocolate candy with fillings; Vegan hot chocolate; Caramels [sweets]; Chocolate fillings for bakery products; Coffee; Decaffeinated coffee; Iced coffee; Coffee drinks; Coffee beans; Mixtures of malt coffee with coffee; Coffee beverages; Coffee (Unroasted -); Unroasted coffee; Caffeine-free coffee; Coffee extracts for use as substitutes for coffee; Coffee essences for use as substitutes for coffee; Coffee substitutes [artificial coffee or vegetable preparations for use as coffee]; Coffee pods; Coffee beverages with milk; Flavoured coffee; Coffee bags; Unroasted coffee beans; Coffee flavorings; Coffee capsules; Roasted coffee beans; Instant coffee; Freeze-dried coffee; Coffee flavourings; Beverages with coffee base; Espresso; Ground coffee; Coffee based drinks; Sugar-coated coffee beans;\u2026",
    "product_category": "biscuits_bakery",
@@ -7304,7 +7304,7 @@
      "https://goloso.co.uk/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382442Z",
+    "enriched_at": "2026-09-11T15:27:29.545989Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -7435,7 +7435,7 @@
     "https://panificioitaliano.co.uk/areas/london/",
     "https://goloso.co.uk/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.403774Z",
+   "enriched_at": "2026-09-11T15:27:29.567448Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -7446,7 +7446,7 @@
    "trademark_number": "UK00004436958",
    "brand_name": "BEAKY",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Seasoning marinade; Seasoning mixes; Popcorn seasoning; Seasonings; Flavorings and seasonings; Food seasonings; Dry seasonings; Blends of seasonings; Seasoned salt for cooking; Salt for flavouring food; Spices; Savory sauces used as condiments; Seasoned salt; Seasoned coating for meat, fish, poultry; Spice rubs; Sauce mixes; Mixed spices; Spiced salt; Sauces; Mixed spice powder.",
    "product_category": "sauces_condiments",
@@ -7501,7 +7501,7 @@
      "https://www.cozymeal.com/magazine/london-food"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382752Z",
+    "enriched_at": "2026-09-11T15:27:29.546232Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -7626,7 +7626,7 @@
     "https://www.designmynight.com/london/blog/london-street-food",
     "https://www.cozymeal.com/magazine/london-food"
    ],
-   "enriched_at": "2026-09-11T15:18:07.404079Z",
+   "enriched_at": "2026-09-11T15:27:29.567824Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -7637,7 +7637,7 @@
    "trademark_number": "UK00004436799",
    "brand_name": "MATISSE BERRIES",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Processed fruit; dried fruit; frozen fruit; jellies, jams, compotes, fruit and vegetable spreads; fruit preserves. Fresh berries; berries [fruits]; plants.",
    "product_category": "sauces_condiments",
@@ -7687,7 +7687,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382913Z",
+    "enriched_at": "2026-09-11T15:27:29.546420Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -7796,7 +7796,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.404374Z",
+   "enriched_at": "2026-09-11T15:27:29.568159Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -7807,7 +7807,7 @@
    "trademark_number": "UK00004426473",
    "brand_name": "Backyard BBQ Club",
    "filing_date": "2026-08-05",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Clothing; T-shirts; Tee-shirts; Shirts; Hooded sweatshirts; Hooded tops; Hooded sweat shirts; Sweatshirts; Hats; Caps; Headwear; Aprons. Barbecue sauce; Sauces; Marinades; Spice rubs; Seasonings; Condiments; Sauces [condiments]. Entertainment services; Entertainment services in the nature of arranging social entertainment events; Entertainment club services; Online entertainment services; Organisation of entertainment services; Organisation of outings for entertainment; Festivals (Organisation of -) for entertainment purposes.",
    "product_category": "sauces_condiments",
@@ -7858,7 +7858,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382939Z",
+    "enriched_at": "2026-09-11T15:27:29.546446Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -7970,7 +7970,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.404696Z",
+   "enriched_at": "2026-09-11T15:27:29.568506Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -7981,7 +7981,7 @@
    "trademark_number": "UK00004436558",
    "brand_name": "BOBA BY SUSHI TIGERS",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Sushi; Ramen [Japanese noodle-based dish]; Japanese noodle-based dish (Ramen); Ramen; Ramen noodles; Chinese stuffed dumplings (gyoza, cooked); Onigiri; Soba noodles [japanese noodles of buckwheat, uncooked]; Udon noodles; Rice salad; Shrimp dumplings; Onigiri [rice balls].",
    "product_category": "ambient_meals",
@@ -8037,7 +8037,7 @@
      "https://www.instagram.com/bobatigers/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.382977Z",
+    "enriched_at": "2026-09-11T15:27:29.546483Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -8169,7 +8169,7 @@
     "https://www.just-eat.co.uk/restaurants-boba-tigers---bubble-tea-and-sushi-ilford/menu",
     "https://www.instagram.com/bobatigers/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.405005Z",
+   "enriched_at": "2026-09-11T15:27:29.568855Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -8180,7 +8180,7 @@
    "trademark_number": "UK00004436834",
    "brand_name": "CLOUDLINE",
    "filing_date": "2026-08-27",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tea.",
    "product_category": "coffee_tea",
@@ -8236,7 +8236,7 @@
      "https://en.wikipedia.org/wiki/Cloud_tea"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.383360Z",
+    "enriched_at": "2026-09-11T15:27:29.546886Z",
     "verification_status": "verified",
     "verification_evidence": [
      "the domain partly matches the brand (cloudlinetea.com)",
@@ -8366,7 +8366,7 @@
     "https://www.o5tea.com/products/cloudline-dark-tea-from",
     "https://en.wikipedia.org/wiki/Cloud_tea"
    ],
-   "enriched_at": "2026-09-11T15:18:07.405300Z",
+   "enriched_at": "2026-09-11T15:27:29.569173Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -8377,7 +8377,7 @@
    "trademark_number": "UK00004437323",
    "brand_name": "Peerie Peats",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Confectionery; Sugar confectionery; Confectionery items coated with chocolate; Chocolate; Honeycomb toffee.",
    "product_category": "confectionery",
@@ -8427,7 +8427,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384007Z",
+    "enriched_at": "2026-09-11T15:27:29.547483Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -8534,7 +8534,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.405620Z",
+   "enriched_at": "2026-09-11T15:27:29.569468Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -8545,7 +8545,7 @@
    "trademark_number": "UK00004437215",
    "brand_name": "YINGPAI",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee-based beverages; Chocolate; Sweets; Pastries; Cereal-based snack food; Cereal preparations; Biscuits; Ice cream; Oat flakes; Fruit jellies [confectionery].",
    "product_category": "biscuits_bakery",
@@ -8599,7 +8599,7 @@
      "https://www.dnb.com/business-directory/company-information.food_services_and_drinking_places.cn.fujian.html"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384039Z",
+    "enriched_at": "2026-09-11T15:27:29.547514Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -8708,7 +8708,7 @@
     "http://www.xingguangfood.com/about.asp?lang=en",
     "https://www.dnb.com/business-directory/company-information.food_services_and_drinking_places.cn.fujian.html"
    ],
-   "enriched_at": "2026-09-11T15:18:07.405915Z",
+   "enriched_at": "2026-09-11T15:27:29.569936Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -8719,7 +8719,7 @@
    "trademark_number": "UK00004437630",
    "brand_name": "Roast and Gather",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Roasted nuts; Salted nuts; Spiced nuts; Blanched nuts; Dried nuts; Edible nuts; Shelled nuts; Flavoured nuts; Flavored nuts; Roast nuts; Cashew nuts (Prepared -); Prepared macadamia nuts; Nuts being cooked; Processed nuts; Seasoned nuts; Prepared nuts; Nuts, prepared; Salted cashews; Roasted peanuts; Coated peanuts; Canned peanuts; Honeyed peanuts; Prepared walnuts; Walnuts, prepared. Chocolate-covered nuts; Chocolate-coated nuts; Gingerbread nuts; Chocolate coated nuts.",
    "product_category": "sauces_condiments",
@@ -8770,7 +8770,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384409Z",
+    "enriched_at": "2026-09-11T15:27:29.547899Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -8876,7 +8876,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.406206Z",
+   "enriched_at": "2026-09-11T15:27:29.570438Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -8887,7 +8887,7 @@
    "trademark_number": "UK00004426831",
    "brand_name": "Flavour Fellas",
    "filing_date": "2026-08-06",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Knives; Kitchen knives; Butter knives; Tongs. Cookery books; Cook books; Recipe books; Printed publications; Printed matter for instructional purposes; Printed matter; Posters; Photographs; Calendars; Stickers; Paper stationery; Printed recipe cards. Cookware; Cookware [pots and pans]; Tableware, cookware and containers; Bakeware; Cooking utensils; Cooking pots and pans [non-electric]; Cooking pans; Grills [cooking utensils]; Skillets; Kitchen utensils of silicon; Ovenware; Kitchen utensils; Baking utensils; Dishes [household utensils]; Graters [household utensils]; Wire baskets [cooking utensils]; Grills in the nature of cooking utensils; Ceramic tableware; Tableware; Household utensils; Sieves [household utensils]; Skewers (cooking utensil); Dinnerware; Bone china tableware [other than cutlery]; Spatulas for kitchen use; Metal pans; Frying pans; Dinnerware of porcelain; Chopping boards; Spatulas; Knife blocks. Clothing; Knitwear [clothing]; Jackets [clothing]; Ready-to-wear clothing; Clothes; Aprons [clothing]; Denims [clothing]; Shorts [clothing]; Casual clothing; Bottoms [clothing]; Tops [clothing]; Caps; Beanies; Hats; Jackets; Shirts; Hooded sweatshirts; Sweatshirts; T-shirts; Headwear. Prepared vegetable products; Fish (Food products made from -); Prepared meat dishes; Seafood products; Prepared vegetable dishes; Processed meat products; Prepared meat; Prepared fish dishes; Prepared meals made from meat [meat predominating]; Oils for food; Frozen meat products; Prepared meals containing [principally] chicken; Dips; Dairy-based dips; Tapenades; Hummus; Soups and stocks, meat extracts; Relishes [pickles]. Sauces; Sauces [condiments]; Mayonnaise-based sauces; Sauces for use with pasta; Sauces for pasta; Pasta sauces; Savory sauces used as condiments; Spicy sauces; Savory sauces; Salsa sauces; Curry sauces; Salad sauces; Cooking sauces; Soya sauces; Herb sauces; Salts, seasonings, flavourings and condiments; Marinades; Chili sauce; Flavourings and seasonings;\u2026",
    "product_category": "sauces_condiments",
@@ -8949,7 +8949,7 @@
      "https://en.wikipedia.org/wiki/Hedgehog_Flavour_Crisps"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384464Z",
+    "enriched_at": "2026-09-11T15:27:29.547932Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the company's registered location appears (BURY ST. EDMUNDS)",
@@ -9071,7 +9071,7 @@
     "https://srsaromatics.co.uk/",
     "https://en.wikipedia.org/wiki/Hedgehog_Flavour_Crisps"
    ],
-   "enriched_at": "2026-09-11T15:18:07.406564Z",
+   "enriched_at": "2026-09-11T15:27:29.570823Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -9082,7 +9082,7 @@
    "trademark_number": "UK00004437201",
    "brand_name": "Scouse in the house",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Hats; Hoodies; T-shirts. Beef stew; Instant stew; Stews.",
    "product_category": null,
@@ -9134,7 +9134,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384697Z",
+    "enriched_at": "2026-09-11T15:27:29.548182Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -9232,7 +9232,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.406877Z",
+   "enriched_at": "2026-09-11T15:27:29.571228Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -9243,7 +9243,7 @@
    "trademark_number": "UK00004437239",
    "brand_name": "Jailato",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice cream; Ice cream confectionery; Ice cream drinks; Dairy ice cream; Ice-cream; Mixtures for making ice cream confections; Ice for refreshment; Substances for binding ice cream; Salad cream; Cream buns; Ice cubes; Truffle cream sauces; Cream crackers. Ice cream parlors.",
    "product_category": "biscuits_bakery",
@@ -9299,7 +9299,7 @@
      "https://gelatorino.com/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.384730Z",
+    "enriched_at": "2026-09-11T15:27:29.548217Z",
     "verification_status": "probable",
     "verification_evidence": [
      "the company's registered location appears (LONDON)",
@@ -9417,7 +9417,7 @@
     "https://joelato.co.uk/",
     "https://gelatorino.com/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.407178Z",
+   "enriched_at": "2026-09-11T15:27:29.571646Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -9428,7 +9428,7 @@
    "trademark_number": "UK00004437179",
    "brand_name": "The Spice is Right",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Shakers for spices; Spice jars; Spice shakers; Spice racks. Spices; Curry spices; Edible spices; Baking spices; Marinades containing spices; Mixed spices; Salts, seasonings, flavourings and condiments; Flavorings and seasonings; Flavourings and seasonings; Seasonings; Curry [spice]; Chili seasonings; Curry spice mixes; Spices in the form of powders; Savory sauces used as condiments; Blends of seasonings; Food seasonings; Spice preparations; Curry powder [spice]; Spice mixes; Sauces [condiments]; Spice rubs; Dry seasonings; Spicy sauces; Allspice; Flavourings for foods; Herb sauces; Condiments; Curry sauces; Dry seasoning mixes for stews; Chili seasoning; Cooking sauces; Savoury sauces; Mixed spice powder.",
    "product_category": "sauces_condiments",
@@ -9477,7 +9477,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.385293Z",
+    "enriched_at": "2026-09-11T15:27:29.548865Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -9591,7 +9591,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.407492Z",
+   "enriched_at": "2026-09-11T15:27:29.571961Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -9602,7 +9602,7 @@
    "trademark_number": "UK00004437374",
    "brand_name": "SWEET BLESSING BAKERY SAVOUR THE SWEET MOMENTS",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Bakery goods; Pastries; Cupcakes; Chocolate desserts; Doughnuts; Cheesecakes; Brownies; Chocolate cakes; Muffins; Cheesecake; Cakes; Chocolate brownies; Macaroons [pastry]; Chocolate pastries; Custards [baked desserts]; Steamed sponge cakes (fagao); Chocolate fillings for bakery products; Mixes for making bakery products; Chocolate for confectionery and bread; Pastry; Danish pastries; Viennese pastries; Ice-cream cakes; Pastries, cakes, tarts and biscuits (cookies); Breads; Fruit pastries; Croissants; Prepared desserts [confectionery]; Truffles [confectionery]; Shortcrust pastry; Cream cakes; Fruit cakes; Sponge cakes; Custard-based fillings for cakes and pies; Chocolate cake; Chocolate covered cakes; Ice cream cakes; Fruit cake snacks; Cake Pops; Dessert puddings; Deep chocolate cake made with chocolate sponge; Puddings; Chocolate biscuits; Savoury biscuits; Biscuits; Preparations for making bakery products; Coffee; Iced coffee; Coffee drinks; Flavoured coffee; Beverages with coffee base; Espresso; Cappuccino; Tea; Iced tea; Sandwiches; Toasted cheese sandwich; Wraps [sandwich]; Chicken sandwiches; Wrap sandwiches; Quesadillas; Pizzas; Flapjacks [griddle cakes].",
    "product_category": "biscuits_bakery",
@@ -9652,7 +9652,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.385323Z",
+    "enriched_at": "2026-09-11T15:27:29.548898Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -9763,7 +9763,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.407795Z",
+   "enriched_at": "2026-09-11T15:27:29.572271Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -9774,7 +9774,7 @@
    "trademark_number": "UK00004437597",
    "brand_name": "GIGGLECHOC",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Trading cards. Clothing. Toys; Stuffed and plush toys; Stuffed plush toys; Plush stuffed toys; Children's toys; Plastic character toys; Action figures. Chocolate; Chocolate sweets; Chocolate confections; Chocolate confectionery products; Confectionery chocolate products; Dairy confectionery; Sugar confectionery. Online retail store services relating to clothing; Online retail services relating to toys; Retail services in relation to confectionery; Retail services in relation to chocolate; Wholesale services in relation to confectionery.",
    "product_category": "confectionery",
@@ -9832,7 +9832,7 @@
      "https://en.wikipedia.org/wiki/List_of_top-selling_candy_brands"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.385356Z",
+    "enriched_at": "2026-09-11T15:27:29.548932Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -9946,7 +9946,7 @@
     "https://us.princesspolly.com/products/giggle-top-chocolate",
     "https://en.wikipedia.org/wiki/List_of_top-selling_candy_brands"
    ],
-   "enriched_at": "2026-09-11T15:18:07.408110Z",
+   "enriched_at": "2026-09-11T15:27:29.572654Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -9957,7 +9957,7 @@
    "trademark_number": "UK00004408700",
    "brand_name": "BMC B.M.C. SPECIAL MEAT MASALA",
    "filing_date": "2026-06-29",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Spices; Spices in the form of powders.",
    "product_category": "sauces_condiments",
@@ -10014,7 +10014,7 @@
      "https://www.justhaat.com/bmc-special-meat-masala-100g"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.385526Z",
+    "enriched_at": "2026-09-11T15:27:29.549084Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -10121,7 +10121,7 @@
     "https://www.indiamart.com/proddetail/special-meat-masala-1464200648.html",
     "https://www.justhaat.com/bmc-special-meat-masala-100g"
    ],
-   "enriched_at": "2026-09-11T15:18:07.408417Z",
+   "enriched_at": "2026-09-11T15:27:29.572987Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -10132,7 +10132,7 @@
    "trademark_number": "UK00004435320",
    "brand_name": "\u0686\u0627\u0649 \u0645\u0627\u0645\u0647 CHAI MAMA",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tea; Black tea; Tea leaves; Chai tea; Black tea [English tea]; Tea bags; Teas.",
    "product_category": "coffee_tea",
@@ -10188,7 +10188,7 @@
      "https://en.wikipedia.org/wiki/Chai_Point"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386096Z",
+    "enriched_at": "2026-09-11T15:27:29.549689Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -10311,7 +10311,7 @@
     "https://liverpoolteawarehouse.com/products/black-chai",
     "https://en.wikipedia.org/wiki/Chai_Point"
    ],
-   "enriched_at": "2026-09-11T15:18:07.408758Z",
+   "enriched_at": "2026-09-11T15:27:29.573333Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -10322,7 +10322,7 @@
    "trademark_number": "WO0000001934358",
    "brand_name": "MAISON MARC",
    "filing_date": "2026-05-12",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Prepared fruits and vegetables, processed fruits and vegetables, cooked fruits and vegetables, preserved fruits and vegetables, dried fruits and vegetables, canned fruits and vegetables, pickled vegetables, preserved vegetables, preserved squash (vegetable plants), pickles, gherkins, pickled gherkins, prepared and preserved olives, preserved mushrooms, prepared mushrooms, dried mushrooms, vegetable-based cream, vegetable-based snacks, vegetable-based spreads, legume-based spreads, gherkin-based spreads, eggplant-based spread, artichoke spread, olive-based spreads, fig-based spread, vegetable pastes, vegetable spreads, garlic-based spreads, vegetable puree, gherkin puree, garlic-based spreads, prepared olive puree, mushroom puree, tomato puree, tapenades, soups, vegetable soups, soup concentrates, potages, gazpachos (cold soups), vegetable velout\u00e9s, tomato velout\u00e9, zucchini velout\u00e9, carrot velout\u00e9, leek velout\u00e9, asparagus velout\u00e9, potato velout\u00e9, preparations for making soups and potages, mixtures for soups and potages, prepared vegetable-based dishes, vegetable patties, vegetable mousses, ratatouille, vegetable salads, prepared vegetable products, mixed vegetables, broths, hummus, guacamole, vegetable p\u00e2t\u00e9, namely, vegetable-based p\u00e2t\u00e9, edible oils, flavored oils, olive oil, vegetable chips. Preparations for making sauces, preparations for sauces, sauces (condiments), gherkin sauces, pesto (sauce), tomato sauce, harissa (condiment), pepper sauce, curry sauce, horseradish sauce, artichoke sauce, tartar sauce, vegetable purees (sauces), aromatic preparations for food, condiments, condiment preparations, mayonnaises, mustards, mustard preparations, chutneys (condiments), aioli, vinegar, flavored vinegar, balsamic vinegar, fruit vinegar, cider vinegar, wine vinegar, mustard vinegar, pepper vinegar, flavorings for soups, spices, seasonings, preserved garden herbs (seasonings), capers, honey, mustard-based spreads, mayonnaise-based sauces.",
    "product_category": "sauces_condiments",
@@ -10372,7 +10372,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386418Z",
+    "enriched_at": "2026-09-11T15:27:29.549991Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -10488,7 +10488,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.409093Z",
+   "enriched_at": "2026-09-11T15:27:29.573740Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -10499,7 +10499,7 @@
    "trademark_number": "UK00004437777",
    "brand_name": "TOSS",
    "filing_date": "2026-08-29",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Tote bags. Lunchboxes; Serving dishes; Serving spoons. Caps [headwear]. Condiments; Food dressings [sauces]; Sauces.",
    "product_category": "sauces_condiments",
@@ -10559,7 +10559,7 @@
      "https://www.tasteatlas.com/best-rated-sauces-in-united-kingdom"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386473Z",
+    "enriched_at": "2026-09-11T15:27:29.550030Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -10685,7 +10685,7 @@
     "https://en.wikipedia.org/wiki/OK_Sauce",
     "https://www.tasteatlas.com/best-rated-sauces-in-united-kingdom"
    ],
-   "enriched_at": "2026-09-11T15:18:07.409390Z",
+   "enriched_at": "2026-09-11T15:27:29.574067Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -10696,7 +10696,7 @@
    "trademark_number": "UK00004428014",
    "brand_name": "FORTE",
    "filing_date": "2026-08-09",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee; Instant coffee; instant coffee powder; freeze-dried coffee; Coffee powder containing added vitamins, minerals and mushroom extracts; Instant coffee beverages containing added vitamins, minerals and mushroom extracts; Coffee containing creatine; Coffee-based beverages containing creatine; Coffee containing nootropic ingredients; Coffee-based beverages containing ingredients for supporting cognitive function; Coffee-based beverages containing plant extracts; Functional coffee beverages; Coffee beverages with added nutritional ingredients; Coffee substitutes; Coffee substitutes in powder form; Coffee substitutes containing mushroom extracts; Coffee substitutes containing creatine or nootropic ingredients; Chicory for use as a substitute for coffee; Coffee-based drinks; Coffee beverages; Prepared coffee and coffee-based beverages; Decaffeinated coffee; Coffee essences; Coffee extracts; Coffee flavourings; Coffee pods; Coffee in drip bags; Coffee beans; Tea; Iced tea; Cocoa based beverages.",
    "product_category": "coffee_tea",
@@ -10746,7 +10746,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386783Z",
+    "enriched_at": "2026-09-11T15:27:29.550384Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -10855,7 +10855,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.409711Z",
+   "enriched_at": "2026-09-11T15:27:29.574404Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -10866,7 +10866,7 @@
    "trademark_number": "UK00004438075",
    "brand_name": "JAM my Plums",
    "filing_date": "2026-08-30",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Jams; fruit preserves; fruit jellies; marmalades; preserved fruits; stewed fruits; fruit spreads.",
    "product_category": "sauces_condiments",
@@ -10915,7 +10915,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386809Z",
+    "enriched_at": "2026-09-11T15:27:29.550412Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -11025,7 +11025,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.410014Z",
+   "enriched_at": "2026-09-11T15:27:29.574745Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -11036,7 +11036,7 @@
    "trademark_number": "UK00004437400",
    "brand_name": "PITHY",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Fruit juices for cooking; Lemon juice for culinary purposes. Flavourings of lemons, other than essential oils, for food or beverages; Fruit flavourings for food or beverages, except essences; Flavourings and seasonings; Salts, seasonings, flavourings and condiments. Lemon juice for use in the preparation of beverages; Fruit beverages and fruit juices; Lime juice for use in the preparation of beverages.",
    "product_category": "sauces_condiments",
@@ -11095,7 +11095,7 @@
      "https://builtinlondon.uk/companies/type/food-companies"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386839Z",
+    "enriched_at": "2026-09-11T15:27:29.550442Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -11141,7 +11141,7 @@
     "reasons": [
      {
       "key": "company_incorporated_within_12m",
-      "text": "UK company incorporated 0 months before this filing",
+      "text": "UK company incorporated in the same month as this filing",
       "weight": 16
      },
      {
@@ -11215,7 +11215,7 @@
     "https://www.hellomagazine.com/cuisine/880064/enticing-food-drink-launches-2026/",
     "https://builtinlondon.uk/companies/type/food-companies"
    ],
-   "enriched_at": "2026-09-11T15:18:07.410346Z",
+   "enriched_at": "2026-09-11T15:27:29.575071Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -11226,7 +11226,7 @@
    "trademark_number": "UK00004437685",
    "brand_name": "LION'S GATE UNLEASH THE FLAVOR. RULE THE HEAT.",
    "filing_date": "2026-08-28",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Hot sauce; Sauces; Hot chili pepper sauce; Seasoning marinade; Spicy sauces; Spice rubs.",
    "product_category": "sauces_condiments",
@@ -11280,7 +11280,7 @@
      "https://www.bestwaywholesale.co.uk/product/999397-2"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.386994Z",
+    "enriched_at": "2026-09-11T15:27:29.550625Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -11390,7 +11390,7 @@
     "https://www.amazon.co.uk/Lion-Very-Hot-Chilli-Sauce/dp/B09J16CL5V",
     "https://www.bestwaywholesale.co.uk/product/999397-2"
    ],
-   "enriched_at": "2026-09-11T15:18:07.410676Z",
+   "enriched_at": "2026-09-11T15:27:29.575366Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -11401,7 +11401,7 @@
    "trademark_number": "UK00004431100",
    "brand_name": "CLOVER & FLINT",
    "filing_date": "2026-08-15",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Body lotions; Reed diffusers; Soap. Candles; Scented candles. Throws; Blanket throws; Bed throws; Throws (furniture coverings); Pillow slips; Pillowcases [pillow slips]; Covers for pillows. Chocolates; Chocolate biscuits; Biscuits; Tea; Coffee; Decaffeinated coffee; Coffee beans.",
    "product_category": "coffee_tea",
@@ -11460,7 +11460,7 @@
      "https://clovergrow.com/stockists/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.387234Z",
+    "enriched_at": "2026-09-11T15:27:29.550878Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "the page describes food or drink products",
@@ -11505,7 +11505,7 @@
     "reasons": [
      {
       "key": "company_incorporated_within_12m",
-      "text": "UK company incorporated 0 months before this filing",
+      "text": "UK company incorporated in the same month as this filing",
       "weight": 16
      },
      {
@@ -11571,7 +11571,7 @@
     "https://www.thereviveclub.com/en-us/collections/flint-and-tinder",
     "https://clovergrow.com/stockists/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.410990Z",
+   "enriched_at": "2026-09-11T15:27:29.575711Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -11582,7 +11582,7 @@
    "trademark_number": "UK00004437844",
    "brand_name": "LEAH'S",
    "filing_date": "2026-08-29",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Labneh; Yogurt; Yoghurts; Yoghurt drinks; Drinking yoghurt; Flavoured yoghurts; Yoghurt made from goats milk; Fruit flavoured yoghurts; Desserts of yogurt; Custard style yoghurts; Flavoured milk; Preparations for making yoghurt; Kefir; Low fat yoghurts; Fermented milk; Drinks based on yoghurt; Coconut milk; Sour milk; Almond milk; Cream cheese; Milk; Oat milk; Milk tea, milk predominating; Fruit marmalade; Goat milk; Rice milk; Milk drinks; Organic milk; Cows' milk; Milk products; Cream [dairy products]; Cheese; Soft cheese; Butter. Granola; Frozen yoghurt; Frozen yoghurts; Frozen yogurt cakes; Muesli; Frozen yoghurt [confectionery ices]; Yoghurt based ice cream [ice cream predominating]; Ice, ice creams, frozen yogurts and sorbets; Breakfast cereals containing a mixture of fruit and fibre; Breakfast cereals containing honey; Milk chocolate; Ice-cream; Dairy ice cream; Non-dairy ice cream; Cereals; Breakfast cereals; Snack foods made from wheat; Oatmeal; Cereal snacks; Cereal breakfast foods; Cereal bars and energy bars; Cereal based snack foods; Milk chocolate bars; Oat-based foods; Flapjacks; Frozen yogurt confections; Grain-based snack foods; Cakes; Pastries.",
    "product_category": "chilled_frozen",
@@ -11638,7 +11638,7 @@
      "https://en.wikipedia.org/wiki/Earth%27s_Best"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.387788Z",
+    "enriched_at": "2026-09-11T15:27:29.551423Z",
     "verification_status": "probable",
     "verification_evidence": [
      "the registered company name appears (EARTH BRANDS LTD)",
@@ -11769,7 +11769,7 @@
     "https://www.faire.com/brand/b_1dwt8ky53v",
     "https://en.wikipedia.org/wiki/Earth%27s_Best"
    ],
-   "enriched_at": "2026-09-11T15:18:07.411315Z",
+   "enriched_at": "2026-09-11T15:27:29.576027Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -11780,7 +11780,7 @@
    "trademark_number": "UK00004437969",
    "brand_name": "Cotswolds Creamery",
    "filing_date": "2026-08-30",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Ice cream; Non-dairy ice cream; Dairy ice cream; Ice cream sandwiches; Vegan ice cream; Ice creams. Retail services in relation to ice creams. Ice cream parlors.",
    "product_category": "chilled_frozen",
@@ -11830,7 +11830,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388158Z",
+    "enriched_at": "2026-09-11T15:27:29.551799Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -11935,7 +11935,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.411648Z",
+   "enriched_at": "2026-09-11T15:27:29.576329Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -11946,7 +11946,7 @@
    "trademark_number": "UK00004437945",
    "brand_name": "your everyday squeeze",
    "filing_date": "2026-08-30",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Salad dressing; Dressings for salad; Condiments; Sauces [condiments]; Sauces; Mayonnaise.",
    "product_category": "sauces_condiments",
@@ -12000,7 +12000,7 @@
      "https://foodanddrinknetwork.co.uk/latest-news/product-development/toss-launches-in-the-uk-to-shake-up-the-stagnant-salad-dressing-aisle/"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388192Z",
+    "enriched_at": "2026-09-11T15:27:29.551832Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -12114,7 +12114,7 @@
    "evidence_urls": [
     "https://foodanddrinknetwork.co.uk/latest-news/product-development/toss-launches-in-the-uk-to-shake-up-the-stagnant-salad-dressing-aisle/"
    ],
-   "enriched_at": "2026-09-11T15:18:07.411956Z",
+   "enriched_at": "2026-09-11T15:27:29.576699Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -12125,7 +12125,7 @@
    "trademark_number": "UK00004425387",
    "brand_name": "NAJORA",
    "filing_date": "2026-08-03",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Sauces [condiments]; Condiments; Seasonings; Food seasonings; Marinades containing seasonings; Marinades containing spices; Blends of seasonings; Sauces; Spices; Cooking sauces; Ready-made sauces; Marinades containing herbs.",
    "product_category": "sauces_condiments",
@@ -12182,7 +12182,7 @@
      "https://rekki.com/food-wholesalers/gb/peterborough"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388284Z",
+    "enriched_at": "2026-09-11T15:27:29.551922Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No result pointed at a page that could be this company's own website."
@@ -12308,7 +12308,7 @@
     "https://www.peterboroughtoday.co.uk/lifestyle/food-and-drink/brand-names-and-discount-prices-new-peterborough-food-and-household-supplies-store-open-for-wholesale-and-retail-4056619",
     "https://rekki.com/food-wholesalers/gb/peterborough"
    ],
-   "enriched_at": "2026-09-11T15:18:07.412253Z",
+   "enriched_at": "2026-09-11T15:27:29.577050Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": false,
@@ -12319,7 +12319,7 @@
    "trademark_number": "UK00004435910",
    "brand_name": "NOMAD CAVIAR",
    "filing_date": "2026-08-25",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Caviar. Truffle, fresh.",
    "product_category": null,
@@ -12370,7 +12370,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388443Z",
+    "enriched_at": "2026-09-11T15:27:29.552077Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -12463,7 +12463,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.412599Z",
+   "enriched_at": "2026-09-11T15:27:29.577385Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -12474,7 +12474,7 @@
    "trademark_number": "UK00004438452",
    "brand_name": "HELLO BRAZIL",
    "filing_date": "2026-08-31",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Cheese-flavored biscuits; Frozen pastry; Savory pastries; Ready-to-bake dough products; Bread mixes; Pastry; Breads.",
    "product_category": "biscuits_bakery",
@@ -12524,7 +12524,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388493Z",
+    "enriched_at": "2026-09-11T15:27:29.552101Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -12633,7 +12633,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.412917Z",
+   "enriched_at": "2026-09-11T15:27:29.577720Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -12644,7 +12644,7 @@
    "trademark_number": "UK00004436487",
    "brand_name": "NORFOLK NUTS",
    "filing_date": "2026-08-26",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Filled biscuits.",
    "product_category": "biscuits_bakery",
@@ -12692,7 +12692,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388519Z",
+    "enriched_at": "2026-09-11T15:27:29.552123Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -12798,7 +12798,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.413205Z",
+   "enriched_at": "2026-09-11T15:27:29.578014Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -12809,7 +12809,7 @@
    "trademark_number": "UK00004438018",
    "brand_name": "The Duke of Cleveland",
    "filing_date": "2026-08-30",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Coffee drinks. Food and drink catering; Hospitality services [food and drink]; Food and drink catering for banquets; Providing food and drink for guests; Serving food and drink for guests; Providing food and drink in restaurants and bars; Providing food and drink for guests in restaurants; Serving food and drink for guests in restaurants; Arranging of wedding receptions [food and drink].",
    "product_category": "coffee_tea",
@@ -12866,7 +12866,7 @@
      "https://en.wikipedia.org/wiki/Duke_of_Cleveland"
     ],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.388550Z",
+    "enriched_at": "2026-09-11T15:27:29.552155Z",
     "verification_status": "verified",
     "verification_evidence": [
      "the brand name appears in the page title",
@@ -13011,7 +13011,7 @@
     "https://www.squaremeal.co.uk/restaurants/the-duke-of-cleveland_18721",
     "https://en.wikipedia.org/wiki/Duke_of_Cleveland"
    ],
-   "enriched_at": "2026-09-11T15:18:07.413548Z",
+   "enriched_at": "2026-09-11T15:27:29.578395Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,
@@ -13022,7 +13022,7 @@
    "trademark_number": "UK00004438918",
    "brand_name": "TestoUP",
    "filing_date": "2026-09-01",
-   "publication_date": null,
+   "publication_date": "2026-09-11",
    "journal_number": "2026-037",
    "goods_summary": "Hydrastine; Babies' nappy-pants; Goulard water; Napkin-pants (Babies' -); Babies' napkin-pants; Babies' napkin-pants [diaper-pants]; Babies' diaper-pants; Diaper-pants (Babies' -); Emmenagogues; Lactagogues; Glycerophosphates; Virucides; Gurjun [gurjon, gurjan] balsam for medical purposes; Diaphoretics. Cancoillotte; Consommes; Frozen brackens (Gosari); Shashliks; Andouillettes. Panettoni; Savarins; Sachima; Bean-jam filled wafers (monaka); Mille-feuilles.",
    "product_category": "biscuits_bakery",
@@ -13074,7 +13074,7 @@
     "retail_presence": "none_found",
     "evidence_urls": [],
     "error": null,
-    "enriched_at": "2026-09-11T15:18:07.389265Z",
+    "enriched_at": "2026-09-11T15:27:29.552911Z",
     "verification_status": "unverified",
     "verification_evidence": [
      "No search results were returned for this brand."
@@ -13179,7 +13179,7 @@
    "related_marks": [],
    "source_url": "file:///home/user/LaunchTrace/data/journals/2026-037.xml.gz",
    "evidence_urls": [],
-   "enriched_at": "2026-09-11T15:18:07.413848Z",
+   "enriched_at": "2026-09-11T15:27:29.578745Z",
    "review_state": "pending",
    "delivered": false,
    "suppressed": true,

@@ -118,7 +118,15 @@ class LaunchTraceScorer:
         age = ctx.company_age_years
         if age is not None:
             facts["company_age_years"] = round(age, 1)
-            facts["company_age_months"] = int(round(age * 12))
+            months = int(round(age * 12))
+            facts["company_age_months"] = months
+            facts["company_age_phrase"] = (
+                "in the same month as"
+                if months <= 0
+                else "a month before"
+                if months == 1
+                else f"{months} months before"
+            )
             if age <= 1.0:
                 positives.append("company_incorporated_within_12m")
             elif age <= 2.0:

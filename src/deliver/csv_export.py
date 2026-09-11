@@ -65,10 +65,10 @@ _HUMAN_STAGE = {
     "unknown": "Unknown",
 }
 _HUMAN_WEBSITE_STATUS = {
-    "verified": "Verified",
-    "probable": "Not confirmed — withheld",
+    "verified": "Confirmed",
+    "probable": "Not confirmed",
     "unverified": "Not found",
-    "conflicting": "Ambiguous — withheld",
+    "conflicting": "Several possible, none confirmed",
     "not_attempted": "Not checked",
 }
 _HUMAN_MATURITY = {

@@ -482,6 +482,11 @@ class Pipeline:
             if opportunity.dedupe_key in seen:
                 counts.duplicates_dropped += 1
                 continue
+            if opportunity.publication_date is None:
+                # Per-record publication dates are not in the journal XML; the
+                # journal's own publication date is the right answer and the
+                # column was shipping empty without it.
+                opportunity.publication_date = result.journal.publication_date
             seen.add(opportunity.dedupe_key)
             counts.scored += 1
             result.opportunities.append(opportunity)
