@@ -25,11 +25,20 @@ python3 scripts/generate_customer_workbook.py \
     --opportunities reports/validation/final/2026-037/opportunities.csv
 ```
 
-The selection is the existing supplier match from `src/sales/matching.py`, used
-exactly as it comes back: 9 of the week's 14 opportunities are relevant to a
-flexible packaging supplier, and all 9 are in the workbook. The brief features
-the first four the matcher picks, which begin with the same three the
-customer-test preview already selected.
+The qualified set is the existing supplier match from `src/sales/matching.py`,
+used exactly as it comes back: 9 of the week's 14 opportunities are relevant to
+a flexible packaging supplier, and all 9 are in the workbook.
+
+Which of those the brief leads with is a separate, presentation-only decision.
+`config/customer_highlights.json` records the reviewed selection for this week
+— kWh Coffee, BULLITT and CHAI MAMA — and those three carry TOP MATCH. Any
+further card comes from the same qualified set on supplier fit, so it reads as
+secondary. Weeks with no reviewed entry fall back to the top of the fit order.
+
+TOP MATCH deliberately does not mean "has a HIGH internal band". Sami's
+Superfoods is HIGH and stays a qualified STRONG match, but a five-year-old
+company already selling direct is a weaker launch example for a short-run
+packaging supplier than a first-run energy bar.
 
 Nothing in the generation path scores, qualifies, re-ranks or filters anything.
 `src/deliver/customer_narrative.py` translates stored fields into customer

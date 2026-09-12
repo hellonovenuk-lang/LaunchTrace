@@ -23,7 +23,7 @@ Three tabs, one per reading depth.
 1. WEEKLY BRIEF - the director view, 30-60 seconds.
    LaunchTrace wordmark, "Prepared for Digimock", journal week and
    publication date, then four metric tiles: 9 opportunities matched,
-   2 top priority, 6 product categories, largest cluster 3 in hot
+   3 top priority, 6 product categories, largest cluster 3 in hot
    drinks. Below that a short paragraph on what the report represents,
    a "This week's signal" callout, and four opportunity cards. Each
    card carries only Brand, Company / Location / Category, Product,
@@ -43,38 +43,47 @@ Three tabs, one per reading depth.
    suggested angle, why websites say "Not confirmed", how to read
    Priority, and how to work the list.
 
-Priority is customer-facing: TOP MATCH / STRONG / RELEVANT, derived
-from the band the opportunity already earned plus supplier fit. The
-raw score, band and fit number stay internal and appear nowhere in the
-file. Nice classes, SIC codes, confidence percentages and taxonomy
+Priority is customer-facing and specific to the subscriber: TOP MATCH
+/ STRONG / RELEVANT. TOP MATCH means one of the strongest
+opportunities FOR THIS CUSTOMER this week - the reviewed selection
+where one exists, otherwise the top of the supplier-specific fit
+order. It deliberately does not mean "has a HIGH internal band": a
+generically strong launch signal in a category this supplier barely
+serves is not one of their best leads. STRONG and RELEVANT split the
+remaining qualified matches on the same supplier fit the matcher
+already computed.
+
+The raw score, band and fit number stay internal and appear nowhere in
+the file. Nice classes, SIC codes, confidence percentages and taxonomy
 keys are all absent. Technical evidence is reachable through the Trade
 Mark and Company Number links instead.
 
 
 TOP OPPORTUNITIES
 
-The brief features four, in the matcher's own order:
+The three approved top matches, then one secondary card:
 
   1. kWh Coffee - Morning People Ltd, York - TOP MATCH
      Coffee across whole bean, ground, espresso, drip bags and coffee
      bags. Already trading from its own site, no retailer listings
      found.
 
-  2. Sami's Superfoods - Sheffield - TOP MATCH
-     Nuts, nut butters and snack mixes, selling direct only.
-
-  3. BULLITT - Coldharbour Foods, Marlow - STRONG
+  2. BULLITT - Coldharbour Foods, Marlow - TOP MATCH
      A single-product energy bar, no website we could confirm.
 
-  4. GIGGLECHOC - Joke It Ltd, Portsmouth - STRONG
-     Chocolate and sugar confectionery, the only mark they filed
-     this week.
+  3. CHAI MAMA - Frond Foods Ltd, Liverpool - TOP MATCH
+     Tea: loose leaf, tea bags and chai.
 
-The first three are exactly what the existing customer-test preview
-selects; the fourth is the next pick from the same selector.
+  4. Sami's Superfoods - Sheffield - STRONG
+     Nuts, nut butters and snack mixes, selling direct only. Shown
+     fourth and clearly secondary to the three above.
+
+The three TOP MATCH leads are the reviewed selection recorded in
+config/customer_highlights.json. The fourth card is the next of the
+same qualified matches on supplier fit.
 
 The remaining five are on the OPPORTUNITIES tab: Rose & Grind
-(STRONG), CHAI MAMA (STRONG), GOLDEN ROOTS (STRONG), LEAH'S
+(STRONG), GIGGLECHOC (STRONG), GOLDEN ROOTS (STRONG), LEAH'S
 (RELEVANT), AE Aravalli Essence (RELEVANT). All 9 are present.
 
 The "This week's signal" line is computed from the counts, not
@@ -116,6 +125,13 @@ Verified programmatically against the delivered file:
   - No internal columns. A token scan for "confidence", "SIC",
     "Nice class", score fields and taxonomy keys returns nothing.
   - The 9 rows equal the matcher's output exactly.
+  - Sami's Superfoods carries band HIGH internally and priority
+    STRONG on the sheet, so a HIGH band alone can no longer create a
+    customer-facing TOP MATCH.
+  - No customer-facing sentence claims a supplier decision is still
+    open, a pack format unsettled or a purchase uncommitted.
+  - Trade mark publication is described as a filed and advertised
+    application, never as completed protection or registration.
   - Row heights capped, longest well under the limit.
   - "Sample - not a live subscription" appears once per tab, small
     and italic.
@@ -126,8 +142,9 @@ repeating the head noun ("Chocolate - chocolate confectionery"), and
 the signal sentence being unreadable when it strung full taxonomy
 labels together.
 
-20 new tests cover the structural guarantees and the no-leak rules.
-Full suite: 669 passing. ruff and mypy clean.
+26 tests cover the structural guarantees, the priority rules and the
+no-leak/no-overclaim wording. Full suite: 677 passing. ruff and mypy
+clean.
 
 Worth your eye: company age is now computed the same way the scorer
 computes it, so the workbook can never state an age that contradicts
@@ -141,6 +158,7 @@ requirements.txt, adding openpyxl.
 
 Everything else is new:
   config/customer_report.json
+  config/customer_highlights.json
   src/deliver/customer_narrative.py
   src/deliver/customer_workbook.py
   scripts/generate_customer_workbook.py
