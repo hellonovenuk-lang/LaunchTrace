@@ -1,0 +1,164 @@
+LAUNCHTRACE - CUSTOMER WORKBOOK (DIGIMOCK, WEEK 2026-037)
+
+
+WORKBOOK
+
+reports/customer_test/2026-037/LaunchTrace_Food_Digimock_2026-037.xlsx
+
+A printed preview sits alongside it:
+reports/customer_test/2026-037/LaunchTrace_Food_Digimock_2026-037_preview.pdf
+
+Both are committed and pushed to branch
+claude/launchtrace-customer-workbook-8vftny
+
+Regenerate with:
+  python3 scripts/generate_customer_workbook.py --prospect P009 \
+    --opportunities reports/validation/final/2026-037/opportunities.csv
+
+
+DESIGN
+
+Three tabs, one per reading depth.
+
+1. WEEKLY BRIEF - the director view, 30-60 seconds.
+   LaunchTrace wordmark, "Prepared for Digimock", journal week and
+   publication date, then four metric tiles: 9 opportunities matched,
+   2 top priority, 6 product categories, largest cluster 3 in hot
+   drinks. Below that a short paragraph on what the report represents,
+   a "This week's signal" callout, and four opportunity cards. Each
+   card carries only Brand, Company / Location / Category, Product,
+   Why now, Relevance and Sales angle. No raw filing text. The whole
+   tab fits on one page.
+
+2. OPPORTUNITIES - the working sales sheet.
+   18 columns, one company per row, as a real Excel table
+   (LaunchTraceOpportunities) with filters on A4:R13, frozen at D5 so
+   Priority, Brand and Company stay put when scrolling right. Prose
+   columns are capped and row heights are computed, so no row blows
+   out.
+
+3. HOW TO USE - readable by a new sales hire in two minutes.
+   Seven short blocks: what LaunchTrace detects, what "Why now" means,
+   that a lead is a signal and not an enquiry, how to use the
+   suggested angle, why websites say "Not confirmed", how to read
+   Priority, and how to work the list.
+
+Priority is customer-facing: TOP MATCH / STRONG / RELEVANT, derived
+from the band the opportunity already earned plus supplier fit. The
+raw score, band and fit number stay internal and appear nowhere in the
+file. Nice classes, SIC codes, confidence percentages and taxonomy
+keys are all absent. Technical evidence is reachable through the Trade
+Mark and Company Number links instead.
+
+
+TOP OPPORTUNITIES
+
+The brief features four, in the matcher's own order:
+
+  1. kWh Coffee - Morning People Ltd, York - TOP MATCH
+     Coffee across whole bean, ground, espresso, drip bags and coffee
+     bags. Already trading from its own site, no retailer listings
+     found.
+
+  2. Sami's Superfoods - Sheffield - TOP MATCH
+     Nuts, nut butters and snack mixes, selling direct only.
+
+  3. BULLITT - Coldharbour Foods, Marlow - STRONG
+     A single-product energy bar, no website we could confirm.
+
+  4. GIGGLECHOC - Joke It Ltd, Portsmouth - STRONG
+     Chocolate and sugar confectionery, the only mark they filed
+     this week.
+
+The first three are exactly what the existing customer-test preview
+selects; the fourth is the next pick from the same selector.
+
+The remaining five are on the OPPORTUNITIES tab: Rose & Grind
+(STRONG), CHAI MAMA (STRONG), GOLDEN ROOTS (STRONG), LEAH'S
+(RELEVANT), AE Aravalli Essence (RELEVANT). All 9 are present.
+
+The "This week's signal" line is computed from the counts, not
+asserted: hot drinks is the largest cluster at 3 of 9 including the
+strongest signal, snacks adds 2, the rest are singles. Energy bars is
+not claimed as a concentration, because there is one.
+
+
+CUSTOMER FIELDS
+
+Owner, Sales Status and Sales Notes are the last three columns,
+deliberately empty and tinted so they read as editable. LaunchTrace
+never writes to them.
+
+Sales Status has a dropdown: Not reviewed / Researching / Contacted /
+Replied / Opportunity / Not relevant. Blanks and typed values are
+still allowed.
+
+Everything is filterable and sortable through the table header.
+Priority, Product Category, Location and Stage are the useful ones for
+splitting a week between a team.
+
+
+QA
+
+Verified programmatically against the delivered file:
+
+  - Three sheets, named as specified.
+  - 20 hyperlinks, all https. Hosts: www.ipo.gov.uk/tmcase (the repo's
+    existing public IPO case URL), find-and-update.company-information
+    .service.gov.uk, and the two confirmed brand sites. No file://,
+    no /home/, no local paths anywhere.
+  - No formulas at all, so nothing can be broken.
+  - Table and autofilter on A4:R13. Freeze panes A7 / D5 / A6.
+    Gridlines off on all three sheets.
+  - Data validation on Q5:Q13 with all six status options.
+  - Conditional formatting on A5:A13 - two rules, subtle fills for
+    TOP MATCH and STRONG.
+  - No internal columns. A token scan for "confidence", "SIC",
+    "Nice class", score fields and taxonomy keys returns nothing.
+  - The 9 rows equal the matcher's output exactly.
+  - Row heights capped, longest well under the limit.
+  - "Sample - not a live subscription" appears once per tab, small
+    and italic.
+
+Every sheet was rendered to PNG and inspected. Three problems were
+found and fixed: rows over-tall by roughly a line, product lines
+repeating the head noun ("Chocolate - chocolate confectionery"), and
+the signal sentence being unreadable when it strung full taxonomy
+labels together.
+
+20 new tests cover the structural guarantees and the no-leak rules.
+Full suite: 669 passing. ruff and mypy clean.
+
+Worth your eye: company age is now computed the same way the scorer
+computes it, so the workbook can never state an age that contradicts
+a stored score reason.
+
+
+ENGINE
+
+Untouched. The only modified tracked file in the whole change is
+requirements.txt, adding openpyxl.
+
+Everything else is new:
+  config/customer_report.json
+  src/deliver/customer_narrative.py
+  src/deliver/customer_workbook.py
+  scripts/generate_customer_workbook.py
+  tests/test_customer_workbook.py
+
+No score, qualification, entity matching, commercial mode, taxonomy,
+enrichment, threshold, supplier matching or outreach code was changed.
+The generator calls select_for_prospect and uses what it returns.
+The website branch was not touched.
+
+
+SENT
+
+Nothing was sent. No email, no draft dispatched, no deployment. The
+workbook was written to disk and pushed to the work branch.
+
+
+NEXT ACTION
+
+Review the generated workbook and approve or revise the customer
+spreadsheet format before generating the remaining launch samples.
