@@ -1,0 +1,15 @@
+{
+  "$schema_version": "1.0",
+  "description": "Operator-approved lead selections for the customer workbook's WEEKLY BRIEF. Where a week has been reviewed by hand, this records which of the already-qualified supplier matches were judged the strongest commercial examples FOR THAT CUSTOMER, and they are the leads that carry TOP MATCH. Where no entry exists — every automated week — the generator falls back to the top of the supplier-specific fit order from src/sales/matching.py.",
+  "usage_note": "Presentation only. A trade mark listed here is shown more prominently; it is never scored differently, never promoted past qualification, and never admitted to a workbook it did not already qualify for. A number that is not in the week's qualified matches is skipped with a warning rather than added. Removing this file changes the order of the brief and nothing else.",
+  "selections": [
+    {
+      "journal": "2026-037",
+      "prospect_id": "P009",
+      "customer": "Digimock",
+      "approved_on": "2026-09-12",
+      "trademarks": ["UK00004435554", "UK00004437089", "UK00004435320"],
+      "note": "kWh Coffee, BULLITT and CHAI MAMA: the three cleanest single-range launch examples for short-run flexible packaging this week — coffee, an energy bar and tea. Sami's Superfoods stays a qualified match and appears next on fit, but a five-year-old company already selling direct is a weaker launch example for this supplier than the three above, whatever its general band."
+    }
+  ]
+}

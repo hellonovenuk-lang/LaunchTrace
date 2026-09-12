@@ -10,6 +10,7 @@ commercial signal into a claim that somebody asked to be sold to.
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 
@@ -131,17 +132,57 @@ class TestCustomerLanguage:
         assert row.website_url == ""
         assert "No website we could confirm" in row.why_now
 
-    def test_priority_is_customer_facing_and_never_the_raw_band(self, config):
-        assert priority_for(_match(make_lead(band="HIGH")), config) == "TOP MATCH"
+    def test_a_high_band_alone_does_not_make_a_top_match(self, config):
+        """TOP MATCH answers "one of my best leads", not "a strong signal".
+
+        A brand can be an unusually strong launch signal in general and still
+        be a weaker example for one supplier than a plainer brand squarely in
+        their category. The band must not decide the customer's ranking.
+        """
+        strong_signal = _match(make_lead(band="HIGH"), fit=18.0)
+        assert priority_for(strong_signal, config) == "STRONG"
+        assert priority_for(strong_signal, config, top_match=True) == "TOP MATCH"
         assert priority_for(_match(make_lead(band="MEDIUM"), fit=15.0), config) == "STRONG"
         assert priority_for(_match(make_lead(band="MEDIUM"), fit=4.0), config) == "RELEVANT"
 
     def test_the_angle_is_framed_as_a_suggestion(self, config):
         disclaimer = config["copy"]["angle_disclaimer"].lower()
-        assert "not requests" in disclaimer
+        assert "not evidence of current buying intent" in disclaimer
+        assert "not a request, enquiry or stated requirement" in disclaimer
         how_to = " ".join(block["body"] for block in config["copy"]["how_to_use"]).lower()
         assert "not as an inbound enquiry" in how_to
         assert "nothing here is a confirmed buying request" in how_to
+
+    def test_a_published_filing_is_not_called_a_completed_registration(self, config):
+        """Publication in the journal means advertised, not registered."""
+        prose = " ".join(
+            [config["copy"]["what_this_is"]]
+            + [block["body"] for block in config["copy"]["how_to_use"]]
+        ).lower()
+        assert "filed a uk trade mark application" in prose
+        assert "not that registration is complete" in prose
+        for overclaim in ("has protected a brand name", "protects its name", "registered its name"):
+            assert overclaim not in prose
+
+    def test_no_sentence_claims_a_supplier_decision_is_still_open(self, config):
+        """We see filings and Companies House. We see no procurement at all.
+
+        Whether a pack format is settled, a converter appointed or an order
+        placed is invisible to LaunchTrace, so nothing generated from this
+        config may assert it either way.
+        """
+        clauses = " ".join(str(value) for value in config["stage_clause"].values()).lower()
+        angles = json.dumps(config["supplier_angles"]).lower()
+        for claim in (
+            "likely still open",
+            "nothing is likely to be committed",
+            "live decision rather than a future one",
+            "before the pack format is committed",
+            "suppliers have not been chosen",
+            "still deciding",
+        ):
+            assert claim not in clauses, claim
+            assert claim not in angles, claim
 
 
 class TestReportAssembly:
@@ -162,13 +203,84 @@ class TestReportAssembly:
         assert report.total == 2
         assert {row.brand for row in report.rows} == {"CRUMBLEDGE", "SECOND"}
 
-    def test_the_brief_features_the_matcher_s_own_first_picks(self, config):
+    def test_the_brief_leads_with_the_top_matches(self, config):
         report = _report(config)
         assert [row.brand for row in report.highlights] == [row.brand for row in report.rows][:4]
 
     def test_a_flat_week_is_described_as_flat(self, config):
         report = _report(config)
         assert "stands out" in report.signal
+
+
+class TestTopMatchSelection:
+    """Which leads the brief leads with, and where that decision comes from."""
+
+    def _leads(self):  # type: ignore[no-untyped-def]
+        # Deliberately arranged so the strongest band is NOT the best fit: the
+        # generic signal is high, the supplier relevance is not.
+        generic = make_lead(
+            brand_name="GENERIC STAR",
+            trademark_number="UK00003900010",
+            company_number="14000010",
+            company_name="GENERIC STAR LTD",
+            band="HIGH",
+            score=90,
+            product_category="chilled_frozen",
+            product_category_label="Chilled and frozen packaged food",
+            intents={**make_lead().intents, "flexible_packaging": "MEDIUM"},
+        )
+        specific = make_lead(
+            brand_name="ON POINT",
+            trademark_number="UK00003900011",
+            company_number="14000011",
+            company_name="ON POINT FOODS LTD",
+            band="MEDIUM",
+            score=75,
+        )
+        return [generic, specific]
+
+    def _result(self, leads):  # type: ignore[no-untyped-def]
+        return select_for_prospect(
+            make_prospect(company_name="Digimock"),
+            leads,
+            source="test",
+            count=50,
+            reference_date=PUBLISHED,
+        )
+
+    def test_an_approved_selection_decides_the_top_matches(self, config):
+        report = build_report(
+            self._result(self._leads()),
+            config=config,
+            approved_marks=["UK00003900011"],
+        )
+        top = [row.brand for row in report.rows if row.priority == "TOP MATCH"]
+        assert top == ["ON POINT"]
+        assert report.rows[0].brand == "ON POINT"
+        # The high-band lead is still delivered, just not promoted.
+        assert "GENERIC STAR" in {row.brand for row in report.rows}
+
+    def test_without_an_approved_selection_supplier_fit_decides(self, config):
+        report = build_report(self._result(self._leads()), config=config)
+        top = [row.brand for row in report.rows if row.priority == "TOP MATCH"]
+        assert top, "some lead must carry TOP MATCH"
+        # Fit order, not band order: the better-fitting MEDIUM leads.
+        assert top[0] == "ON POINT"
+
+    def test_an_approved_mark_that_did_not_qualify_is_never_admitted(self, config):
+        report = build_report(
+            self._result(self._leads()),
+            config=config,
+            approved_marks=["UK00009999999", "UK00003900011"],
+        )
+        assert "UK00009999999" not in {row.trademark_number for row in report.rows}
+        assert [row.brand for row in report.rows if row.priority == "TOP MATCH"] == ["ON POINT"]
+        assert any("UK00009999999" in warning for warning in report.warnings)
+
+    def test_every_qualified_lead_survives_the_reordering(self, config):
+        leads = self._leads()
+        report = build_report(self._result(leads), config=config, approved_marks=["UK00003900011"])
+        assert len(report.rows) == len(leads)
 
 
 class TestWorkbookFile:

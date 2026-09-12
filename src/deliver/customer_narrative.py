@@ -80,6 +80,9 @@ class CustomerReport:
     category_counts: list[tuple[str, int, str]] = field(default_factory=list)
     signal: str = ""
     considered: int = 0
+    # Operator-facing notes from assembly, printed by the generator. Never
+    # rendered into the workbook.
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def total(self) -> int:
@@ -214,8 +217,10 @@ def why_now(match: MatchedLead) -> str:
             presence.append("with no multiple-retailer listings found")
     else:
         presence.append("No website we could confirm")
+    # What the evidence shows about how far along the brand is — never a claim
+    # about what it has or has not decided or bought.
     if lead.launch_stage in {"pre-launch", "pre_launch"}:
-        presence.append("and the signals read pre-launch")
+        presence.append("and the available signals suggest it is still early in its launch")
     parts.append(", ".join(presence) + ".")
 
     return " ".join(parts)
@@ -259,17 +264,24 @@ def sales_angle(match: MatchedLead, product_head: str, config: dict, profile_key
     return str(angle)
 
 
-def priority_for(match: MatchedLead, config: dict) -> str:
-    """The customer-facing priority.
+def priority_for(match: MatchedLead, config: dict, top_match: bool = False) -> str:
+    """The customer-facing priority, as this customer would rank it.
 
-    Derived from the band the opportunity already earned and its fit with this
-    supplier. It never promotes a lead that did not qualify, and the underlying
-    score is left exactly as it was.
+    TOP MATCH answers "is this one of my best leads this week", which is not
+    the same question as "is this a strong LaunchTrace opportunity". A brand
+    can be an unusually strong launch signal in general and still be a weaker
+    example for one supplier than a plainer brand in the middle of their
+    category, so ``top_match`` is decided by the selection in
+    :func:`build_report` — the operator-approved leads, or the top of the
+    supplier-specific fit order — and never by the internal band.
+
+    STRONG and RELEVANT split the rest on the fit the matcher already
+    computed. Nothing here promotes a lead past qualification, and no score or
+    band is changed.
     """
-    rules = config["priority"]
-    if match.lead.band == rules["top_match_requires_band"]:
+    if top_match:
         return "TOP MATCH"
-    if match.fit_score >= float(rules["strong_minimum_fit"]):
+    if match.fit_score >= float(config["priority"]["strong_minimum_fit"]):
         return "STRONG"
     return "RELEVANT"
 
@@ -290,11 +302,12 @@ def build_row(
     config: dict,
     profile_key: str,
     towns: dict[str, str],
+    top_match: bool = False,
 ) -> CustomerRow:
     head, line = summarise_product(match, config)
     lead = match.lead
     return CustomerRow(
-        priority=priority_for(match, config),
+        priority=priority_for(match, config, top_match=top_match),
         brand=lead.brand_name or lead.trademark_number,
         company=lead.display_company,
         location=_location(match, towns),
@@ -319,9 +332,6 @@ def build_row(
         score=lead.score,
         band=lead.band,
     )
-
-
-_PRIORITY_ORDER = {"TOP MATCH": 0, "STRONG": 1, "RELEVANT": 2}
 
 
 def _join(items: list[str]) -> str:
@@ -363,29 +373,82 @@ def _signal_sentence(rows: list[CustomerRow], counts: list[tuple[str, int, str]]
     return f"{lead}{second}{tail}"
 
 
+def select_top_matches(
+    matches: list[MatchedLead],
+    config: dict,
+    approved_marks: list[str] | None = None,
+) -> tuple[list[MatchedLead], list[str]]:
+    """Which of the qualified matches are this customer's best leads.
+
+    Two sources, in order of authority:
+
+    * an operator-approved selection for the week, given as trade mark
+      numbers — the commercial judgement a person already made about which
+      launches are the strongest examples for this supplier;
+    * otherwise the top of the supplier-specific fit order, which is the
+      matcher's own answer to the same question.
+
+    Never the internal band. The band says whether a launch signal is strong
+    in general, not whether it is one of *this* supplier's best opportunities,
+    and those come apart often enough to matter.
+
+    An approved number that is not in the week's qualified matches is skipped
+    and reported, never added: this chooses emphasis among leads that already
+    qualified and cannot admit one that did not.
+    """
+    warnings: list[str] = []
+    by_fit = sorted(matches, key=lambda m: (m.fit_score, m.lead.score), reverse=True)
+
+    if not approved_marks:
+        wanted = int(config["priority"]["default_top_match_count"])
+        return by_fit[:wanted], warnings
+
+    available = {match.lead.trademark_number: match for match in matches}
+    selected: list[MatchedLead] = []
+    for mark in approved_marks:
+        match = available.get(mark)
+        if match is None:
+            warnings.append(
+                f"approved trade mark {mark} is not among this week's qualified matches, skipped"
+            )
+            continue
+        selected.append(match)
+    if not selected:
+        warnings.append("no approved selection matched this week; falling back to supplier fit")
+        return by_fit[: int(config["priority"]["default_top_match_count"])], warnings
+    return selected, warnings
+
+
 def build_report(
     result: PreviewResult,
     config: dict | None = None,
     towns: dict[str, str] | None = None,
     highlight_count: int = 4,
+    approved_marks: list[str] | None = None,
 ) -> CustomerReport:
     """Assemble everything the workbook renders.
 
     ``result`` is the existing supplier match, used exactly as it came back.
-    The highlights are its own first ``highlight_count`` picks, so the brief
-    agrees with the customer-test selection rather than re-ranking it.
+    The brief leads with this customer's top matches in the order they were
+    selected; any further cards come from the same qualified set on fit, so
+    they read as secondary to the selection rather than competing with it.
     """
     cfg = config or load_config("customer_report.json")
     profile_key = result.prospect.supplier_category
     town_map = towns or {}
 
-    ordered = [build_row(match, cfg, profile_key, town_map) for match in result.matches]
-    highlights = ordered[:highlight_count]
-
-    rows = sorted(
-        ordered,
-        key=lambda r: (_PRIORITY_ORDER.get(r.priority, 9), -r.fit_score, -r.score),
+    top_matches, warnings = select_top_matches(list(result.matches), cfg, approved_marks)
+    top_keys = {match.lead.trademark_number for match in top_matches}
+    remainder = sorted(
+        (match for match in result.matches if match.lead.trademark_number not in top_keys),
+        key=lambda m: (m.fit_score, m.lead.score),
+        reverse=True,
     )
+
+    rows = [
+        build_row(match, cfg, profile_key, town_map, top_match=True) for match in top_matches
+    ] + [build_row(match, cfg, profile_key, town_map) for match in remainder]
+    highlights = rows[:highlight_count]
 
     shorts = cfg["category_short_labels"]
     tally: dict[str, int] = {}
@@ -409,6 +472,7 @@ def build_report(
         category_counts=counts,
         signal=_signal_sentence(rows, counts),
         considered=result.considered,
+        warnings=warnings,
     )
 
 
@@ -420,6 +484,7 @@ __all__ = [
     "build_row",
     "priority_for",
     "sales_angle",
+    "select_top_matches",
     "summarise_product",
     "why_now",
     "why_relevant",

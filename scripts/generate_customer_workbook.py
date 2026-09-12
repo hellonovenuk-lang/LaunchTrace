@@ -55,6 +55,23 @@ def _slug(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "", text) or "Customer"
 
 
+def _approved_marks(journal: str, prospect_id: str) -> list[str]:
+    """The reviewed selection for this week and customer, if one exists.
+
+    Weeks nobody has looked at return nothing, and the generator falls back to
+    the supplier-specific fit order. Either way the leads come from the
+    matcher; this only decides which of them the brief leads with.
+    """
+    try:
+        config = load_config("customer_highlights.json")
+    except FileNotFoundError:
+        return []
+    for selection in config.get("selections", []):
+        if selection.get("journal") == journal and selection.get("prospect_id") == prospect_id:
+            return [str(mark) for mark in selection.get("trademarks", [])]
+    return []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prospect", default="P009", help="Prospect ID from the seed list")
@@ -78,6 +95,15 @@ def main() -> int:
     parser.add_argument(
         "--highlights", type=int, default=4, help="How many opportunities the brief features"
     )
+    parser.add_argument(
+        "--highlight",
+        default="",
+        help=(
+            "Comma-separated trade mark numbers to lead the brief with, overriding "
+            "config/customer_highlights.json. They must already be qualified matches; "
+            "anything else is skipped with a warning."
+        ),
+    )
     args = parser.parse_args()
 
     csv_path = (REPO_ROOT / args.opportunities).resolve()
@@ -93,12 +119,19 @@ def main() -> int:
         print(f"Nothing in {csv_path} suits {prospect.company_name}. No workbook written.")
         return 1
 
+    approved = (
+        [mark.strip() for mark in args.highlight.split(",") if mark.strip()]
+        if args.highlight
+        else _approved_marks(journal, prospect.prospect_id)
+    )
+
     config = load_config("customer_report.json")
     report = build_report(
         result,
         config=config,
         towns=_post_towns(csv_path.parent / "result.json"),
         highlight_count=args.highlights,
+        approved_marks=approved,
     )
     report.journal_number = journal
 
@@ -107,8 +140,12 @@ def main() -> int:
     path = write_workbook(report, out_dir / filename, config=config)
 
     print(f"{prospect.company_name}: {report.total} opportunities, {report.top_count} top priority")
+    print(f"Top matches from: {'approved selection' if approved else 'supplier fit order'}")
+    for warning in report.warnings:
+        print(f"  ! {warning}")
     for row in report.rows:
         print(f"  {row.priority:<10} {row.brand}")
+    print(f"Brief cards: {', '.join(row.brand for row in report.highlights)}")
     print(f"Written: {path}")
     print("Nothing was sent.")
     return 0

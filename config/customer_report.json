@@ -25,11 +25,11 @@
   },
 
   "priority": {
-    "note": "A customer-facing priority derived from the band the opportunity already earned and how well it fits this supplier. It reorders nothing and admits nothing that did not qualify on its own merit.",
+    "note": "A customer-facing priority, specific to the supplier reading the workbook. TOP MATCH means one of the strongest opportunities FOR THIS CUSTOMER this week — the operator-approved selection where one exists, otherwise the best of the supplier-specific matches by fit. It deliberately does not mean 'has a HIGH internal band': a generically strong launch signal in a category this supplier barely serves is not one of their best leads. STRONG and RELEVANT split the remaining qualified matches on the same supplier fit the matcher already computed. Nothing here reorders, promotes or admits a lead that did not qualify on its own merit, and no underlying score or band is changed or shown.",
     "levels": [
       {
         "key": "TOP MATCH",
-        "meaning": "Strongest launch signal of the week and a direct fit for what you sell. Worth contacting first."
+        "meaning": "One of the strongest opportunities for you this week. Start here."
       },
       {
         "key": "STRONG",
@@ -40,7 +40,8 @@
         "meaning": "Qualified and in scope, but a partial fit. Read the angle before spending time on it."
       }
     ],
-    "top_match_requires_band": "HIGH",
+    "default_top_match_count": 3,
+    "default_top_match_note": "How many leads carry TOP MATCH when no approved selection exists for the week. Taken from the top of the supplier-specific fit order, never from the internal band.",
     "strong_minimum_fit": 10.0
   },
 
@@ -193,14 +194,14 @@
     "note": "One relevance sentence and one suggested angle per product category, written for the supplier profile reading the workbook. {brand} and {product} are filled from the opportunity. The angle is a suggestion about how this supplier might approach the brand, never a statement about what the brand wants.",
     "flexible_packaging": {
       "_default": {
-        "relevance": "An early-stage UK food brand that has just protected its name, in a category where printed film or pouches are part of the pack decision.",
-        "angle": "Introduce short-run printed film before the pack format is committed."
+        "relevance": "An early-stage UK food brand that has recently filed a trade mark application, in a category where printed film or pouches are part of the pack.",
+        "angle": "Short-run printed film for the range as it comes to market."
       },
       "coffee_tea": {
         "relevance": "{product_head} is a printed-pouch category. Film and bag formats are normally the first pack decision a hot-drinks brand makes, and usually across several SKUs at once.",
         "angle": {
           "Coffee": "Short-run printed coffee pouches across multiple SKUs, with drip-bag and coffee-bag film as a natural second format.",
-          "Tea": "Small-batch printed tea pouches, with digital print keeping the quantity per SKU low while the range settles."
+          "Tea": "Small-batch printed tea pouches, with digital print keeping the quantity per SKU low."
         }
       },
       "snacks": {
@@ -212,8 +213,8 @@
         }
       },
       "cereal_bars": {
-        "relevance": "{product_head} are flow-wrapped. Wrapper film and artwork have to be settled before the first production run, not after it.",
-        "angle": "First-run bar wrappers — flow-wrap film at launch quantities, while the artwork is still open."
+        "relevance": "{product_head} are flow-wrapped, so wrapper film and artwork are part of getting a first production run onto shelf.",
+        "angle": "First-run bar wrappers — flow-wrap film at launch quantities."
       },
       "confectionery": {
         "relevance": "{product_head} uses printed film, flow-wrap and pouches. A range that pairs sweets with other merchandise usually carries several small formats rather than one.",
@@ -231,30 +232,30 @@
   },
 
   "stage_clause": {
-    "note": "Appended to the relevance line so two brands in the same category do not read identically. Chosen from what the opportunity already records about the brand's presence.",
-    "selling_direct": "{brand} is already selling from its own site, so pack is a live decision rather than a future one.",
-    "no_website": "There is no brand site we could confirm, so the pack format is likely still open.",
-    "pre_launch": "The signals read pre-launch, so nothing is likely to be committed yet."
+    "note": "Appended to the relevance line so two brands in the same category do not read identically. Says what the public evidence shows about how far the brand has got. It must never imply we know whether a supplier has been chosen, a pack format settled, or a purchase committed — we have no visibility of any of that.",
+    "selling_direct": "The brand is already trading, so this may be more relevant as a range-extension, alternative-supplier or short-run conversation.",
+    "no_website": "We could not confirm a brand website, so there is less public evidence about how far the launch has progressed.",
+    "pre_launch": "There is little public evidence about the brand so far, so an early introduction is more about being known to them than about any specific project."
   },
 
   "copy": {
     "report_type": "LaunchTrace Food",
     "brief_title": "Weekly opportunity brief",
     "sample_note": "Sample — not a live subscription",
-    "what_this_is": "LaunchTrace reads the UK Intellectual Property Office trade mark journal every week, matches each food and drink applicant to Companies House, and keeps only the brands that look genuinely early-stage. This brief covers the opportunities from that week that are relevant to what {customer} sells. Every company here has protected a brand name in the last few weeks; none of them has been contacted, and none has asked to be introduced to a supplier.",
+    "what_this_is": "LaunchTrace reads the UK Intellectual Property Office trade mark journal every week, matches each food and drink applicant to Companies House, and keeps only the brands that look genuinely early-stage. This brief covers the opportunities from that week that are relevant to what {customer} sells. Every company here has recently filed a UK trade mark application for a brand or product range; none of them has been contacted, and none has asked to be introduced to a supplier.",
     "top_section_title": "Priority opportunities",
     "top_section_note": "The full list, with filters and space for your own notes, is on the OPPORTUNITIES tab.",
     "signal_title": "This week's signal",
-    "angle_disclaimer": "Suggested sales angles are LaunchTrace's view of how you might approach each brand. They are not requests, enquiries or stated requirements.",
+    "angle_disclaimer": "Suggested sales angles are LaunchTrace's view of how you might approach each brand. They are a suggested approach, not evidence of current buying intent, and not a request, enquiry or stated requirement.",
     "footer": "Sources: UK Intellectual Property Office Trade Marks Journal and Companies House, under the Open Government Licence v3.0. Commercial signals, not confirmed buying intent.",
     "how_to_use": [
       {
         "heading": "What LaunchTrace detects",
-        "body": "Every week the UK Intellectual Property Office publishes the trade marks that have been filed. A new food or drink brand almost always protects its name before it goes on sale. LaunchTrace reads that journal, works out which applicants are real UK food businesses, checks them against Companies House, and keeps only the ones that look like they are still building rather than already established. What you get is a list of brands at the point where their suppliers have not been chosen yet."
+        "body": "Every week the UK Intellectual Property Office publishes the trade mark applications that have been filed. A new food or drink brand almost always files an application for its name before it goes on sale. Publication means the application has been filed and advertised, not that registration is complete. LaunchTrace reads that journal, works out which applicants are real UK food businesses, checks them against Companies House, and keeps only the ones that look like they are still building rather than already established. What you get is a list of brands early enough in their life to be worth introducing yourself to."
       },
       {
         "heading": "What \"Why now\" means",
-        "body": "It is the timing evidence: when the name was filed and published, how recently the company behind it was formed, whether this is the first mark we have seen from them, and whether the brand has a website or retailer listings yet. It explains why this week is a sensible moment to make contact, rather than six months from now."
+        "body": "It is the timing evidence: when the application was filed and published, how recently the company behind it was formed, whether this is the first mark we have seen from them, and whether the brand has a website or retailer listings yet. It explains why this week is a sensible moment to make contact, rather than six months from now. It does not tell you anything about who they buy from, or what they have already ordered — we have no visibility of that."
       },
       {
         "heading": "A lead is a signal, not an enquiry",
@@ -262,7 +263,7 @@
       },
       {
         "heading": "How to use the suggested sales angle",
-        "body": "The angle is our read on what this kind of brand, at this stage, usually needs from a supplier like you. It is a starting point for a first conversation — a sensible opening line and a reason to call — not a statement that the company has asked for that product. Check it against what you actually see on their website or filing before you use it."
+        "body": "The angle is our read on what a supplier like you might be able to offer a brand at this stage. It is a starting point for a first conversation — a sensible opening line and a reason to call — not a statement that the company has asked for that product, and not evidence that any supplier decision is still open. Check it against what you actually see on their website or filing before you use it."
       },
       {
         "heading": "Why some websites say \"Not confirmed\"",
@@ -270,7 +271,7 @@
       },
       {
         "heading": "How to read Priority",
-        "body": "TOP MATCH — the strongest launch signals of the week and a direct fit for what you sell. Start here. STRONG — a clear early-stage brand in a category you serve; worth a call this week. RELEVANT — qualified and in scope, but a partial fit; read the suggested angle before spending time on it. Priority combines how early-stage the brand looks with how closely its category matches your business, so it is specific to you and not a general ranking."
+        "body": "TOP MATCH — one of the strongest opportunities for you this week. Start here. STRONG — a clear early-stage brand in a category you serve; worth a call this week. RELEVANT — qualified and in scope, but a partial fit; read the suggested angle before spending time on it. Priority is specific to your business, not a general ranking: it weighs how early-stage the brand looks together with how closely what it is launching matches what you sell. A brand can be an unusually strong launch signal in general and still not be one of your best leads, and Priority reflects your side of that."
       },
       {
         "heading": "Working the list",
