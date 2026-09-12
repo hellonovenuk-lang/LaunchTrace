@@ -1,0 +1,281 @@
+{
+  "$schema_version": "1.0",
+  "description": "Presentation rules for the customer-facing weekly Excel workbook. This file decides how an internal opportunity is described to a subscriber's sales team: which plain-English priority it carries, how its goods list is compressed to something readable, and which commercial angle suits the supplier reading it. It changes wording and layout only. It never touches the LaunchTrace Score, qualification, entity matching or buying-intent classification.",
+  "usage_note": "Every sentence produced from this file must be supportable by what is already stored on the opportunity. Angles are suggestions for how a supplier might approach a brand, never claims that the brand has asked for anything.",
+
+  "brand": {
+    "wordmark_first": "Launch",
+    "wordmark_second": "Trace",
+    "product_name": "LaunchTrace Food",
+    "ink": "FF1C1917",
+    "muted": "FF57534E",
+    "faint": "FF78716C",
+    "line": "FFE7E5E4",
+    "page": "FFFAFAF9",
+    "card": "FFFFFFFF",
+    "accent": "FF0F766E",
+    "accent_dark": "FF115E59",
+    "accent_tint": "FFEEF6F4",
+    "top_fill": "FFE3F0EC",
+    "top_text": "FF115E59",
+    "strong_fill": "FFEDF2F1",
+    "strong_text": "FF1C1917",
+    "relevant_text": "FF57534E",
+    "font": "Calibri"
+  },
+
+  "priority": {
+    "note": "A customer-facing priority derived from the band the opportunity already earned and how well it fits this supplier. It reorders nothing and admits nothing that did not qualify on its own merit.",
+    "levels": [
+      {
+        "key": "TOP MATCH",
+        "meaning": "Strongest launch signal of the week and a direct fit for what you sell. Worth contacting first."
+      },
+      {
+        "key": "STRONG",
+        "meaning": "A clear early-stage brand in a category you serve. Worth a call this week."
+      },
+      {
+        "key": "RELEVANT",
+        "meaning": "Qualified and in scope, but a partial fit. Read the angle before spending time on it."
+      }
+    ],
+    "top_match_requires_band": "HIGH",
+    "strong_minimum_fit": 10.0
+  },
+
+  "stage_labels": {
+    "pre-launch": "Pre-launch",
+    "pre_launch": "Pre-launch",
+    "early launch": "Early launch",
+    "early_launch": "Early launch",
+    "scaling": "Scaling",
+    "established": "Established",
+    "unknown": "Not determined"
+  },
+
+  "website_unconfirmed_label": "Not confirmed",
+
+  "category_short_labels": {
+    "note": "Short names for the same categories, used where a full taxonomy label would make a sentence unreadable.",
+    "coffee_tea": "hot drinks",
+    "snacks": "snacks",
+    "cereal_bars": "bars",
+    "confectionery": "confectionery",
+    "chilled_frozen": "chilled and frozen",
+    "sauces_condiments": "sauces and spices",
+    "cereal_granola": "cereal and granola",
+    "biscuits_bakery": "biscuits and bakery",
+    "health_nutrition_food": "health and nutrition",
+    "ambient_meals": "ambient meals",
+    "baby_food": "baby food"
+  },
+
+  "sales_status_options": [
+    "Not reviewed",
+    "Researching",
+    "Contacted",
+    "Replied",
+    "Opportunity",
+    "Not relevant"
+  ],
+
+  "product_summary": {
+    "note": "Turns a trade mark goods list into one readable line. A head is used only when its keyword appears in the stored goods text, and a format is listed only when its keyword appears too, so the line is always a compression of the real filing rather than a description of it. A format that merely repeats a word from the head is dropped as noise, unless keep_with_head marks it as a real format in its own right (coffee bags, tea bags).",
+    "max_formats": 5,
+    "categories": {
+      "coffee_tea": {
+        "heads": [
+          {"label": "Coffee", "match": ["coffee"]},
+          {"label": "Tea", "match": ["tea;", "tea.", "teas", "tea leaves", "chai"]},
+          {"label": "Hot chocolate", "match": ["drinking chocolate", "hot chocolate"]}
+        ],
+        "formats": [
+          {"label": "whole bean", "match": ["whole-bean", "whole bean", "coffee beans"]},
+          {"label": "ground", "match": ["ground coffee"]},
+          {"label": "espresso", "match": ["espresso"]},
+          {"label": "drip bags", "match": ["drip bag"]},
+          {"label": "coffee bags", "match": ["coffee bags"], "keep_with_head": true},
+          {"label": "pods", "match": ["coffee pods"]},
+          {"label": "capsules", "match": ["coffee capsules"]},
+          {"label": "instant", "match": ["instant coffee"]},
+          {"label": "loose leaf", "match": ["tea leaves", "loose leaf"]},
+          {"label": "tea bags", "match": ["tea bags"], "keep_with_head": true},
+          {"label": "chai", "match": ["chai"]},
+          {"label": "black tea", "match": ["black tea"]},
+          {"label": "green tea", "match": ["green tea"]},
+          {"label": "herbal and fruit infusions", "match": ["herbal tea", "fruit tea", "infusions"]}
+        ]
+      },
+      "snacks": {
+        "heads": [
+          {"label": "Nuts", "match": ["roasted nuts", "salted nuts", "edible nuts", "processed nuts"]},
+          {"label": "Vegetable crisps and fries", "match": ["vegetable crisps", "cassava crisps", "sweet potato chips", "potato fries"]},
+          {"label": "Crisps", "match": ["potato crisps", "crisps"]},
+          {"label": "Popcorn", "match": ["popcorn"]},
+          {"label": "Savoury snacks", "match": ["snack food", "snack foods"]}
+        ],
+        "formats": [
+          {"label": "roasted and salted", "match": ["roasted nuts", "salted nuts"]},
+          {"label": "flavoured", "match": ["flavoured nuts", "flavored nuts", "seasoned nuts"]},
+          {"label": "nut butters", "match": ["nut butter", "nut butters"]},
+          {"label": "snack mixes", "match": ["snack mixes"]},
+          {"label": "dried fruit", "match": ["dehydrated fruit", "dried fruit", "raisins"]},
+          {"label": "crisps", "match": ["crisps"]},
+          {"label": "fries", "match": ["fries"]},
+          {"label": "frozen lines", "match": ["frozen cassava", "frozen plantain", "pre-cooked frozen"]},
+          {"label": "ready meals", "match": ["ready-to-eat meals", "ready to eat meals"]}
+        ]
+      },
+      "cereal_bars": {
+        "heads": [
+          {"label": "Energy bars", "match": ["energy bar"]},
+          {"label": "Protein bars", "match": ["protein bar"]},
+          {"label": "Cereal bars", "match": ["cereal bar"]},
+          {"label": "Flapjacks", "match": ["flapjack"]},
+          {"label": "Snack bars", "match": ["snack bar"]}
+        ],
+        "formats": [
+          {"label": "protein", "match": ["protein bar"]},
+          {"label": "cereal", "match": ["cereal bar"]},
+          {"label": "flapjacks", "match": ["flapjack"]},
+          {"label": "bites and balls", "match": ["energy ball", "protein ball", "bites"]}
+        ]
+      },
+      "confectionery": {
+        "heads": [
+          {"label": "Chocolate", "match": ["chocolate"]},
+          {"label": "Sweets", "match": ["sugar confectionery", "sweets"]}
+        ],
+        "formats": [
+          {"label": "chocolate confectionery", "match": ["chocolate confectionery", "chocolate confections"]},
+          {"label": "sugar confectionery", "match": ["sugar confectionery"]},
+          {"label": "dairy confectionery", "match": ["dairy confectionery"]},
+          {"label": "chocolate sweets", "match": ["chocolate sweets"]},
+          {"label": "gummies", "match": ["gummy", "gummies"]}
+        ]
+      },
+      "chilled_frozen": {
+        "heads": [
+          {"label": "Yoghurt and dairy", "match": ["yoghurt", "yogurt", "labneh"]},
+          {"label": "Chilled and frozen food", "match": ["frozen", "chilled"]}
+        ],
+        "formats": [
+          {"label": "labneh", "match": ["labneh"]},
+          {"label": "kefir", "match": ["kefir"]},
+          {"label": "drinking yoghurt", "match": ["yoghurt drinks", "drinking yoghurt"]},
+          {"label": "cheese", "match": ["cream cheese", "soft cheese", "cheese"]},
+          {"label": "dairy alternatives", "match": ["oat milk", "almond milk", "coconut milk", "rice milk"]},
+          {"label": "granola", "match": ["granola", "muesli"]},
+          {"label": "frozen yoghurt", "match": ["frozen yoghurt", "frozen yogurt"], "keep_with_head": true}
+        ]
+      },
+      "sauces_condiments": {
+        "heads": [
+          {"label": "Spices and seasonings", "match": ["spices", "seasonings"]},
+          {"label": "Sauces", "match": ["sauces"]},
+          {"label": "Condiments", "match": ["condiments"]}
+        ],
+        "formats": [
+          {"label": "curry powders", "match": ["curry powder", "curry spice"]},
+          {"label": "seasoning blends", "match": ["spice mixes", "blends of seasonings", "seasoning mixes"]},
+          {"label": "chutneys", "match": ["chutney", "chutneys"]},
+          {"label": "marinades", "match": ["marinade", "marinades"]},
+          {"label": "cooking sauces", "match": ["cooking sauces", "ready-made sauces"]},
+          {"label": "hot sauces", "match": ["spicy sauces", "hot pepper"]},
+          {"label": "dressings", "match": ["food dressings", "dressings"]}
+        ]
+      }
+    }
+  },
+
+  "supplier_angles": {
+    "note": "One relevance sentence and one suggested angle per product category, written for the supplier profile reading the workbook. {brand} and {product} are filled from the opportunity. The angle is a suggestion about how this supplier might approach the brand, never a statement about what the brand wants.",
+    "flexible_packaging": {
+      "_default": {
+        "relevance": "An early-stage UK food brand that has just protected its name, in a category where printed film or pouches are part of the pack decision.",
+        "angle": "Introduce short-run printed film before the pack format is committed."
+      },
+      "coffee_tea": {
+        "relevance": "{product_head} is a printed-pouch category. Film and bag formats are normally the first pack decision a hot-drinks brand makes, and usually across several SKUs at once.",
+        "angle": {
+          "Coffee": "Short-run printed coffee pouches across multiple SKUs, with drip-bag and coffee-bag film as a natural second format.",
+          "Tea": "Small-batch printed tea pouches, with digital print keeping the quantity per SKU low while the range settles."
+        }
+      },
+      "snacks": {
+        "relevance": "{product_head} go to market in printed bags and pouches. A range with several variants means several designs, each at modest volume.",
+        "angle": {
+          "Nuts": "Resealable printed pouches for the nut and snack-mix range — one short run per flavour rather than one long run.",
+          "Vegetable crisps and fries": "Printed snack bags across the crisp variants, with frozen-suitable film for the fry lines.",
+          "_default": "Flexible snack packaging for the new range, at launch quantities rather than full production runs."
+        }
+      },
+      "cereal_bars": {
+        "relevance": "{product_head} are flow-wrapped. Wrapper film and artwork have to be settled before the first production run, not after it.",
+        "angle": "First-run bar wrappers — flow-wrap film at launch quantities, while the artwork is still open."
+      },
+      "confectionery": {
+        "relevance": "{product_head} uses printed film, flow-wrap and pouches. A range that pairs sweets with other merchandise usually carries several small formats rather than one.",
+        "angle": "Short-run printed film and pouches across a multi-SKU confectionery range, where no single line justifies a long run."
+      },
+      "chilled_frozen": {
+        "relevance": "{product_head} is mostly pots and labels rather than film. The granola, frozen and lidding formats in the same filing are the part that is flexible-pack work.",
+        "angle": "Lower priority for film. Worth a call if the granola or frozen lines come first, or for lidding and sleeve work alongside the chilled range."
+      },
+      "sauces_condiments": {
+        "relevance": "{product_head} reach shelf in glass or in pouches and sachets. Where a brand chooses pouches, it is flexible-pack work from the first batch onwards.",
+        "angle": "Printed pouches and sachets for the range — worth asking whether they have settled on glass or pouch before pitching a format."
+      }
+    }
+  },
+
+  "stage_clause": {
+    "note": "Appended to the relevance line so two brands in the same category do not read identically. Chosen from what the opportunity already records about the brand's presence.",
+    "selling_direct": "{brand} is already selling from its own site, so pack is a live decision rather than a future one.",
+    "no_website": "There is no brand site we could confirm, so the pack format is likely still open.",
+    "pre_launch": "The signals read pre-launch, so nothing is likely to be committed yet."
+  },
+
+  "copy": {
+    "report_type": "LaunchTrace Food",
+    "brief_title": "Weekly opportunity brief",
+    "sample_note": "Sample — not a live subscription",
+    "what_this_is": "LaunchTrace reads the UK Intellectual Property Office trade mark journal every week, matches each food and drink applicant to Companies House, and keeps only the brands that look genuinely early-stage. This brief covers the opportunities from that week that are relevant to what {customer} sells. Every company here has protected a brand name in the last few weeks; none of them has been contacted, and none has asked to be introduced to a supplier.",
+    "top_section_title": "Priority opportunities",
+    "top_section_note": "The full list, with filters and space for your own notes, is on the OPPORTUNITIES tab.",
+    "signal_title": "This week's signal",
+    "angle_disclaimer": "Suggested sales angles are LaunchTrace's view of how you might approach each brand. They are not requests, enquiries or stated requirements.",
+    "footer": "Sources: UK Intellectual Property Office Trade Marks Journal and Companies House, under the Open Government Licence v3.0. Commercial signals, not confirmed buying intent.",
+    "how_to_use": [
+      {
+        "heading": "What LaunchTrace detects",
+        "body": "Every week the UK Intellectual Property Office publishes the trade marks that have been filed. A new food or drink brand almost always protects its name before it goes on sale. LaunchTrace reads that journal, works out which applicants are real UK food businesses, checks them against Companies House, and keeps only the ones that look like they are still building rather than already established. What you get is a list of brands at the point where their suppliers have not been chosen yet."
+      },
+      {
+        "heading": "What \"Why now\" means",
+        "body": "It is the timing evidence: when the name was filed and published, how recently the company behind it was formed, whether this is the first mark we have seen from them, and whether the brand has a website or retailer listings yet. It explains why this week is a sensible moment to make contact, rather than six months from now."
+      },
+      {
+        "heading": "A lead is a signal, not an enquiry",
+        "body": "Nobody on this list has contacted you, asked for a quote, or been told about you. These are companies whose public filings show a brand being built. Treat every row as a well-timed reason to introduce yourself, not as an inbound enquiry. Nothing here is a confirmed buying request."
+      },
+      {
+        "heading": "How to use the suggested sales angle",
+        "body": "The angle is our read on what this kind of brand, at this stage, usually needs from a supplier like you. It is a starting point for a first conversation — a sensible opening line and a reason to call — not a statement that the company has asked for that product. Check it against what you actually see on their website or filing before you use it."
+      },
+      {
+        "heading": "Why some websites say \"Not confirmed\"",
+        "body": "We only publish a website when we can prove it belongs to that company. If a search turns up a page that might be the brand but might equally be a similarly named business elsewhere, we leave the field as Not confirmed rather than send you to the wrong company. It is usually worth a quick search of your own — the absence of a confirmed site is often a sign the brand is genuinely early."
+      },
+      {
+        "heading": "How to read Priority",
+        "body": "TOP MATCH — the strongest launch signals of the week and a direct fit for what you sell. Start here. STRONG — a clear early-stage brand in a category you serve; worth a call this week. RELEVANT — qualified and in scope, but a partial fit; read the suggested angle before spending time on it. Priority combines how early-stage the brand looks with how closely its category matches your business, so it is specific to you and not a general ranking."
+      },
+      {
+        "heading": "Working the list",
+        "body": "The OPPORTUNITIES tab is a filterable table. Sort or filter by Priority, Product Category or Location to split the week between your team, then use the Owner, Sales Status and Sales Notes columns to track what happens. Those three columns are yours — LaunchTrace never writes to them, so your notes survive from week to week if you keep the file."
+      }
+    ]
+  }
+}
