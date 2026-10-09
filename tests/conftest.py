@@ -6,7 +6,9 @@ dependency is either a fixture provider or a stub.
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import socket
 from datetime import date
 from pathlib import Path
 
@@ -27,6 +29,85 @@ from src.settings import FIXTURES_DIR, Settings
 
 FIXTURE_JOURNAL = FIXTURES_DIR / "journals" / "2025-050.xml"
 MALFORMED_JOURNAL = FIXTURES_DIR / "malformed" / "malformed.xml"
+
+
+# ---------------------------------------------------------------------------
+# network guard
+# ---------------------------------------------------------------------------
+
+
+class NetworkBlockedError(RuntimeError):
+    """A test tried to reach the network. Mock the dependency instead."""
+
+
+_REAL_CONNECT = socket.socket.connect
+_REAL_CONNECT_EX = socket.socket.connect_ex
+_REAL_CREATE_CONNECTION = socket.create_connection
+
+
+def _is_local(address: object, family: int | None = None) -> bool:
+    """Loopback and Unix-domain addresses are allowed; everything else is not."""
+    if family is not None and family == getattr(socket, "AF_UNIX", object()):
+        return True
+    if isinstance(address, (str, bytes)) and not isinstance(address, tuple):
+        # A path: only Unix-domain sockets take one.
+        return True
+    if not isinstance(address, tuple) or not address:
+        return False
+    host = address[0]
+    if isinstance(host, bytes):
+        host = host.decode("ascii", "replace")
+    host = str(host).split("%", 1)[0].strip("[]")
+    if host.lower() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def _blocked(address: object) -> NetworkBlockedError:
+    return NetworkBlockedError(
+        f"Outbound network access is blocked in tests (attempted {address!r}). "
+        "Use a fixture provider or a stub instead."
+    )
+
+
+@pytest.fixture(autouse=True)
+def _block_network(monkeypatch):  # type: ignore[no-untyped-def]
+    """Every test runs offline: any non-loopback connection raises."""
+
+    def guarded_connect(self, address):  # type: ignore[no-untyped-def]
+        if not _is_local(address, self.family):
+            raise _blocked(address)
+        return _REAL_CONNECT(self, address)
+
+    def guarded_connect_ex(self, address):  # type: ignore[no-untyped-def]
+        if not _is_local(address, self.family):
+            raise _blocked(address)
+        return _REAL_CONNECT_EX(self, address)
+
+    def guarded_create_connection(address, *args, **kwargs):  # type: ignore[no-untyped-def]
+        # Checked before name resolution, so a test cannot even make a DNS query.
+        if not _is_local(address):
+            raise _blocked(address)
+        return _REAL_CREATE_CONNECTION(address, *args, **kwargs)
+
+    # A local forward proxy is a loopback address that leads straight back out
+    # to the internet, so HTTP clients must not be told about one.
+    for name in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
+    monkeypatch.setattr(socket, "create_connection", guarded_create_connection)
+    yield
 
 
 @pytest.fixture
