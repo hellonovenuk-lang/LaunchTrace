@@ -4,7 +4,7 @@ The IPO publishes the Trade Marks Journal every Friday.  Each journal has its
 own directory on ipo.gov.uk, addressed by ``YYYY-NNN`` (year plus the ordinal
 Friday of that year), for example::
 
-    https://www.ipo.gov.uk/types/tm/t-os/t-tmj/tm-journals/2025-052/
+    https://www.ipo.gov.uk/t-tmj/tm-journals/2025-052/
 
 The XML data file inside that directory has been published under several
 filenames over the years, so rather than hard-coding one obsolete pattern this
@@ -18,10 +18,12 @@ source:
 ``JOURNAL_SOURCE=local`` lets an operator feed in a manually downloaded file
 without any code change.
 
-Note on access: ipo.gov.uk sits behind bot protection that challenges some
-network ranges with a captcha.  When that happens this source raises
-``JournalRetrievalError`` with the HTTP status, and the run fails closed rather
-than delivering a partial report.
+Note on access: ipo.gov.uk answers 403 for paths that do not exist, which
+earlier read like bot protection; with the current URL scheme journals from
+about the last year are served to automated clients (see
+reports/backtest/availability.json). Any HTTP failure raises
+``JournalRetrievalError`` with the status, and the run fails closed rather than
+delivering a partial report.
 """
 
 from __future__ import annotations

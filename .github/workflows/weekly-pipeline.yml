@@ -19,7 +19,7 @@ on:
         description: "Journal number (e.g. 2026-036). Leave blank for the latest."
         required: false
       source:
-        description: "Journal source. Use 'local' for a journal XML committed to data/journals/, because ipo.gov.uk refuses automated clients."
+        description: "Journal source. Use 'local' for a journal XML committed to data/journals/ (a fallback if ipo.gov.uk is unreachable)."
         required: false
         default: "ukipo_http"
         type: choice
