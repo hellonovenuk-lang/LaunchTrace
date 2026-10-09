@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.db.tables import OpportunityRow
+from src.privacy import display_party
 from src.settings import REPORTS_DIR, load_config
 
 # Which CSV column carries which buying-intent category.
@@ -48,6 +49,9 @@ class Lead:
     product_category_label: str = ""
     goods_summary: str = ""
     applicant_name: str = ""
+    # corporate | natural_person | unknown. Only used to decide whether the
+    # applicant's name may be shown -- it never is for an individual.
+    applicant_type: str = "unknown"
     company_name: str = ""
     company_number: str = ""
     company_incorporation_date: date | None = None
@@ -70,7 +74,17 @@ class Lead:
 
     @property
     def display_company(self) -> str:
-        return self.company_name or self.applicant_name or "Company not matched"
+        """Who is behind the lead, safe for any output (never an individual's name)."""
+        return display_party(
+            self.company_name, self.applicant_name, self.applicant_type, empty="Company not matched"
+        )
+
+    @property
+    def identity_key(self) -> str:
+        """Internal identity for "one company once" selection. Never rendered."""
+        return (
+            self.company_number or self.company_name or self.applicant_name or "Company not matched"
+        )
 
     @property
     def display_category(self) -> str:
@@ -206,6 +220,7 @@ def leads_from_db(
                 product_category_label=key_to_label.get(row.product_category or "", ""),
                 goods_summary=row.goods_summary or "",
                 applicant_name=row.applicant_name or "",
+                applicant_type=row.applicant_type or "unknown",
                 company_name=row.company_name or "",
                 company_number=row.company_number or "",
                 company_incorporation_date=row.company_incorporation_date,

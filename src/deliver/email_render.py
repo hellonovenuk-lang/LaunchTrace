@@ -14,6 +14,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 
 from src.errors import RenderFailureError
 from src.models import Opportunity, PipelineResult
+from src.privacy import display_party_for
 from src.score.buying_intent import supplier_category_labels
 from src.settings import Settings, get_settings, load_config
 
@@ -89,6 +90,8 @@ def render_weekly_email(
             high_count=high_count,
             top=opportunities[:top_n],
             top_intents=_top_intents(supplier_category_labels()),
+            # Never the raw applicant name: an applicant may be a private individual.
+            party=display_party_for,
             journal_number=result.journal.journal_number,
             publication_date=result.journal.publication_date.strftime("%-d %B %Y"),
             csv_url=csv_url,
@@ -111,7 +114,7 @@ def render_weekly_text(result: PipelineResult, opportunities: list[Opportunity])
     for opp in opportunities[:10]:
         lines.append(
             f"{opp.score.value} {opp.score.band.value} — {opp.brand_name or opp.trademark_number}"
-            f" ({opp.company.company_name or opp.applicant_name or 'unknown company'})"
+            f" ({display_party_for(opp, empty='unknown company')})"
         )
         for reason in opp.score.reason_texts[:2]:
             lines.append(f"    - {reason}")

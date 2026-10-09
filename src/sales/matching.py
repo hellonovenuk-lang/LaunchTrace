@@ -260,8 +260,9 @@ def _diversify(candidates: list[MatchedLead], wanted: int) -> list[MatchedLead]:
     seen_categories: set[str] = set()
 
     def company_key(match: MatchedLead) -> str:
-        lead = match.lead
-        return (lead.company_number or lead.display_company).strip().lower()
+        # The raw identity, not the display text: every individual applicant
+        # displays the same neutral wording and must not collapse into one.
+        return match.lead.identity_key.strip().lower()
 
     # Pass 1 prefers a new category as well as a new company; pass 2 accepts a
     # repeated category. Neither pass ever repeats a company.
