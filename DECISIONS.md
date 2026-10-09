@@ -251,7 +251,7 @@ lists the ones that fired on `Opportunity.domain.indicators`; a weight-0
 indicator adds nothing and produces no `ScoreReason`, so `score.reasons`,
 `reason_texts`, emails and the stability snapshot's `reason_keys` do not change.
 Proof: the stability harness now injects a fixture prober giving every verified
-website (20 probes over the 10 runs) signals that fire all four indicators, and
+website (18 probes of 9 distinct domains over the 10 runs) signals that fire all four indicators, and
 the compare output is byte-identical to `reports/stability/phase1_diff.txt`.
 
 **D-207 — Persistence without a schema change.** `Opportunity.domain` is not
