@@ -1,0 +1,10 @@
+{
+  "description": "Trimmed fixture of the IANA RDAP bootstrap file for DNS.",
+  "publication": "2026-09-30T19:00:01Z",
+  "services": [
+    [["com", "net"], ["https://rdap.verisign.com/com/v1/"]],
+    [["uk"], ["https://rdap.nominet.uk/uk/"]],
+    [["shop", "store"], ["http://rdap.example-shop.invalid/rdap", "https://rdap.example-shop.invalid/rdap"]]
+  ],
+  "version": "1.0"
+}
