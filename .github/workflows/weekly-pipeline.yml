@@ -153,6 +153,33 @@ jobs:
           python -m src.pipeline weekly $ARGS | tee pipeline.log
         continue-on-error: true
 
+      # Re-check recently seen brands (config/rescan.json, docs/RESCAN.md), record
+      # what moved, and prepare the weekly "brands that moved" digest. Runs even
+      # when the weekly step stopped at 'already processed'; the later Friday
+      # attempts find nothing due (min_days_between_checks) and the digest is
+      # idempotent per week. Never fails the job. The digest only goes to the
+      # outbox until SEND_MODE=automatic AND digest.send_enabled is true.
+      - name: Re-scan recent brands
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ENVIRONMENT: production
+          SEND_MODE: ${{ vars.SEND_MODE || 'review' }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
+          LOG_FORMAT: json
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          COMPANIES_HOUSE_API_KEY: ${{ secrets.COMPANIES_HOUSE_API_KEY }}
+          SEARCH_PROVIDER: ${{ vars.SEARCH_PROVIDER || 'none' }}
+          SEARCH_API_KEY: ${{ secrets.SEARCH_API_KEY }}
+          SEARCH_MAX_CALLS_PER_RUN: ${{ vars.SEARCH_MAX_CALLS_PER_RUN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+          DOMAIN_LAYER_ENABLED: ${{ vars.DOMAIN_LAYER_ENABLED || 'true' }}
+          DOMAIN_USER_AGENT: ${{ vars.DOMAIN_USER_AGENT }}
+        run: python -m src.pipeline rescan | tee rescan.log
+
       # Anonymise / delete data past its retention period (config/retention.json).
       # Housekeeping only: it never runs inside a pipeline run and never fails the job.
       # Runs before the feed build so the feed is built from retained data only.
@@ -215,6 +242,18 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+      # Digest emails written instead of sent (review mode / no Resend key), so the
+      # copy can be reviewed. Holds recipient addresses: short retention.
+      - name: Upload the email outbox
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: email-outbox-${{ github.run_number }}
+          path: reports/outbox/
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Upload the week's report and QA output
         if: always()
         uses: actions/upload-artifact@v4
@@ -223,6 +262,7 @@ jobs:
           path: |
             reports/runs/**
             pipeline.log
+            rescan.log
           retention-days: 60
           if-no-files-found: warn
 

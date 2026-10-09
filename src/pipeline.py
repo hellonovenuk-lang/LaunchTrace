@@ -126,6 +126,21 @@ def build_parser() -> argparse.ArgumentParser:
     retention.add_argument("--apply", action="store_true", help="Make the changes")
     retention.add_argument("--json", action="store_true", help="Print the report as JSON")
 
+    rescan = sub.add_parser(
+        "rescan",
+        help="Re-check recently seen brands, record what moved, then prepare the movers digest",
+    )
+    rescan.add_argument(
+        "--dry-run", action="store_true", help="List what would be checked; no calls, no writes"
+    )
+    rescan.add_argument("--limit", type=int, help="Check at most this many brands")
+    rescan.add_argument("--no-digest", action="store_true", help="Skip the movers digest")
+    rescan.add_argument("--json", action="store_true", help="Print the summary as JSON")
+    movers = sub.add_parser(
+        "movers-digest", help="Prepare this week's 'brands that moved' digest on its own"
+    )
+    movers.add_argument("--json", action="store_true", help="Print the summary as JSON")
+
     return parser
 
 
@@ -183,6 +198,11 @@ def main(argv: list[str] | None = None) -> int:
         from src.retention import cmd_retention
 
         handlers["retention"] = cmd_retention
+    if args.command in ("rescan", "movers-digest"):
+        from src.rescan.command import cmd_movers_digest, cmd_rescan
+
+        handlers["rescan"] = cmd_rescan
+        handlers["movers-digest"] = cmd_movers_digest
     handler = handlers[args.command]
     try:
         return int(handler(args) or 0)
