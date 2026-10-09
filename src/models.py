@@ -404,6 +404,8 @@ class FunnelCounts(BaseModel):
     duplicates_dropped: int = 0
     enrichment_failures: int = 0
     llm_failures: int = 0
+    # Calls made to the web search provider this run (the cost driver).
+    search_calls: int = 0
 
     # -- customer-facing quality -------------------------------------------
     verified_websites: int = 0

@@ -67,7 +67,36 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v4
-      - name: Apply the schema to a real PostgreSQL
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -e .
+
+      # Alembic is the canonical schema: upgrade, downgrade to nothing, and
+      # upgrade again, on the 'launchtrace' database.
+      - name: Alembic upgrade, downgrade and upgrade on a real PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/launchtrace
+        run: |
+          python -m alembic upgrade head
+          python -m alembic downgrade base
+          python -m alembic upgrade head
+          python -m alembic current
+
+      # The paste-into-Supabase SQL goes into a second database so the two
+      # routes cannot collide; init-db must then recognise it as complete.
+      - name: Apply the generated SQL to a second database, then adopt it
         env:
           PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d launchtrace -v ON_ERROR_STOP=1 -f migrations/0001_initial.sql
+        run: |
+          createdb -h localhost -U postgres launchtrace_sql
+          psql -h localhost -U postgres -d launchtrace_sql -v ON_ERROR_STOP=1 -f migrations/0001_initial.sql
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/launchtrace_sql python -m src.pipeline init-db
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/launchtrace_sql python -m alembic current

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Regenerate the PostgreSQL schema from the SQLAlchemy models.
+"""Regenerate the full PostgreSQL schema from the SQLAlchemy models.
 
     python scripts/generate_migration.py > migrations/0001_initial.sql
 
-The models in ``src/db/tables.py`` are the source of truth; this keeps the
-checked-in SQL honest rather than hand-maintained.
+Alembic (``src/db/alembic/``) is the canonical, versioned schema: production
+databases are migrated with ``alembic upgrade head`` or
+``python -m src.pipeline init-db``. This file is the full current schema in one
+script, kept for pasting into the Supabase SQL editor. CI checks it is in step
+with the models.
 """
 
 from __future__ import annotations
@@ -19,14 +22,18 @@ from sqlalchemy.schema import CreateIndex, CreateTable  # noqa: E402
 
 from src.db.tables import Base  # noqa: E402
 
-HEADER = """-- LaunchTrace initial schema (PostgreSQL / Supabase).
+HEADER = """-- LaunchTrace full schema (PostgreSQL / Supabase), as of the newest revision.
 --
 -- Generated from src/db/tables.py by scripts/generate_migration.py.
--- Do not hand-edit: change the models and regenerate.
+-- Do not hand-edit: change the models, add an Alembic revision, and regenerate.
 --
--- Apply with:
+-- Alembic (src/db/alembic/) is canonical. Prefer:
+--     DATABASE_URL=... alembic upgrade head      (or: python -m src.pipeline init-db)
+-- This file is the convenience copy for pasting into the Supabase SQL editor:
 --     psql "$DATABASE_URL" -f migrations/0001_initial.sql
--- or paste into the Supabase SQL editor.
+-- Only for a NEW, empty database. It has no alembic_version table; the first
+-- init-db recognises the schema as complete and stamps it at head. For an
+-- existing database never paste this: run init-db, which migrates in place.
 
 BEGIN;
 """

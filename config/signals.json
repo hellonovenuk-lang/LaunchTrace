@@ -1,0 +1,113 @@
+{
+  "$schema_version": "1.0",
+  "description": "Registry of every signal that may be written to the observations table (src/brands.py). An observation's signal must be named here. point_in_time_safe is the default for observations of that signal: true only when the observation's source_date is when the fact became true in the world AND that date could have been known on that date, so a backtest may use it as of source_date without seeing the future. Grouped by source so parallel work appends to its own section; signal names must be unique across all groups.",
+  "_comment": "Each signal: {\"source\": <observations.source value>, \"point_in_time_safe\": bool, \"description\": str}. Keys starting with '_' are comments.",
+  "trademark": {
+    "_comment": "Facts from the UKIPO Trade Marks Journal record itself. Filing and publication dates are fixed historical facts.",
+    "filing_date": {
+      "source": "trademark",
+      "point_in_time_safe": true,
+      "description": "The trade mark application was filed. Value: {trademark_number, filing_date}. source_date = filing date."
+    },
+    "publication_date": {
+      "source": "trademark",
+      "point_in_time_safe": true,
+      "description": "The application was published in the journal. Value: {trademark_number, journal_number}. source_date = journal publication date."
+    },
+    "nice_classes": {
+      "source": "trademark",
+      "point_in_time_safe": true,
+      "description": "Nice classes as published. Value: {trademark_number, classes}. source_date = journal publication date (classes can be amended before publication, so not the filing date)."
+    }
+  },
+  "companies_house": {
+    "_comment": "Companies House facts for a confident company match. Only the incorporation date is historical; everything else is the register as it stands when we looked, so it is not point-in-time safe.",
+    "incorporation_date": {
+      "source": "companies_house",
+      "point_in_time_safe": true,
+      "description": "The matched company was incorporated. Value: {company_number, incorporation_date}. source_date = incorporation date."
+    },
+    "company_match": {
+      "source": "companies_house",
+      "point_in_time_safe": false,
+      "description": "The applicant was matched to this company. Value: {company_number, match_confidence, match_method}. Matching runs against today's register."
+    },
+    "company_status": {
+      "source": "companies_house",
+      "point_in_time_safe": false,
+      "description": "Company status (active, dissolved, ...) as on the register when observed."
+    },
+    "sic_codes": {
+      "source": "companies_house",
+      "point_in_time_safe": false,
+      "description": "SIC codes as on the register when observed; companies change them."
+    },
+    "accounts_category": {
+      "source": "companies_house",
+      "point_in_time_safe": false,
+      "description": "Latest accounts category (micro entity, small, ...) when observed."
+    }
+  },
+  "web_search": {
+    "_comment": "What a web search found when we looked. None of it carries a trustworthy date of its own. Recorded only when a search was attempted; a null value means searched and not found.",
+    "website": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "Verified website for the brand, or null if none was verified."
+    },
+    "website_maturity": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "early_stage / established / unknown, from attributed search results."
+    },
+    "retail_presence": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "RetailPresence value resolved from attributed search results."
+    },
+    "marketplace_presence": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "Seen on an online marketplace (true/false/null)."
+    },
+    "major_retailer_presence": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "Seen at a major retailer (true/false/null)."
+    },
+    "social_presence": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "Has a social media presence (true/false/null)."
+    },
+    "products_on_sale": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "The verified site shows products for sale (true/false/null)."
+    },
+    "launch_evidence": {
+      "source": "web_search",
+      "point_in_time_safe": false,
+      "description": "Launch phrases found in attributed results (list)."
+    }
+  },
+  "score": {
+    "_comment": "LaunchTrace's own derivations. Never point-in-time safe: they depend on the code and on non-PIT inputs.",
+    "launchtrace_score": {
+      "source": "score",
+      "point_in_time_safe": false,
+      "description": "Score for one mark in one run. Value: {trademark_number, score, band, suppressed}."
+    },
+    "launch_stage": {
+      "source": "score",
+      "point_in_time_safe": false,
+      "description": "Assessed launch stage (pre_launch, early_launch, scaling, established, unknown)."
+    }
+  },
+  "domain": {
+    "_comment": "Reserved for the domain layer (RDAP, DNS, homepage probes). Phase 2 domain-layer agent appends signals here, e.g. an RDAP registration date with point_in_time_safe true and source 'rdap'."
+  },
+  "rescan": {
+    "_comment": "Reserved for the rescan job (Phase 3). Signals observed by later re-checks of a known brand go here, with source 'rescan' (or 'outcome' for labelled outcomes)."
+  }
+}

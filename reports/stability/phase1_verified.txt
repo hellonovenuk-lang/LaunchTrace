@@ -1,0 +1,8 @@
+VERIFIED: all 5 re_run entries are identical to their first_run entries:
+  fixture_2025-050/re_run == fixture_2025-050/first_run
+  local_2026-036/re_run == local_2026-036/first_run
+  local_2026-037/re_run == local_2026-037/first_run
+  open_data_2018-01-05/re_run == open_data_2018-01-05/first_run
+  open_data_2018-01-12/re_run == open_data_2018-01-12/first_run
+VERIFIED: 4 of 5 first_run entries are identical to the baseline.
+  expected (DECISIONS.md D-104): open_data_2018-01-05/first_run: UK00003272909 (BUNK) gains first_trademark_for_applicant, score 11 -> 22, band SUPPRESS unchanged -- Bunk Group Limited also filed in 2026-037, which the harness processes before 2018-001; the old code counted that future filing as 'already known'.

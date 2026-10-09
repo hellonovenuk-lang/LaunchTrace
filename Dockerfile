@@ -21,6 +21,9 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY docs/ ./docs/
 COPY migrations/ ./migrations/
+# The Alembic environment itself is inside src/ (src/db/alembic/); this ini is
+# only so `alembic upgrade head` also works from a shell in the container.
+COPY alembic.ini ./
 COPY scripts/ ./scripts/
 COPY data/journals/ ./data/journals/
 

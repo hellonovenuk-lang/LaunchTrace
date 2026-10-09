@@ -1,0 +1,7 @@
+{
+  "$schema_version": "1.0",
+  "description": "Housekeeping rules for scheduled runs. Edit freely; nothing here changes a score.",
+  "cache_max_age_days": 30,
+  "_cache_max_age_days_note": "At the end of every weekly run (successful or not), files older than this are deleted from the journal download caches under CACHE_DIR (journals/ and opendata/). A pruned journal is simply downloaded again if it is ever needed. The Companies House API cache and index are not touched.",
+  "cache_prune_subdirs": ["journals", "opendata"]
+}
