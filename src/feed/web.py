@@ -3,10 +3,15 @@
 Generated on request from the database with the same builder and renderers as
 the static build, so the two cannot drift. The pages link a stylesheet rather
 than inlining it, which keeps the site's Content-Security-Policy intact.
+
+The rendered site is kept in memory for ``web_cache_seconds``
+(config/public_feed.json, 0 = rebuild on every request), so a burst of
+requests does not rebuild the feed from the database each time (D-708).
 """
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -14,9 +19,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from src.feed.build import build_feed
+from src.feed.build import CONFIG_NAME, build_feed
 from src.feed.render import app_links, render_site, stylesheet
-from src.settings import get_settings
+from src.settings import get_settings, load_config
 
 MEDIA_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -30,12 +35,21 @@ _SPECIAL = {
 }
 
 
-def build_feed_router(db_session: Callable[..., Any]) -> APIRouter:
+def build_feed_router(
+    db_session: Callable[..., Any], clock: Callable[[], float] = time.monotonic
+) -> APIRouter:
     router = APIRouter()
+    ttl = float(load_config(CONFIG_NAME).get("web_cache_seconds", 300) or 0)
+    cache: dict[str, Any] = {"at": None, "files": None}
 
     def _files(session: Session) -> dict[str, bytes]:
+        now = clock()
+        if ttl > 0 and cache["files"] is not None and now - cache["at"] < ttl:
+            return dict(cache["files"])
         feed = build_feed(session)
-        return render_site(feed, app_links(feed, get_settings().site_url))
+        files = render_site(feed, app_links(feed, get_settings().site_url))
+        cache.update(at=now, files=files)
+        return dict(files)
 
     def _serve(session: Session, name: str) -> Response:
         if name == "feed.css":

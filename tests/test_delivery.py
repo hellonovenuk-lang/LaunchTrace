@@ -150,6 +150,23 @@ class TestQaReport:
         report = build_qa_report(result)
         assert any("Nestle" in d for d in report["major_brand_detections"])
 
+    def test_major_brand_detections_withhold_an_individual(self, result):
+        from src.models import RejectedRecord
+        from src.privacy import INDIVIDUAL_WITHHELD
+
+        person = result.model_copy(deep=True)
+        person.rejected = [
+            RejectedRecord(
+                trademark_number="UK1",
+                applicant_name="Bruno Mars",
+                stage="food_filter",
+                reason="major_brand_owner",
+                detail="mars",
+            )
+        ]
+        detections = build_qa_report(person)["major_brand_detections"]
+        assert detections == [f"UK1 — {INDIVIDUAL_WITHHELD} (mars)"]
+
     def test_report_flags_review_mode(self, result):
         report = build_qa_report(result, send_mode="review")
         assert report["requires_approval"] is True

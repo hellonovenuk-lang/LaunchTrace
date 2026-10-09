@@ -5,6 +5,8 @@
   "site_title": "LaunchTrace: new UK food brands",
   "site_description": "A weekly sample of newly filed UK food and drink brands owned by recently matched companies, from public UK trade mark and Companies House data.",
   "top_n_per_week": 5,
+  "web_cache_seconds": 300,
+  "_web_cache_seconds_note": "The website's /feed routes keep the rendered feed in memory this long before rebuilding it from the database (0 = rebuild on every request). The static build-feed command is not cached.",
   "_top_n_per_week_note": "Entries shown per journal week, highest LaunchTrace Score first. Paying customers get every qualifying lead.",
   "delay_weeks": 1,
   "_delay_weeks_note": "A journal week becomes public only once it is at least this many weeks older than the newest journal in the database (so with 1, the latest week stays private to customers until the next week has been processed). 0 publishes immediately.",

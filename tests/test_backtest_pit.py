@@ -269,6 +269,54 @@ class TestApplicantHistory:
         b = make_source_record(db_session, trademark_number="UK3", journal_number="2025-051")
         assert applicant_history(db_session, record_from_row(b)) == (False, 1)
 
+    def test_earlier_means_published_by_the_pit_cutoff(self, db_session):
+        # D-708: a journal published after the filing (but before this record's
+        # own journal) is the future at the cutoff.
+        from datetime import date
+
+        make_source_record(
+            db_session,
+            trademark_number="UK1",
+            journal_number="2025-045",
+            publication_date=date(2025, 11, 7),
+        )
+        filed_before = make_source_record(
+            db_session,
+            trademark_number="UK2",
+            journal_number="2025-050",
+            filing_date=date(2025, 9, 15),
+        )
+        record = record_from_row(filed_before)
+        assert applicant_history(db_session, record, date(2025, 9, 15)) == (True, 1)
+        assert applicant_history(db_session, record, date(2025, 11, 7)) == (False, 1)
+        # without a cutoff: the weekly definition, every earlier journal
+        assert applicant_history(db_session, record) == (False, 1)
+
+    def test_a_record_without_a_publication_date_is_not_assumed_early(self, db_session):
+        from datetime import date
+
+        make_source_record(
+            db_session, trademark_number="UK1", journal_number="2025-045", publication_date=None
+        )
+        row = make_source_record(db_session, trademark_number="UK2", journal_number="2025-050")
+        assert applicant_history(db_session, record_from_row(row), date(2026, 1, 1)) == (True, 1)
+
+    def test_the_pit_scorer_uses_the_cutoff(self, db_session, scorer, monkeypatch):
+        import src.backtest.pit as pit
+
+        seen: list[object] = []
+        real = pit.applicant_history
+
+        def spy(session, record, cutoff=None):  # type: ignore[no-untyped-def]
+            seen.append(cutoff)
+            return real(session, record, cutoff)
+
+        monkeypatch.setattr(pit, "applicant_history", spy)
+        brand = make_brand(db_session)
+        record = make_source_record(db_session, brand)
+        _score(scorer, db_session, brand, record)
+        assert seen == [scorer.policy.cutoff(record.filing_date)]
+
     def test_no_applicant_name(self, db_session):
         row = make_source_record(db_session, trademark_number="UK9", applicant_name=None)
         assert applicant_history(db_session, record_from_row(row)) == (True, 1)

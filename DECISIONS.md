@@ -758,3 +758,23 @@ is none. Only rows with `brand_id` NULL are touched (idempotent) and the only
 opportunity column written is `brand_id`. Facts a stored row does not keep
 (raw web-search facts, domain signals, match confidence) are not invented, so
 back-filled brands have fewer observations than freshly scored ones.
+
+**D-708 — Smaller reviewer items: PIT applicant history, QA-report names,
+feed caching.** (a) The backtest's `applicant_history` counted every stored
+record in an earlier journal as "earlier", including journals published after
+the filing date, which are in the future of the PIT cutoff. The PIT scorer now
+passes its cutoff (`filing_date + pit_window_days`, config/backtest.json) and
+only records from earlier journals **published on or before the cutoff** count;
+a record without a publication date is left out rather than assumed early. The
+weekly run is unchanged (no cutoff: every earlier journal), so live scores and
+the stability snapshot are untouched; backtest scores can only change toward
+"first trade mark" for applicants whose earlier mark was published after the
+filing. (b) The internal QA report's `major_brand_detections` printed the raw
+applicant name. Major-brand matching is a substring test, so an individual
+whose name contains a brand ("Bruno Mars") could appear; the applicant is now
+shown through `src.privacy.display_party` (company names with a legal form
+still show, as with "Nestle UK Ltd"). (c) The website's `/feed` routes rebuilt
+the feed from the database on every request; the rendered site is now kept in
+memory for `web_cache_seconds` (config/public_feed.json, 300; 0 disables). A
+newly processed week therefore appears on the website up to five minutes
+later; the static `build-feed` is not cached.
