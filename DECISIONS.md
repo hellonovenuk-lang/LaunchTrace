@@ -718,3 +718,19 @@ which counts the attempt or, when the allowance is spent, refuses it (raising
 budget exhausted). A provider that makes no HTTP request (fixture, none) still
 counts one call per search, so fixture-based runs and the stability snapshot
 are unchanged.
+
+**D-705 — The test guard also blocks UDP and name resolution; tests never
+touch the real database.** The autouse guard in `tests/conftest.py` blocked
+TCP `connect`/`connect_ex`/`create_connection` only, so a UDP `sendto` (a
+dnspython query) or a `getaddrinfo` DNS lookup could leave the machine. It now
+also wraps `socket.socket.sendto`, `socket.socket.sendmsg` (non-loopback
+destination) and `socket.getaddrinfo` (anything but loopback addresses and
+`localhost`); dnspython sends through `sendto`, so its queries are covered
+(tested). Starlette's TestClient resolves nothing, so no allowance for
+`testserver` was needed, and no existing test had to change. At import time,
+before any `Settings` is built, the conftest points `DATABASE_URL` and
+`CACHE_DIR` at a per-session `launchtrace-tests-*` temp directory (removed at
+session end) unless they already point under the system temp dir, so a test
+that forgets its own database can no longer migrate or fill
+`data/local/launchtrace.sqlite` (verified: after removing `data/local`, a full
+`pytest` leaves no `data/local` or `data/cache`).

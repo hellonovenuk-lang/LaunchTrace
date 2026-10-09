@@ -9,24 +9,64 @@ from __future__ import annotations
 import ipaddress
 import json
 import os
+import shutil
 import socket
+import tempfile
 from datetime import date
 from pathlib import Path
 
 import pytest
 
-from src.classify.food_filter import FoodFilter
-from src.classify.pipeline import ProductClassifier
-from src.db.engine import get_engine
-from src.db.tables import Base
-from src.enrich.companies_house import FixtureCompanyRegistry
-from src.enrich.providers import FixtureSearchProvider
-from src.enrich.web import WebEnricher
-from src.ingest.fixture import FixtureJournalSource
-from src.models import CompanyMatch, ProductAssessment, TrademarkRecord, WebEnrichment
-from src.pipeline_core import Pipeline
-from src.score.launchtrace_score import LaunchTraceScorer
-from src.settings import FIXTURES_DIR, Settings
+
+def _isolate_storage() -> Path | None:
+    """Point DATABASE_URL and CACHE_DIR at a per-session temp dir (LOW-3, D-705).
+
+    Runs at import time, before any ``Settings`` is built, so a test that
+    forgets its own database cannot migrate or write the developer's real
+    ``data/local/launchtrace.sqlite`` (or a hosted database named in the
+    environment). A value already under the system temp dir is kept.
+    """
+    tmp_root = os.path.realpath(tempfile.gettempdir())
+
+    def is_temp(value: str) -> bool:
+        path = value.removeprefix("sqlite:///").removeprefix("sqlite://")
+        return bool(path) and os.path.realpath(path).startswith(tmp_root + os.sep)
+
+    session_dir: Path | None = None
+    if not is_temp(os.environ.get("DATABASE_URL", "")) or not is_temp(
+        os.environ.get("CACHE_DIR", "")
+    ):
+        session_dir = Path(tempfile.mkdtemp(prefix="launchtrace-tests-"))
+    if not is_temp(os.environ.get("DATABASE_URL", "")):
+        assert session_dir is not None
+        os.environ["DATABASE_URL"] = f"sqlite:///{session_dir / 'launchtrace.sqlite'}"
+    if not is_temp(os.environ.get("CACHE_DIR", "")):
+        assert session_dir is not None
+        os.environ["CACHE_DIR"] = str(session_dir / "cache")
+    return session_dir
+
+
+_SESSION_STORAGE = _isolate_storage()
+
+
+def pytest_sessionfinish(session, exitstatus):  # type: ignore[no-untyped-def]
+    if _SESSION_STORAGE is not None:
+        shutil.rmtree(_SESSION_STORAGE, ignore_errors=True)
+
+
+# Imported after _isolate_storage() on purpose: nothing from src may load first.
+from src.classify.food_filter import FoodFilter  # noqa: E402
+from src.classify.pipeline import ProductClassifier  # noqa: E402
+from src.db.engine import get_engine  # noqa: E402
+from src.db.tables import Base  # noqa: E402
+from src.enrich.companies_house import FixtureCompanyRegistry  # noqa: E402
+from src.enrich.providers import FixtureSearchProvider  # noqa: E402
+from src.enrich.web import WebEnricher  # noqa: E402
+from src.ingest.fixture import FixtureJournalSource  # noqa: E402
+from src.models import CompanyMatch, ProductAssessment, TrademarkRecord, WebEnrichment  # noqa: E402
+from src.pipeline_core import Pipeline  # noqa: E402
+from src.score.launchtrace_score import LaunchTraceScorer  # noqa: E402
+from src.settings import FIXTURES_DIR, Settings  # noqa: E402
 
 # The domain layer (RDAP / DNS / homepage) is off unless a test injects a
 # prober. The network guard would block it anyway; this keeps the default
@@ -50,6 +90,9 @@ class NetworkBlockedError(RuntimeError):
 _REAL_CONNECT = socket.socket.connect
 _REAL_CONNECT_EX = socket.socket.connect_ex
 _REAL_CREATE_CONNECTION = socket.create_connection
+_REAL_SENDTO = socket.socket.sendto
+_REAL_SENDMSG = getattr(socket.socket, "sendmsg", None)
+_REAL_GETADDRINFO = socket.getaddrinfo
 
 
 def _is_local(address: object, family: int | None = None) -> bool:
@@ -100,6 +143,27 @@ def _block_network(monkeypatch):  # type: ignore[no-untyped-def]
             raise _blocked(address)
         return _REAL_CREATE_CONNECTION(address, *args, **kwargs)
 
+    def guarded_sendto(self, data, *args):  # type: ignore[no-untyped-def]
+        # sendto(data, address) or sendto(data, flags, address): UDP, e.g. DNS.
+        address = args[-1] if args else None
+        if not _is_local(address, self.family):
+            raise _blocked(address)
+        return _REAL_SENDTO(self, data, *args)
+
+    def guarded_sendmsg(self, buffers, ancdata=(), flags=0, address=None):  # type: ignore[no-untyped-def]
+        if address is not None and not _is_local(address, self.family):
+            raise _blocked(address)
+        assert _REAL_SENDMSG is not None
+        if address is None:
+            return _REAL_SENDMSG(self, buffers, ancdata, flags)
+        return _REAL_SENDMSG(self, buffers, ancdata, flags, address)
+
+    def guarded_getaddrinfo(host, *args, **kwargs):  # type: ignore[no-untyped-def]
+        # Name resolution is network access too (a DNS query leaves the box).
+        if host is not None and not _is_local((host,)):
+            raise _blocked(host)
+        return _REAL_GETADDRINFO(host, *args, **kwargs)
+
     # A local forward proxy is a loopback address that leads straight back out
     # to the internet, so HTTP clients must not be told about one.
     for name in (
@@ -114,6 +178,10 @@ def _block_network(monkeypatch):  # type: ignore[no-untyped-def]
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
     monkeypatch.setattr(socket, "create_connection", guarded_create_connection)
+    monkeypatch.setattr(socket.socket, "sendto", guarded_sendto)
+    if _REAL_SENDMSG is not None:
+        monkeypatch.setattr(socket.socket, "sendmsg", guarded_sendmsg)
+    monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
     yield
 
 
