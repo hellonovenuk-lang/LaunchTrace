@@ -393,6 +393,14 @@ def render_markdown(payload: dict[str, Any]) -> str:
     live = meta.get("live_band_counts") or {}
     for band, count in meta["pit_band_counts"].items():
         lines.append(f"| {band} | {count} | {live.get(band, 0)} |")
+    if meta.get("pit_equals_live") is not None:
+        lines += [
+            "",
+            f"The PIT score equals the stored score for {meta['pit_equals_live']} of "
+            f"{payload['dataset']['scored']} brands. They differ only where the stored score "
+            "used an input the PIT policy drops (Companies House status, SIC codes or accounts; "
+            "a company incorporated after filing; anything from web search or the domain layer).",
+        ]
 
     for h, r in horizons.items():
         lines += [
@@ -556,6 +564,7 @@ def generate_report(
             "unknown_reasons": reasons,
             "pit_band_counts": band_counts,
             "live_band_counts": live_counts,
+            "pit_equals_live": sum(1 for r in rows if r.live_score == r.pit_score),
             "observations_by_source": evidence,
             "brands_with_company_match": int(matched_brands),
             "note": note,
@@ -572,6 +581,7 @@ def generate_report(
                 "filing_date": r.filing_date.isoformat(),
                 "pit_cutoff": r.cutoff.isoformat(),
                 "pit_score": r.pit_score,
+                "stored_score": r.live_score,
                 "pit_band": r.pit_band,
                 "fired": r.fired,
                 "labels": {str(k): v for k, v in r.labels.items()},

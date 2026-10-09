@@ -177,3 +177,29 @@ def test_ingest_cli_exit_codes(bt_env):
                  "--source", "fixture"]) == 1  # fmt: skip
     assert main(["backtest", "ingest", "--from", "2025-050", "--to", "2025-050",
                  "--source", "fixture", "--max-journals", "1"]) == 0  # fmt: skip
+
+
+def test_pit_score_equals_the_stored_score_when_nothing_non_pit_was_used(
+    bt_env, monkeypatch, tmp_path
+):
+    """No Companies House match, no search, no domain layer: nothing for PIT to drop.
+
+    Then the backtest score must be exactly what the weekly code path stored,
+    which shows the backtest scores with the live scorer rather than a copy.
+    """
+    from datetime import date
+
+    from src.backtest.report import generate_report
+
+    monkeypatch.setenv("COMPANY_REGISTRY_PROVIDER", "auto")
+    monkeypatch.setenv("COMPANIES_HOUSE_API_KEY", "")
+    monkeypatch.setenv("COMPANIES_HOUSE_BULK_INDEX", str(tmp_path / "missing.sqlite"))
+    get_settings.cache_clear()
+    run_ingest("2025-050", "2025-050", source="fixture")
+
+    with session_scope() as session:
+        _, _, payload = generate_report(session, out_dir=tmp_path / "r", today=date(2026, 10, 9))
+    rows = payload["rows"]
+    assert rows
+    assert all(r["pit_score"] == r["stored_score"] for r in rows)
+    assert payload["meta"]["pit_equals_live"] == len(rows)
