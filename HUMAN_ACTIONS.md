@@ -200,3 +200,37 @@ and flagged by `render_draft` warnings).
   unauthenticated; the per-run cap (60 domains) and 1 s spacing are well
   inside their published limits. Revisit if `max_domains_per_run` is raised a
   lot.
+
+## Phase 3 — backtest
+
+- **Run the full backtest ingest** where the weekly database lives (so the
+  rescan job tracks these brands and their labels can mature), after building
+  the free Companies House index (without it every applicant is unmatched and
+  every lead is suppressed, as in the sandbox run):
+
+  ```bash
+  python -m src.pipeline build-company-index --download
+  python -m src.pipeline backtest ingest --source ukipo_http --from 2026-010 --to 2026-041 --max-journals 32
+  python -m src.pipeline backtest run
+  ```
+
+  32 journals, ~200–230 MB each (~7 GB transferred, ~10 MB each cached),
+  about 15–20 minutes with the 15 s pause. Without `--max-journals` it stops
+  after 10 journals: run it again to continue. It never calls web search or
+  the LLM. See docs/BACKTEST.md §2 for why this range.
+- **Decide before ingesting into production** (DECISIONS D-508): past weeks
+  with MEDIUM leads will appear in the public feed, and the extra applicant
+  history makes `first_trademark_for_applicant` fire less often in future
+  weekly scores. If either is unwanted, point `DATABASE_URL` at a separate
+  database for the backtest (labels will then only mature if the rescan job is
+  run against that database too).
+- **The IPO archive is rolling (~53 weeks).** On 2026-10-09 the earliest
+  journal served was 2025-040. Anything you want older than a year from now
+  must be ingested (or kept) before it disappears; re-run
+  `python -m src.pipeline backtest probe` to see the current window.
+- **Re-run `python -m src.pipeline backtest run` monthly** (or add it to the
+  weekly workflow after the rescan step). Labels only appear once observations
+  inside each brand's +3/+6-month window exist. Commit or archive the reports.
+- **Before changing any weight** from a report's suggestions: check the sample
+  size banner, then edit `config/scoring.json` by hand and review the stability
+  snapshot. Nothing is applied automatically.

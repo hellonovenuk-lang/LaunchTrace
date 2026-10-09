@@ -403,3 +403,97 @@ stored in `opportunities` (no new revision); the facts are in `observations`.
 A run rebuilt from the database for `send --run-id` therefore has blank domain
 CSV columns, as it already lacks other non-persisted fields.
 `brands.website` is unchanged (still the verified website from web search).
+
+## Backtest (Phase 3)
+
+**D-500 — Probe only `jnl.xml`, by binary search, and trust no HTML answer.**
+`backtest probe` checks one file name per journal (the one the IPO uses, first
+in `XML_FILENAME_PATTERNS`), not the ten historical patterns: ten requests per
+week for patterns not used since the URL fix would be impolite for no gain.
+Availability is assumed contiguous between the earliest served journal and
+today (binary search); `availability.json` records that assumption and every
+request. A HEAD answered with HTML or 403 (before any journal was served) is
+checked with a 1 KB ranged GET, because ipo.gov.uk serves a soft "not found"
+page and also uses 403 for both "missing" and "blocked". Real result
+(2026-10-09, 16 requests): earliest served 2025-040, latest 2026-041 — a
+rolling ~53-week archive; no captcha.
+
+**D-501 — A backtest ingest is the weekly path with nothing paid and nothing
+present-tense.** `backtest ingest` calls `src.commands._run_one` (which gained
+two optional keyword arguments, `settings_overrides` and `output_dir`; existing
+callers are unchanged) with `search_provider none`, `llm_provider none` and the
+domain layer off unless `--with-domain-layer`. Companies House matching stays
+on (free; the PIT policy decides what of it a score may use). Run artefacts go
+to `CACHE_DIR/backtest_runs/`, not `reports/runs/`. Idempotency reuses
+`journal_already_processed`, so a journal processed by `weekly` is not
+re-ingested. Cap 10 journals per invocation, 15 s between ipo.gov.uk
+journals; runs are recorded with mode `backtest-ingest`.
+
+**D-502 — PIT cutoff is filing date + `pit_window_days`, default 0.** The
+strictest reading of "what could be known at filing". The stored trade mark
+record (as published) is always used — it is the subject of the prediction —
+even though `publication_date`/`nice_classes` observations are dated at
+publication, after the cutoff; goods can be amended before publication, which
+is a small, accepted leak. The window can be raised to the filing-to-publication
+lag to ask "what could we have known when the journal came out?".
+
+**D-503 — `company_match` is used as an identity link only.** It is not PIT
+safe (matching runs against today's register, and companies rename), but the
+PIT-safe `incorporation_date` is meaningless without knowing which company is
+the applicant's. The backtest uses the match's company number and confidence
+only when a PIT-safe incorporation date for that same company is inside the
+cutoff; otherwise the applicant is unmatched. Status, SIC codes and accounts
+category are always emptied. `identity_link_signal: null` switches the
+exception off.
+
+**D-504 — Score through the real pipeline helper, not a copy.** `PitScorer`
+builds a `Pipeline` with null registry/search/domain/LLM and calls its
+`_build_opportunity` (category inference, launch stage, `ScoringContext`,
+`LaunchTraceScorer`), replicating only the two context lines of stages 2 and 5
+(applicant type; negative company age → 0). Web evidence is neutralised as
+"search not run", exactly as a live run without a provider is scored (evidence
+scaling, cap 79). Evidence that this is the live code: with nothing non-PIT in
+the data, the PIT score equals the stored score (152/152 on the real 2025-040/041
+run; a test on the fixture journal).
+
+**D-505 — One row per brand, anchored on its first filing.** The report scores
+the brand's opportunity from its earliest journal (highest PIT score if it filed
+several marks that week) and the labeller anchors horizons on
+`brands.first_filing_date` (else the earliest opportunity's filing date). A
+backtest asks "when we first saw it, did we rank it well?".
+
+**D-506 — Labels are conservative and evidence-based.** `launched` needs a
+positive observation observed on or before the horizon end; `not_launched`
+needs a negative check observed in [horizon end, +30 days] and nothing positive
+(a launch is assumed not to be undone); anything else is `unknown`, and so is
+every horizon that has not ended, even if a launch is already visible. The
+Companies House accounts criterion is recorded as `unavailable`: the bulk index
+and stored matches hold the accounts category only, no made-up-to date, and
+today's "active" status is not evidence of trading at the horizon. The labeller
+writes no observations (so no `outcome` signal group is registered) and does
+not touch `brands.launched_at`, which the rescan work owns.
+
+**D-507 — Report statistics.** Unknown labels are excluded and counted. Wilson
+95% intervals. A weight suggestion is made only when an indicator has at least
+10 labelled brands fired and 10 not fired and the two intervals do not overlap;
+its size is `round(8 × ln(lift))`, capped at ±8; "no launches when fired" is
+−8. Indicators the PIT score cannot fire are listed as "cannot assess". Nothing
+is ever written to `config/scoring.json`.
+
+**D-508 — Side effects of ingesting into the production database, documented
+not changed.** Ingesting past journals into the weekly database (needed so the
+rescan job can track those brands and labels can mature) also (a) gives the
+weekly run more applicant history, so `first_trademark_for_applicant` fires
+less often for repeat filers — arguably more correct, but a live score change
+caused by data, not code; (b) adds past weeks to the public feed if any
+backtest lead reaches MEDIUM (`src/feed` publishes every week in the database
+after `delay_weeks`); (c) adds `backtest-ingest` runs to the volume history the
+weekly guard compares against (similar volumes, harmless). Left as a human
+decision (HUMAN_ACTIONS.md) rather than changing the feed or the weekly run
+from this branch.
+
+**D-509 — What is committed.** `reports/backtest/availability.json` (the probe
+evidence) and the first real report. The two downloaded journals (2025-040,
+2025-041; 233 MB and 200 MB, ~10 MB each once artwork is stripped) are not
+committed: they stay in the gitignored cache and the DB, and the IPO still
+serves them for a few weeks.
