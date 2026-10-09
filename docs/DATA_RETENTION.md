@@ -48,12 +48,20 @@ system enforces them.**
 
 ## How to enforce it
 
-The cache prunes itself (`FileCache.prune`). Database retention is not yet
-automated — that is a deliberate gap while the dataset is tiny.
+The cache prunes itself (`FileCache.prune`). Database retention is automated
+since the structural upgrade (Phase 2):
 
-**Owner action once you are live:** add a monthly job that deletes rows past
-their retention period. A single scheduled SQL statement per table is enough at
-this scale; do not build a retention framework for a few thousand rows.
+* `config/retention.json` holds one entry per data class, with the period from
+  the table above. **Every period there is a placeholder pending the owner's
+  decision** — change the number there and in this document together.
+* `python -m src.pipeline retention` prints what would change (dry run);
+  `--apply` changes it, one transaction per class. A second apply changes
+  nothing. The weekly workflow runs `--apply` after every run.
+* For `trademark_records`, `company_matches` and `opportunities` the action is
+  to remove an individual applicant's name, not to delete the row (DECISIONS.md
+  D-404, D-405). Corporate rows are kept.
+* Suppression lists, customers, customer preferences, journal metadata and
+  brands are never touched. See `docs/DATA_MAP.md` for every store.
 
 ## Deletion requests
 

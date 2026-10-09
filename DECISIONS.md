@@ -230,3 +230,81 @@ so they do not change with the host.
 its `.launchtrace-feed` marker, so a mistaken `--out .` cannot delete anything.
 `--journal J` rewrites only that week's page and JSON and prunes nothing. A
 `.nojekyll` file is written for GitHub Pages.
+
+## Compliance (Phase 2)
+
+**D-400 — Redact, never exclude, individual applicants.** Every output that
+says who is behind a lead goes through `src/privacy.py`: a confirmed Companies
+House company by its registered name; otherwise a corporate-looking applicant
+name; otherwise the neutral text "Individual applicant (name withheld)". An
+applicant counts as an individual when it is typed `natural_person`, **or**
+when its name has no corporate suffix (the food filter's `looks_corporate`
+test), whatever its stored type — so rows rehydrated from the database or read
+from a CSV without a type are covered. Leads are not removed from delivery:
+that would be a delivery-filter change, and redaction already removes the
+name. Scores, bands, suppression and `deliverable` are unchanged.
+
+**D-401 — Rehydration carries `applicant_type`.** `_rehydrate_result`
+(`send --run-id`, `regenerate-csv`) now restores `applicant_type` from the
+stored row (unknown values become `unknown`). Nothing reads it for scoring or
+delivery; it only feeds D-400.
+
+**D-402 — Landing-page examples are confirmed companies only.** The public
+`/` page shows HIGH/MEDIUM examples that have a Companies House company number
+and are not suppressed (a removal request is a suppression; it must not stay on
+the home page). The applicant name is no longer passed to the template at all.
+This changes which examples the page shows, not any score.
+
+**D-403 — "One company once" keys on raw identity.** Prospect previews
+deduplicated by the displayed company text; with D-400 every individual would
+display the same text and collapse into one. The key is now
+`Lead.identity_key` (company number, else company name, else applicant name),
+which is exactly what the display text used to be — selection is unchanged.
+
+**D-404 — Retention anonymises source and lead rows; it does not delete them.**
+`docs/DATA_RETENTION.md` gives `trademark_records`, `company_matches` and
+`opportunities` a [24]-month period. Deleting them would lose corporate
+history that backtests and rescans need and is irreversible; the personal data
+in them is the individual applicant's name. So after the period the name is set
+to NULL where the applicant is (or may be) an individual, and the row stays.
+Corporate rows are untouched. `score_events` (no personal data) is not touched.
+Whether to delete outright is an owner decision (HUMAN_ACTIONS).
+
+**D-405 — The "first trade mark" trade-off.** `known_applicant_names` reads
+`trademark_records.applicant_name`. After anonymisation, an individual whose
+previous filing is older than the retention period is no longer recognised and
+counts as a first-time filer again. Only individuals are affected (corporate
+names are kept), natural-person applicants are already downranked, and the
+effect is limited to filings more than the period apart. No hash column was
+added to preserve detection: it would need a schema change and a change to the
+signal's lookup, for a marginal case. The stability snapshot is unaffected
+(retention never runs inside a run).
+
+**D-406 — What retention clears or deletes.** Prospect contacts: after the
+period since the row's latest dated interaction (email, sample, offer,
+conversion, follow-up; else `date_added`, else `created_at` — `updated_at` is
+rewritten on every store save, so it is not used), `generic_contact_email`,
+`named_contact`, `decision_maker_role` and `notes` are emptied; the row and its
+opt-out flag stay, and prospects linked to a non-cancelled customer are
+skipped. `suppression_reason` is kept (opt-out evidence). Lead feedback: the
+free-text `note` is cleared; the state row is kept as tuning evidence.
+Deliveries: rows older than the period are deleted except those of a
+non-cancelled customer. Sample requests: deleted when both `created_at` and
+`sent_at` are past the period. `web_enrichment` rows never enriched
+(`enriched_at` NULL) are left alone. Customers and their preferences are never
+touched (life of subscription + [6] years is an accounting decision).
+
+**D-407 — Retention defaults are enforced from merge.** The weekly workflow
+runs `retention --apply` after every run (`if: always()`,
+`continue-on-error: true`). Defaults are the doc's bracketed values, marked as
+placeholders in `config/retention.json` and in HUMAN_ACTIONS. Enforcing a
+conservative default was judged better than holding personal data with no
+limit; the owner can set `"enabled": false` per class.
+
+**D-408 — Logs.** The one production log line that carried an applicant name
+(`ch.lookup_failed`, WARNING) now logs it only when it looks corporate, and for
+an individual logs the exception type instead of its text (an HTTP error quotes
+the request URL, which contains the name). `company_matches.error` and
+`match_evidence` can still hold that text (or words of the name) in the
+database until the company-match retention class clears them with the name.
+Other log lines and stores are listed in `docs/DATA_MAP.md`.

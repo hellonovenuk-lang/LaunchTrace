@@ -30,7 +30,7 @@
           <span class="badge {{ 'high' if e.score_band == 'HIGH' else 'med' }}">{{ e.launchtrace_score }} {{ e.score_band }}</span>
         </h3>
         <p style="margin:6px 0 8px">
-          {% if e.product_category %}{{ e.product_category }} · {% endif %}{{ e.company_name or e.applicant_name }}{% if e.company_region %} · {{ e.company_region }}{% endif %}
+          {% if e.product_category %}{{ e.product_category }} · {% endif %}{{ e.company_display }}{% if e.company_region %} · {{ e.company_region }}{% endif %}
         </p>
         <p style="font-size:13px">{{ e.first_reason }}</p>
       </div>

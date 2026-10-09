@@ -37,6 +37,7 @@ from src.db.tables import (
 )
 from src.feed.web import build_feed_router
 from src.logging_setup import configure_logging, get_logger
+from src.privacy import display_party
 from src.sales.feedback import FeedbackState
 from src.settings import REPORTS_DIR, get_settings, load_config
 from src.web.api import build_api_router
@@ -103,10 +104,17 @@ def create_app() -> FastAPI:
 
     # -- public ------------------------------------------------------------
     def _example_opportunities(session: Session, limit: int = 3) -> list[dict[str, Any]]:
+        # A public page: only confirmed Companies House companies, never a
+        # suppressed row, and never the applicant name (DECISIONS.md D-402).
         rows = list(
             session.execute(
                 select(OpportunityRow)
-                .where(OpportunityRow.score_band.in_(["HIGH", "MEDIUM"]))
+                .where(
+                    OpportunityRow.score_band.in_(["HIGH", "MEDIUM"]),
+                    OpportunityRow.suppressed.is_(False),
+                    OpportunityRow.company_number.is_not(None),
+                    OpportunityRow.company_number != "",
+                )
                 .order_by(OpportunityRow.launchtrace_score.desc())
                 .limit(limit)
             ).scalars()
@@ -114,8 +122,9 @@ def create_app() -> FastAPI:
         return [
             {
                 "brand_name": r.brand_name,
-                "company_name": r.company_name,
-                "applicant_name": r.applicant_name,
+                "company_display": display_party(
+                    r.company_name, r.applicant_name, r.applicant_type
+                ),
                 "company_region": r.company_region,
                 "product_category": (r.product_category or "").replace("_", " ").title() or None,
                 "launchtrace_score": r.launchtrace_score,

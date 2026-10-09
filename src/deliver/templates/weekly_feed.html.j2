@@ -40,7 +40,7 @@
     </div>
     <p style="margin:0 0 8px;font-size:14px;color:#57534e;">
       {% if opp.product_category_label %}{{ opp.product_category_label }} · {% endif %}
-      {% if opp.company.company_name %}{{ opp.company.company_name }}{% else %}{{ opp.applicant_name }}{% endif %}
+      {{ party(opp) }}
       {% if opp.company.region %} · {{ opp.company.region }}{% endif %}
     </p>
     {% if opp.related_marks %}

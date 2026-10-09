@@ -1,0 +1,108 @@
+{
+  "$schema_version": "1.0",
+  "description": "How long LaunchTrace keeps each class of data before `python -m src.pipeline retention --apply` anonymises, clears or deletes it. Enforced by src/retention.py; documented in docs/DATA_RETENTION.md and docs/DATA_MAP.md. Nothing here changes a score.",
+  "_comment": "EVERY PERIOD BELOW IS A PLACEHOLDER PENDING OWNER DECISION. The defaults are the bracketed values in docs/DATA_RETENTION.md (see HUMAN_ACTIONS.md, 'Phase 2 — compliance'). A period may be given in 'months' or 'days' (not both). Set 'enabled' to false to stop a class being touched at all. The suppression lists (suppression_rules, prospect_suppressions), customers within a subscription, customer_preferences, journals metadata, brands, observations and stage_changes are never touched by retention, whatever this file says.",
+  "classes": {
+    "trademark_records_individual_names": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "anonymise",
+      "table": "trademark_records",
+      "age_from": "publication_date (created_at when missing)",
+      "description": "Sets applicant_name to NULL on records whose applicant does not look corporate (a likely private individual). The record itself, and corporate applicants' names, are kept. Trade-off (DECISIONS.md D-405): an individual whose earlier filing is older than this period is no longer recognised as a repeat filer by the 'first trade mark for this applicant' signal."
+    },
+    "opportunities_individual_names": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "anonymise",
+      "table": "opportunities",
+      "age_from": "publication_date (created_at when missing)",
+      "description": "Sets applicant_name to NULL where applicant_type is natural_person, or the applicant does not look corporate. Scores, bands and company fields are kept."
+    },
+    "company_matches_individual_names": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "anonymise",
+      "table": "company_matches",
+      "age_from": "created_at",
+      "description": "Where the applicant does not look corporate: sets applicant_name and error to NULL and empties match_evidence (both can quote the name). Company fields and the match result are kept."
+    },
+    "web_enrichment": {
+      "enabled": true,
+      "months": 12,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "web_enrichment",
+      "age_from": "enriched_at (rows never enriched are left alone)",
+      "description": "Web evidence goes stale; old rows are deleted rather than trusted."
+    },
+    "pipeline_runs": {
+      "enabled": true,
+      "months": 12,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "pipeline_runs",
+      "age_from": "started_at",
+      "description": "Operational run records (counts, warnings). The journals table, which prevents duplicate processing, is never touched."
+    },
+    "errors": {
+      "enabled": true,
+      "months": 12,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "errors",
+      "age_from": "created_at",
+      "description": "Operational error log; messages can quote record details."
+    },
+    "deliveries": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "deliveries",
+      "age_from": "created_at",
+      "description": "Delivery log (holds recipient email addresses). Only old rows; recent ones are the double-send guard."
+    },
+    "sample_requests": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "sample_requests",
+      "age_from": "the later of created_at and sent_at",
+      "description": "Inbound sample requests (work email, contact name)."
+    },
+    "prospect_contacts": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "clear_fields",
+      "table": "prospect_state",
+      "fields": ["generic_contact_email", "named_contact", "decision_maker_role", "notes"],
+      "age_from": "the latest dated interaction on the row (email, sample, offer, conversion, follow-up), else date_added, else created_at",
+      "description": "Clears the personal fields of prospects with no interaction in the period. The row stays (a deleted row is a row that gets re-added) and prospect_suppressions is never touched. Prospects linked to a customer whose subscription is not cancelled are skipped."
+    },
+    "lead_feedback_notes": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "clear_fields",
+      "table": "lead_feedback",
+      "fields": ["note"],
+      "age_from": "created_at",
+      "description": "Clears the free-text note; the feedback state (evidence for tuning) is kept."
+    },
+    "webhook_events": {
+      "enabled": true,
+      "months": 24,
+      "status": "placeholder pending owner decision",
+      "action": "delete",
+      "table": "webhook_events",
+      "age_from": "processed_at",
+      "description": "Stripe webhook idempotency records and payment audit trail."
+    }
+  }
+}

@@ -36,6 +36,7 @@ from src.ingest.discovery import previous_journal_dates
 from src.logging_setup import get_logger
 from src.models import JournalRef, PipelineResult, RunStatus
 from src.pipeline_core import Pipeline
+from src.privacy import display_party
 from src.settings import DATA_DIR, REPORTS_DIR, Settings, get_settings, load_config
 
 log = get_logger(__name__)
@@ -429,6 +430,7 @@ def _rehydrate_result(session, run: PipelineRun) -> PipelineResult:  # type: ign
     """Rebuild enough of a PipelineResult from the database to re-send a run."""
     from src.ingest.discovery import date_for_journal_number
     from src.models import (
+        ApplicantType,
         BuyingIntent,
         CompanyMatch,
         FunnelCounts,
@@ -462,6 +464,12 @@ def _rehydrate_result(session, run: PipelineRun) -> PipelineResult:  # type: ign
                 goods_summary=row.goods_summary,
                 product_category=row.product_category,
                 applicant_name=row.applicant_name,
+                # Carried so renderers can withhold an individual's name (D-400).
+                applicant_type=(
+                    ApplicantType(row.applicant_type)
+                    if row.applicant_type in ApplicantType._value2member_map_
+                    else ApplicantType.UNKNOWN
+                ),
                 nice_classes=row.nice_classes or [],
                 company=CompanyMatch(
                     matched=bool(row.company_number),
@@ -546,7 +554,8 @@ def cmd_opportunities(args) -> int:  # type: ignore[no-untyped-def]
     for r in rows:
         print(
             f"{r.launchtrace_score:>5} {r.score_band:<9} {(r.brand_name or '')[:27]:<28} "
-            f"{(r.company_name or r.applicant_name or '')[:31]:<32} {(r.product_category or '')[:19]:<20} "
+            f"{display_party(r.company_name, r.applicant_name, r.applicant_type)[:31]:<32} "
+            f"{(r.product_category or '')[:19]:<20} "
             f"{r.trademark_number}"
         )
     return 0
