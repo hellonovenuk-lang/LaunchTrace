@@ -89,6 +89,24 @@ def _suspicious_opportunities(opportunities: list[Opportunity]) -> list[str]:
     return notes[:30]
 
 
+def _domain_layer_summary(opportunities: list[Opportunity]) -> dict[str, Any]:
+    """Counts for enrichment layer 3, over every scored lead (suppressed included)."""
+    with_signals = [o.domain for o in opportunities if o.domain is not None]
+    probed = [d for d in with_signals if d.checked]
+    stages = Counter(d.web_presence_stage for d in probed)
+    return {
+        "leads_with_domain_signals": len(with_signals),
+        "probed": len(probed),
+        "no_verified_domain": sum(1 for d in with_signals if d.domain is None),
+        "not_probed_cap": sum(1 for d in with_signals if "domain_cap_reached" in d.errors),
+        "live_store": stages.get("live_store", 0),
+        "holding_or_parked": stages.get("holding_page", 0) + stages.get("parked", 0),
+        "rdap_dates": sum(1 for d in probed if d.rdap_created),
+        "with_errors": sum(1 for d in probed if d.errors),
+        "stages": dict(sorted(stages.items())),
+    }
+
+
 def build_qa_report(
     result: PipelineResult,
     history: list[dict[str, Any]] | None = None,
@@ -154,6 +172,7 @@ def build_qa_report(
             counts.rejection_reasons.items(), key=lambda kv: kv[1], reverse=True
         )[:12],
         "major_brand_detections": _major_brand_detections(result),
+        "domain_layer": _domain_layer_summary(result.opportunities),
         "data_quality_concerns": concerns,
         "warnings": result.warnings,
         "errors": result.errors,

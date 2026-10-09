@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import os
 import socket
 from datetime import date
 from pathlib import Path
@@ -26,6 +27,12 @@ from src.models import CompanyMatch, ProductAssessment, TrademarkRecord, WebEnri
 from src.pipeline_core import Pipeline
 from src.score.launchtrace_score import LaunchTraceScorer
 from src.settings import FIXTURES_DIR, Settings
+
+# The domain layer (RDAP / DNS / homepage) is off unless a test injects a
+# prober. The network guard would block it anyway; this keeps the default
+# Pipeline from even trying. (dnspython sends UDP, which connect() guards
+# do not see, so this matters.)
+os.environ["DOMAIN_LAYER_ENABLED"] = "false"
 
 FIXTURE_JOURNAL = FIXTURES_DIR / "journals" / "2025-050.xml"
 MALFORMED_JOURNAL = FIXTURES_DIR / "malformed" / "malformed.xml"

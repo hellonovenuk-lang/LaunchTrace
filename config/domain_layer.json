@@ -22,7 +22,8 @@
       "tesco.com", "sainsburys.co.uk", "waitrose.com", "ocado.com", "asda.com", "morrisons.com",
       "deliveroo.co.uk", "ubereats.com", "just-eat.co.uk", "find-and-update.company-information.service.gov.uk",
       "companieshouse.gov.uk", "gov.uk", "shopify.com", "myshopify.com", "wixsite.com", "squarespace.com",
-      "bigcartel.com", "wordpress.com", "blogspot.com", "github.io", "crowdfunder.co.uk", "kickstarter.com"
+      "bigcartel.com", "wordpress.com", "blogspot.com", "github.io", "crowdfunder.co.uk", "kickstarter.com",
+      "tripadvisor.com", "tripadvisor.co.uk", "yelp.com", "yelp.co.uk", "trustpilot.com", "faire.com", "wikidata.org"
     ],
     "_skip_hosts_note": "A website on one of these hosts (or a subdomain of one) is a marketplace, social, retailer or shared-platform page, not the brand's own domain. Its RDAP date and DNS describe the platform, so it is never probed.",
     "multi_label_suffixes": [
@@ -120,7 +121,7 @@
       "we're launching", "we are launching", "watch this space", "domain is parked", "this domain is for sale",
       "buy this domain", "domain may be for sale", "parked free", "parked domain", "is for sale!",
       "website is under construction", "opening soon", "sign up to be the first", "be the first to know",
-      "password protected", "enter store using password", "future home of"
+      "enter store using pass", "future home of"
     ],
     "parking_hosts": [
       "sedo.com", "sedoparking.com", "dan.com", "afternic.com", "parkingcrew.net", "bodis.com",

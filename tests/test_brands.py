@@ -432,4 +432,12 @@ class TestSignalsRegistry:
 
     def test_only_dated_historical_facts_are_pit_safe(self):
         safe = {n for n, s in signal_registry().items() if s["point_in_time_safe"]}
-        assert safe == {"filing_date", "publication_date", "nice_classes", "incorporation_date"}
+        # domain_created: the RDAP registration date (D-205) -- the only domain fact
+        # that describes the past.
+        assert safe == {
+            "filing_date",
+            "publication_date",
+            "nice_classes",
+            "incorporation_date",
+            "domain_created",
+        }

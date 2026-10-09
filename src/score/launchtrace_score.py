@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from src.models import (
     CompanyMatch,
+    DomainSignals,
     LaunchStage,
     ProductAssessment,
     RetailPresence,
@@ -44,6 +45,8 @@ class ScoringContext:
     company_age_years: float | None = None
     food_sic_summary: str | None = None
     service_business_sic_only: str | None = None
+    # Enrichment layer 3 (src/enrich/domain); None when the layer did not run.
+    domain: DomainSignals | None = None
 
 
 class LaunchTraceScorer:
@@ -60,6 +63,8 @@ class LaunchTraceScorer:
         self.exclusions = exclusions or load_config("exclusions.json")
         self.positive = {i["key"]: i for i in self.cfg["positive_indicators"]}
         self.negative = {i["key"]: i for i in self.cfg["negative_indicators"]}
+        # Domain-layer indicators: computed for every lead, weight 0 today.
+        self.domain_indicators = {i["key"]: i for i in self.cfg.get("domain_indicators", [])}
         self.evidence_groups = {
             k: v for k, v in self.cfg.get("evidence_groups", {}).items() if not k.startswith("_")
         }
@@ -224,6 +229,36 @@ class LaunchTraceScorer:
 
         return positives, negatives, facts
 
+    def domain_indicator_keys(self, ctx: ScoringContext) -> tuple[list[str], dict[str, object]]:
+        """Domain indicators that hold for this lead, and the facts their reasons use.
+
+        Pure: whether an indicator *counts* is decided by its weight in
+        ``score``; this only says whether it is true.
+        """
+        fired: list[str] = []
+        facts: dict[str, object] = {}
+        d = ctx.domain
+        if d is None or not d.checked:
+            return fired, facts
+        if d.rdap_created is not None and ctx.record.filing_date is not None:
+            days = (ctx.record.filing_date - d.rdap_created).days
+            facts["domain_days_before_filing"] = days
+            limit = int(
+                load_config("domain_layer.json")
+                .get("scoring_features", {})
+                .get("domain_registered_recently_days", 365)
+            )
+            if days <= limit:
+                fired.append("domain_registered_recently")
+        if d.shop_platform or d.web_presence_stage == "live_store":
+            fired.append("shop_platform_detected")
+            facts["shop_platform"] = d.platform or "online shop"
+        if d.is_holding_page and not d.is_parked:
+            fired.append("holding_page_detected")
+        if d.has_mx:
+            fired.append("has_mx_records")
+        return [k for k in fired if k in self.domain_indicators], facts
+
     @staticmethod
     def _distinctive_brand_name(record: TrademarkRecord) -> bool:
         """A short, non-generic word mark reads like a new consumer product name."""
@@ -269,6 +304,23 @@ class LaunchTraceScorer:
                     weight=int(ind["weight"]),
                 )
             )
+
+        # Domain indicators: a weight-0 indicator contributes nothing and gives
+        # no reason line -- a reason a customer reads must have moved the score.
+        domain_keys, domain_facts = self.domain_indicator_keys(ctx)
+        for key in domain_keys:
+            ind = self.domain_indicators[key]
+            weight = int(ind.get("weight", 0))
+            if weight == 0:
+                continue
+            value += weight
+            reason = ScoreReason(
+                key=key, text=self._render(ind["reason_template"], domain_facts), weight=weight
+            )
+            if ind.get("direction") == "negative" or weight < 0:
+                negative_reasons.append(reason)
+            else:
+                reasons.append(reason)
 
         value = max(int(self.cfg["min_score"]), min(int(self.cfg["max_score"]), value))
 

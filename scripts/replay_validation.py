@@ -26,6 +26,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
+from src.enrich.domain import NullDomainProber  # noqa: E402
 from src.enrich.providers.base import SearchProvider, SearchResult  # noqa: E402
 from src.enrich.web import WebEnricher  # noqa: E402
 from src.parse.normalise import normalise_text  # noqa: E402
@@ -82,6 +83,9 @@ def main() -> int:
         settings=settings,
         web=WebEnricher(provider=provider, settings=settings),
         output_dir=Path(args.out),
+        # A replay is about recorded evidence; live domain probes would make it
+        # depend on today's internet.
+        domain=NullDomainProber(),
     )
     result = pipeline.run(journal_number=args.journal)
 

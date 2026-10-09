@@ -295,9 +295,11 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
     """End-to-end run on fixture data: no network, no credentials, no database."""
     from src.classify.pipeline import ProductClassifier
     from src.enrich.companies_house import FixtureCompanyRegistry
+    from src.enrich.domain import FixtureDomainProber
     from src.enrich.providers import FixtureSearchProvider
     from src.enrich.web import WebEnricher
     from src.ingest.fixture import FixtureJournalSource
+    from src.settings import FIXTURES_DIR
 
     out = Path(getattr(args, "out", None) or (REPORTS_DIR / "smoke"))
     settings = get_settings().model_copy(
@@ -311,6 +313,8 @@ def cmd_smoke_test(args) -> int:  # type: ignore[no-untyped-def]
         classifier=ProductClassifier(settings, llm_provider=None),
         web=WebEnricher(provider=FixtureSearchProvider(), settings=settings),
         output_dir=out,
+        # Canned domain signals: the smoke test never touches the network.
+        domain=FixtureDomainProber.from_json(FIXTURES_DIR / "domain" / "probes.json"),
     )
     result = pipeline.run(write_outputs=True)
     _print_result(result)

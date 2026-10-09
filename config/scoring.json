@@ -188,6 +188,33 @@
       "reason_template": "Already listed on a consumer marketplace, so the brand is past first launch"
     }
   ],
+  "domain_indicators": [
+    {
+      "key": "domain_registered_recently",
+      "weight": 0,
+      "direction": "positive",
+      "reason_template": "Website domain registered {domain_days_before_filing} days before this filing"
+    },
+    {
+      "key": "shop_platform_detected",
+      "weight": 0,
+      "direction": "negative",
+      "reason_template": "Website already runs an online shop ({shop_platform})"
+    },
+    {
+      "key": "holding_page_detected",
+      "weight": 0,
+      "direction": "positive",
+      "reason_template": "Website is a holding or coming-soon page"
+    },
+    {
+      "key": "has_mx_records",
+      "weight": 0,
+      "direction": "positive",
+      "reason_template": "Website domain is set up to receive email"
+    }
+  ],
+  "_domain_indicators_note": "Enrichment layer 3 (src/enrich/domain, config/domain_layer.json). Computed for every lead with domain signals and listed on Opportunity.domain.indicators, but every weight is 0 until a backtest shows which of them predict a launch. A weight-0 indicator adds nothing to the score and produces NO reason line. These indicators are deliberately outside positive/negative_indicators, the evidence scaling and the achievable-weight calibration: give one a weight only together with a stability review. 'direction' says which list its reason joins once it has a weight (negative weights belong with direction 'negative'). domain_registered_recently uses config/domain_layer.json -> scoring_features.domain_registered_recently_days.",
   "confidence_requirements": {
     "high_band_requires_company_match": true,
     "high_band_min_company_match_confidence": 70,
