@@ -1,13 +1,48 @@
--- LaunchTrace initial schema (PostgreSQL / Supabase).
+-- LaunchTrace full schema (PostgreSQL / Supabase), as of the newest revision.
 --
 -- Generated from src/db/tables.py by scripts/generate_migration.py.
--- Do not hand-edit: change the models and regenerate.
+-- Do not hand-edit: change the models, add an Alembic revision, and regenerate.
 --
--- Apply with:
+-- Alembic (src/db/alembic/) is canonical. Prefer:
+--     DATABASE_URL=... alembic upgrade head      (or: python -m src.pipeline init-db)
+-- This file is the convenience copy for pasting into the Supabase SQL editor:
 --     psql "$DATABASE_URL" -f migrations/0001_initial.sql
--- or paste into the Supabase SQL editor.
+-- Only for a NEW, empty database. It has no alembic_version table; the first
+-- init-db recognises the schema as complete and stamps it at head. For an
+-- existing database never paste this: run init-db, which migrates in place.
 
 BEGIN;
+
+CREATE TABLE IF NOT EXISTS brands (
+	id SERIAL NOT NULL, 
+	brand_uid VARCHAR(32) NOT NULL, 
+	brand_key VARCHAR(128) NOT NULL, 
+	brand_name VARCHAR(512) NOT NULL, 
+	company_number VARCHAR(16), 
+	company_name VARCHAR(512), 
+	applicant_type VARCHAR(32) NOT NULL, 
+	applicant_key_hash VARCHAR(64), 
+	product_category VARCHAR(64), 
+	region VARCHAR(128), 
+	website VARCHAR(512), 
+	first_seen_journal VARCHAR(32) NOT NULL, 
+	first_seen_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	first_filing_date DATE, 
+	last_seen_journal VARCHAR(32) NOT NULL, 
+	current_stage VARCHAR(32) NOT NULL, 
+	current_score INTEGER NOT NULL, 
+	current_band VARCHAR(16) NOT NULL, 
+	last_checked_at TIMESTAMP WITH TIME ZONE, 
+	launched_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (brand_uid), 
+	UNIQUE (brand_key)
+);
+
+CREATE INDEX IF NOT EXISTS ix_brands_applicant_key_hash ON brands (applicant_key_hash);
+CREATE INDEX IF NOT EXISTS ix_brands_company_number ON brands (company_number);
 
 CREATE TABLE IF NOT EXISTS company_matches (
 	id SERIAL NOT NULL, 
@@ -93,59 +128,6 @@ CREATE TABLE IF NOT EXISTS journals (
 
 CREATE INDEX IF NOT EXISTS ix_journals_journal_number ON journals (journal_number);
 CREATE INDEX IF NOT EXISTS ix_journals_publication_date ON journals (publication_date);
-
-CREATE TABLE IF NOT EXISTS opportunities (
-	id SERIAL NOT NULL, 
-	dedupe_key VARCHAR(64) NOT NULL, 
-	run_id VARCHAR(64) NOT NULL, 
-	journal_number VARCHAR(32) NOT NULL, 
-	trademark_number VARCHAR(32) NOT NULL, 
-	brand_name VARCHAR(512), 
-	filing_date DATE, 
-	publication_date DATE, 
-	goods_summary TEXT, 
-	product_category VARCHAR(64), 
-	applicant_name VARCHAR(512), 
-	applicant_type VARCHAR(32) NOT NULL, 
-	company_name VARCHAR(512), 
-	company_number VARCHAR(16), 
-	company_incorporation_date DATE, 
-	company_age_years_at_filing FLOAT, 
-	company_region VARCHAR(128), 
-	website VARCHAR(512), 
-	contact_page VARCHAR(512), 
-	launch_stage VARCHAR(32) NOT NULL, 
-	retail_presence VARCHAR(32) NOT NULL, 
-	launchtrace_score INTEGER NOT NULL, 
-	score_band VARCHAR(16) NOT NULL, 
-	score_reasons JSON NOT NULL, 
-	buying_intent JSON NOT NULL, 
-	nice_classes JSON NOT NULL, 
-	source_url VARCHAR(512), 
-	evidence_urls JSON NOT NULL, 
-	enriched_at TIMESTAMP WITH TIME ZONE, 
-	review_state VARCHAR(16) NOT NULL, 
-	delivered BOOLEAN NOT NULL, 
-	suppressed BOOLEAN NOT NULL, 
-	suppression_reason VARCHAR(128), 
-	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
-	PRIMARY KEY (id), 
-	CONSTRAINT uq_opportunity_journal_key UNIQUE (journal_number, dedupe_key)
-);
-
-CREATE INDEX IF NOT EXISTS ix_opportunities_company_number ON opportunities (company_number);
-CREATE INDEX IF NOT EXISTS ix_opportunities_dedupe_key ON opportunities (dedupe_key);
-CREATE INDEX IF NOT EXISTS ix_opportunities_delivered ON opportunities (delivered);
-CREATE INDEX IF NOT EXISTS ix_opportunities_journal_number ON opportunities (journal_number);
-CREATE INDEX IF NOT EXISTS ix_opportunities_launchtrace_score ON opportunities (launchtrace_score);
-CREATE INDEX IF NOT EXISTS ix_opportunities_product_category ON opportunities (product_category);
-CREATE INDEX IF NOT EXISTS ix_opportunities_publication_date ON opportunities (publication_date);
-CREATE INDEX IF NOT EXISTS ix_opportunities_review_state ON opportunities (review_state);
-CREATE INDEX IF NOT EXISTS ix_opportunities_run_id ON opportunities (run_id);
-CREATE INDEX IF NOT EXISTS ix_opportunities_score_band ON opportunities (score_band);
-CREATE INDEX IF NOT EXISTS ix_opportunities_suppressed ON opportunities (suppressed);
-CREATE INDEX IF NOT EXISTS ix_opportunities_trademark_number ON opportunities (trademark_number);
-CREATE INDEX IF NOT EXISTS ix_opportunity_band_score ON opportunities (score_band, launchtrace_score);
 
 CREATE TABLE IF NOT EXISTS pipeline_runs (
 	id SERIAL NOT NULL, 
@@ -237,22 +219,6 @@ CREATE TABLE IF NOT EXISTS sample_requests (
 
 CREATE INDEX IF NOT EXISTS ix_sample_requests_status ON sample_requests (status);
 CREATE INDEX IF NOT EXISTS ix_sample_requests_work_email ON sample_requests (work_email);
-
-CREATE TABLE IF NOT EXISTS score_events (
-	id SERIAL NOT NULL, 
-	dedupe_key VARCHAR(64) NOT NULL, 
-	run_id VARCHAR(64) NOT NULL, 
-	score INTEGER NOT NULL, 
-	band VARCHAR(16) NOT NULL, 
-	reasons JSON NOT NULL, 
-	negative_reasons JSON NOT NULL, 
-	scoring_config_version VARCHAR(16) NOT NULL, 
-	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
-	PRIMARY KEY (id)
-);
-
-CREATE INDEX IF NOT EXISTS ix_score_events_dedupe_key ON score_events (dedupe_key);
-CREATE INDEX IF NOT EXISTS ix_score_events_run_id ON score_events (run_id);
 
 CREATE TABLE IF NOT EXISTS suppression_rules (
 	id SERIAL NOT NULL, 
@@ -368,6 +334,114 @@ CREATE INDEX IF NOT EXISTS ix_lead_feedback_dedupe_key ON lead_feedback (dedupe_
 CREATE INDEX IF NOT EXISTS ix_lead_feedback_journal_number ON lead_feedback (journal_number);
 CREATE INDEX IF NOT EXISTS ix_lead_feedback_state ON lead_feedback (state);
 CREATE INDEX IF NOT EXISTS ix_lead_feedback_trademark_number ON lead_feedback (trademark_number);
+
+CREATE TABLE IF NOT EXISTS observations (
+	id SERIAL NOT NULL, 
+	brand_id INTEGER NOT NULL, 
+	source VARCHAR(32) NOT NULL, 
+	signal VARCHAR(64) NOT NULL, 
+	value JSON, 
+	observed_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	source_date DATE, 
+	point_in_time_safe BOOLEAN NOT NULL, 
+	run_id VARCHAR(64), 
+	journal_number VARCHAR(32), 
+	PRIMARY KEY (id), 
+	CONSTRAINT fk_observations_brand_id_brands FOREIGN KEY(brand_id) REFERENCES brands (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_observations_brand_id ON observations (brand_id);
+CREATE INDEX IF NOT EXISTS ix_observations_observed_at ON observations (observed_at);
+CREATE INDEX IF NOT EXISTS ix_observations_signal ON observations (signal);
+
+CREATE TABLE IF NOT EXISTS opportunities (
+	id SERIAL NOT NULL, 
+	dedupe_key VARCHAR(64) NOT NULL, 
+	run_id VARCHAR(64) NOT NULL, 
+	journal_number VARCHAR(32) NOT NULL, 
+	trademark_number VARCHAR(32) NOT NULL, 
+	brand_name VARCHAR(512), 
+	filing_date DATE, 
+	publication_date DATE, 
+	goods_summary TEXT, 
+	product_category VARCHAR(64), 
+	applicant_name VARCHAR(512), 
+	applicant_type VARCHAR(32) NOT NULL, 
+	company_name VARCHAR(512), 
+	company_number VARCHAR(16), 
+	company_incorporation_date DATE, 
+	company_age_years_at_filing FLOAT, 
+	company_region VARCHAR(128), 
+	website VARCHAR(512), 
+	contact_page VARCHAR(512), 
+	launch_stage VARCHAR(32) NOT NULL, 
+	retail_presence VARCHAR(32) NOT NULL, 
+	launchtrace_score INTEGER NOT NULL, 
+	score_band VARCHAR(16) NOT NULL, 
+	score_reasons JSON NOT NULL, 
+	buying_intent JSON NOT NULL, 
+	nice_classes JSON NOT NULL, 
+	source_url VARCHAR(512), 
+	evidence_urls JSON NOT NULL, 
+	enriched_at TIMESTAMP WITH TIME ZONE, 
+	review_state VARCHAR(16) NOT NULL, 
+	delivered BOOLEAN NOT NULL, 
+	suppressed BOOLEAN NOT NULL, 
+	suppression_reason VARCHAR(128), 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	brand_id INTEGER, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_opportunity_journal_key UNIQUE (journal_number, dedupe_key), 
+	CONSTRAINT fk_opportunities_brand_id_brands FOREIGN KEY(brand_id) REFERENCES brands (id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS ix_opportunities_brand_id ON opportunities (brand_id);
+CREATE INDEX IF NOT EXISTS ix_opportunities_company_number ON opportunities (company_number);
+CREATE INDEX IF NOT EXISTS ix_opportunities_dedupe_key ON opportunities (dedupe_key);
+CREATE INDEX IF NOT EXISTS ix_opportunities_delivered ON opportunities (delivered);
+CREATE INDEX IF NOT EXISTS ix_opportunities_journal_number ON opportunities (journal_number);
+CREATE INDEX IF NOT EXISTS ix_opportunities_launchtrace_score ON opportunities (launchtrace_score);
+CREATE INDEX IF NOT EXISTS ix_opportunities_product_category ON opportunities (product_category);
+CREATE INDEX IF NOT EXISTS ix_opportunities_publication_date ON opportunities (publication_date);
+CREATE INDEX IF NOT EXISTS ix_opportunities_review_state ON opportunities (review_state);
+CREATE INDEX IF NOT EXISTS ix_opportunities_run_id ON opportunities (run_id);
+CREATE INDEX IF NOT EXISTS ix_opportunities_score_band ON opportunities (score_band);
+CREATE INDEX IF NOT EXISTS ix_opportunities_suppressed ON opportunities (suppressed);
+CREATE INDEX IF NOT EXISTS ix_opportunities_trademark_number ON opportunities (trademark_number);
+CREATE INDEX IF NOT EXISTS ix_opportunity_band_score ON opportunities (score_band, launchtrace_score);
+
+CREATE TABLE IF NOT EXISTS score_events (
+	id SERIAL NOT NULL, 
+	dedupe_key VARCHAR(64) NOT NULL, 
+	run_id VARCHAR(64) NOT NULL, 
+	score INTEGER NOT NULL, 
+	band VARCHAR(16) NOT NULL, 
+	reasons JSON NOT NULL, 
+	negative_reasons JSON NOT NULL, 
+	scoring_config_version VARCHAR(16) NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	brand_id INTEGER, 
+	PRIMARY KEY (id), 
+	CONSTRAINT fk_score_events_brand_id_brands FOREIGN KEY(brand_id) REFERENCES brands (id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS ix_score_events_brand_id ON score_events (brand_id);
+CREATE INDEX IF NOT EXISTS ix_score_events_dedupe_key ON score_events (dedupe_key);
+CREATE INDEX IF NOT EXISTS ix_score_events_run_id ON score_events (run_id);
+
+CREATE TABLE IF NOT EXISTS stage_changes (
+	id SERIAL NOT NULL, 
+	brand_id INTEGER NOT NULL, 
+	from_stage VARCHAR(32), 
+	to_stage VARCHAR(32) NOT NULL, 
+	detected_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	evidence JSON NOT NULL, 
+	run_id VARCHAR(64), 
+	PRIMARY KEY (id), 
+	CONSTRAINT fk_stage_changes_brand_id_brands FOREIGN KEY(brand_id) REFERENCES brands (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_stage_changes_brand_id ON stage_changes (brand_id);
 
 CREATE TABLE IF NOT EXISTS trademark_records (
 	id SERIAL NOT NULL, 

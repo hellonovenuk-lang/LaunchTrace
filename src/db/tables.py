@@ -12,6 +12,7 @@ stays in git; anything that accumulates from contacting real people does not.
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import (
     JSON,
@@ -174,6 +175,12 @@ class OpportunityRow(Base):
     suppressed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     suppression_reason: Mapped[str | None] = mapped_column(String(128))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    # The cross-week brand this row belongs to (revision 0002_brands). Nullable:
+    # rows written before brands existed, or by a run that did not sync, have none.
+    brand_id: Mapped[int | None] = mapped_column(
+        ForeignKey("brands.id", ondelete="SET NULL", name="fk_opportunities_brand_id_brands"),
+        index=True,
+    )
 
     __table_args__ = (
         UniqueConstraint("journal_number", "dedupe_key", name="uq_opportunity_journal_key"),
@@ -193,6 +200,10 @@ class ScoreEvent(Base):
     negative_reasons: Mapped[list] = mapped_column(JSON, default=list)
     scoring_config_version: Mapped[str] = mapped_column(String(16), default="1.0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    brand_id: Mapped[int | None] = mapped_column(
+        ForeignKey("brands.id", ondelete="SET NULL", name="fk_score_events_brand_id_brands"),
+        index=True,
+    )
 
 
 class Customer(Base):
@@ -452,3 +463,87 @@ class WebhookEvent(Base):
     payload_summary: Mapped[dict] = mapped_column(JSON, default=dict)
 
     __table_args__ = (UniqueConstraint("provider", "event_id", name="uq_webhook_provider_event"),)
+
+
+# ---------------------------------------------------------------------------
+# Brands across weeks (revision 0002_brands). See docs/ARCHITECTURE.md.
+# ---------------------------------------------------------------------------
+
+
+class Brand(Base):
+    """One real-world brand or company, followed across journal weeks.
+
+    Dedupe identity is ``brand_key``: ``ch:<company number>`` for a confident
+    Companies House match, otherwise ``tm:<hash of mark text and applicant>``.
+    The applicant's name is never stored here, only a hash of it, because an
+    applicant can be a private individual.
+    """
+
+    __tablename__ = "brands"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    brand_uid: Mapped[str] = mapped_column(String(32), unique=True)
+    brand_key: Mapped[str] = mapped_column(String(128), unique=True)
+    brand_name: Mapped[str] = mapped_column(String(512), default="")
+    company_number: Mapped[str | None] = mapped_column(String(16), index=True)
+    company_name: Mapped[str | None] = mapped_column(String(512))
+    applicant_type: Mapped[str] = mapped_column(String(32), default="unknown")
+    applicant_key_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    product_category: Mapped[str | None] = mapped_column(String(64))
+    region: Mapped[str | None] = mapped_column(String(128))
+    website: Mapped[str | None] = mapped_column(String(512))
+    first_seen_journal: Mapped[str] = mapped_column(String(32))
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    first_filing_date: Mapped[date | None] = mapped_column(Date)
+    last_seen_journal: Mapped[str] = mapped_column(String(32))
+    current_stage: Mapped[str] = mapped_column(String(32), default="unknown")
+    current_score: Mapped[int] = mapped_column(Integer, default=0)
+    current_band: Mapped[str] = mapped_column(String(16), default="SUPPRESS")
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    launched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class Observation(Base):
+    """One fact about a brand, as seen at one moment. Append-only.
+
+    ``observed_at`` is when we looked; ``source_date`` is when the fact was true
+    in the world, and ``point_in_time_safe`` says whether that date can be
+    trusted by a backtest that must not see the future.
+    """
+
+    __tablename__ = "observations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    brand_id: Mapped[int] = mapped_column(
+        ForeignKey("brands.id", ondelete="CASCADE", name="fk_observations_brand_id_brands"),
+        index=True,
+    )
+    source: Mapped[str] = mapped_column(String(32))
+    signal: Mapped[str] = mapped_column(String(64), index=True)
+    value: Mapped[Any] = mapped_column(JSON, nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, index=True
+    )
+    source_date: Mapped[date | None] = mapped_column(Date)
+    point_in_time_safe: Mapped[bool] = mapped_column(Boolean, default=False)
+    run_id: Mapped[str | None] = mapped_column(String(64))
+    journal_number: Mapped[str | None] = mapped_column(String(32))
+
+
+class StageChange(Base):
+    """A detected move of a brand from one launch stage to another."""
+
+    __tablename__ = "stage_changes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    brand_id: Mapped[int] = mapped_column(
+        ForeignKey("brands.id", ondelete="CASCADE", name="fk_stage_changes_brand_id_brands"),
+        index=True,
+    )
+    from_stage: Mapped[str | None] = mapped_column(String(32))
+    to_stage: Mapped[str] = mapped_column(String(32))
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    evidence: Mapped[Any] = mapped_column(JSON, default=dict)
+    run_id: Mapped[str | None] = mapped_column(String(64))

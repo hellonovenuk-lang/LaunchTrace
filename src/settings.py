@@ -107,6 +107,10 @@ class Settings(BaseSettings):
     search_api_key: str = Field(default="", alias="SEARCH_API_KEY")
     search_max_candidates_per_run: int = Field(default=150, alias="SEARCH_MAX_CANDIDATES_PER_RUN")
     search_timeout_seconds: int = Field(default=30, alias="SEARCH_TIMEOUT_SECONDS")
+    # Overrides config/costs.json -> search_guard.max_calls_per_run when set.
+    # Counts provider calls (one candidate can take two), unlike the candidate
+    # cap above.
+    search_max_calls_per_run: int | None = Field(default=None, alias="SEARCH_MAX_CALLS_PER_RUN")
 
     # --- email -------------------------------------------------------------
     resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
@@ -123,16 +127,19 @@ class Settings(BaseSettings):
     # --- admin -------------------------------------------------------------
     admin_token: str = Field(default="", alias="ADMIN_TOKEN")
 
+    @field_validator("search_max_calls_per_run", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, v: object) -> object:
+        # A workflow passes an unset repository variable as an empty string.
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
     @field_validator("database_url", mode="after")
     @classmethod
     def _default_database_url(cls, v: str) -> str:
         if v:
-            # SQLAlchemy needs the driver-qualified scheme for psycopg3.
-            if v.startswith("postgres://"):
-                v = "postgresql+psycopg://" + v[len("postgres://") :]
-            elif v.startswith("postgresql://"):
-                v = "postgresql+psycopg://" + v[len("postgresql://") :]
-            return v
+            return normalise_database_url(v)
         (DATA_DIR / "local").mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{DATA_DIR / 'local' / 'launchtrace.sqlite'}"
 
@@ -177,6 +184,15 @@ class Settings(BaseSettings):
         if not self.supabase_url and self.is_sqlite:
             missing["DATABASE_URL"] = "Hosted PostgreSQL / Supabase (local SQLite is used)"
         return missing
+
+
+def normalise_database_url(url: str) -> str:
+    """SQLAlchemy needs the driver-qualified scheme for psycopg3."""
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
 
 
 @lru_cache(maxsize=1)
