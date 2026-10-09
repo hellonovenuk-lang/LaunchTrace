@@ -28,7 +28,7 @@
       "action": "anonymise",
       "table": "company_matches",
       "age_from": "created_at",
-      "description": "Sets applicant_name to NULL where the applicant does not look corporate. Match evidence and company fields are kept."
+      "description": "Where the applicant does not look corporate: sets applicant_name and error to NULL and empties match_evidence (both can quote the name). Company fields and the match result are kept."
     },
     "web_enrichment": {
       "enabled": true,

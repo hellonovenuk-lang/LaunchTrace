@@ -149,11 +149,12 @@ def _older(value: datetime | date | None, cutoff: datetime) -> bool:
 Handler = Callable[[Session, datetime, dict[str, Any], bool], int]
 
 
-def _anonymise(session: Session, model: Any, ids: list[int], apply: bool) -> int:
+def _anonymise(session: Session, model: Any, ids: list[int], apply: bool, **extra: Any) -> int:
     if apply and ids:
+        values = {"applicant_name": None, **extra}
         for start in range(0, len(ids), 500):
             chunk = ids[start : start + 500]
-            session.execute(update(model).where(model.id.in_(chunk)).values(applicant_name=None))
+            session.execute(update(model).where(model.id.in_(chunk)).values(**values))
     return len(ids)
 
 
@@ -203,7 +204,9 @@ def _company_matches(session: Session, cutoff: datetime, cfg: dict, apply: bool)
     ids = [
         r.id for r in rows if _older(r.created_at, cutoff) and not looks_corporate(r.applicant_name)
     ]
-    return _anonymise(session, CompanyMatchRow, ids, apply)
+    # The match evidence quotes words of the applicant's name, and a provider
+    # error can quote the request URL that carried it: both go with the name.
+    return _anonymise(session, CompanyMatchRow, ids, apply, error=None, match_evidence=[])
 
 
 def _delete_ids(session: Session, model: Any, ids: list[int], apply: bool) -> int:

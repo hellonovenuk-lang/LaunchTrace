@@ -91,7 +91,11 @@ def populated(factory):  # type: ignore[no-untyped-def]
                 _opp(3, "Recent Person", "natural_person", NEW_DATE),
                 _opp(4, "Untyped Person", "unknown", OLD_DATE),
                 CompanyMatchRow(
-                    dedupe_key="c1", applicant_name="Zebedee Quillfeather", created_at=OLD
+                    dedupe_key="c1",
+                    applicant_name="Zebedee Quillfeather",
+                    created_at=OLD,
+                    match_evidence=["Shared distinctive words: quillfeather"],
+                    error="429 for url ...?q=Zebedee+Quillfeather",
                 ),
                 CompanyMatchRow(dedupe_key="c2", applicant_name="Old Foods Ltd", created_at=OLD),
                 CompanyMatchRow(dedupe_key="c3", applicant_name="Recent Person", created_at=NEW),
@@ -240,6 +244,10 @@ class TestRetention:
                 .all()
             )
             assert names == {"c1": None, "c2": "Old Foods Ltd", "c3": "Recent Person"}
+            c1 = s.execute(
+                select(CompanyMatchRow).where(CompanyMatchRow.dedupe_key == "c1")
+            ).scalar_one()
+            assert c1.match_evidence == [] and c1.error is None
             assert set(s.execute(select(WebEnrichmentRow.dedupe_key)).scalars()) == {"w2", "w3"}
             assert set(s.execute(select(PipelineRun.run_id)).scalars()) == {"new-run"}
             assert set(s.execute(select(ErrorLog.message)).scalars()) == {"new"}

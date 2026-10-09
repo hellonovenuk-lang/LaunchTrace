@@ -75,7 +75,16 @@ class CompanyRegistry(ABC):
         try:
             candidates = self.find_candidates(applicant_name)
         except (ProviderError, httpx.HTTPError) as exc:
-            log.warning("ch.lookup_failed", applicant=applicant_name[:80], error=str(exc)[:200])
+            from src.privacy import safe_applicant_name
+
+            # An individual's name never goes to the logs (D-408). The error text
+            # can quote the request URL, which carries the name, so it goes too.
+            safe = safe_applicant_name(applicant_name)
+            log.warning(
+                "ch.lookup_failed",
+                applicant=(safe or "[individual withheld]")[:80],
+                error=str(exc)[:200] if safe else type(exc).__name__,
+            )
             return CompanyMatch(
                 matched=False,
                 match_method="provider_error",

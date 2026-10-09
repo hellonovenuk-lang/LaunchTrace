@@ -482,3 +482,24 @@ class TestPrivacyRules:
         b = Lead(brand_name="B", trademark_number="2", applicant_name="John Roe")
         assert a.display_company == b.display_company == INDIVIDUAL_WITHHELD
         assert a.identity_key != b.identity_key
+
+
+class TestLogs:
+    def test_a_failed_companies_house_lookup_does_not_log_an_individual(self):
+        from structlog.testing import capture_logs
+
+        from src.enrich.companies_house import CompanyRegistry
+        from src.errors import ProviderError
+
+        class Failing(CompanyRegistry):
+            name = "failing"
+
+            def find_candidates(self, applicant_name):  # type: ignore[no-untyped-def]
+                raise ProviderError(f"429 for url ...?q={applicant_name}")
+
+        with capture_logs() as logs:
+            Failing().match(INDIVIDUAL)
+            Failing().match("Crumbledge Foods Ltd")
+        text = repr(logs)
+        assert "quillfeather" not in text.lower()
+        assert "Crumbledge Foods Ltd" in text, "corporate applicants are still logged"
