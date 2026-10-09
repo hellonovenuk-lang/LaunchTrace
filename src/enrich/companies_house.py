@@ -69,6 +69,15 @@ class CompanyRegistry(ABC):
     @abstractmethod
     def find_candidates(self, applicant_name: str) -> list[CandidateCompany]: ...
 
+    def lookup_by_number(self, company_number: str) -> CandidateCompany | None:
+        """The register entry for one company number, or None if unknown here.
+
+        Used by the rescan (src/rescan) to refresh a confirmed match's status
+        and accounts. Providers that cannot look a number up return None.
+        Network and provider errors propagate; the caller is fail-soft.
+        """
+        return None
+
     def match(self, applicant_name: str | None) -> CompanyMatch:
         if not applicant_name:
             return CompanyMatch(matched=False, match_method="no_applicant_name", provider=self.name)
@@ -155,6 +164,59 @@ class CompaniesHouseApiRegistry(CompanyRegistry):
 
         return _do()
 
+    def _get_company(self, number: str) -> dict[str, Any] | None:
+        @retry(
+            reraise=True,
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=3, min=3, max=30),
+            retry=retry_if_exception_type((RateLimitedError, httpx.TransportError, ProviderError)),
+        )
+        def _do() -> dict[str, Any] | None:
+            with httpx.Client(timeout=30) as client:
+                resp = client.get(
+                    f"{self.base_url}/company/{number}",
+                    auth=(self.settings.companies_house_api_key, ""),
+                )
+            if resp.status_code == 404:
+                return None
+            if resp.status_code == 429:
+                raise RateLimitedError("Companies House rate limit (600 requests / 5 minutes)")
+            if resp.status_code == 401:
+                raise ProviderError("Companies House rejected the API key (401)")
+            if resp.status_code >= 500:
+                raise ProviderError(f"Companies House {resp.status_code}")
+            resp.raise_for_status()
+            payload = resp.json()
+            return payload if isinstance(payload, dict) else None
+
+        return _do()
+
+    def lookup_by_number(self, company_number: str) -> CandidateCompany | None:
+        """GET /company/{number}: the company profile, never cached (it is a refresh)."""
+        number = (company_number or "").strip().upper()
+        if not number:
+            return None
+        item = self._get_company(number)
+        if not item:
+            return None
+        address = item.get("registered_office_address") or {}
+        accounts = item.get("accounts") or {}
+        last_accounts = accounts.get("last_accounts") or {}
+        return CandidateCompany(
+            company_name=item.get("company_name") or "",
+            company_number=item.get("company_number") or number,
+            company_status=item.get("company_status"),
+            company_category=item.get("type"),
+            incorporation_date=_parse_ch_date(item.get("date_of_creation")),
+            dissolution_date=_parse_ch_date(item.get("date_of_cessation")),
+            sic_codes=tuple(item.get("sic_codes") or ()),
+            region=address.get("region") or address.get("country"),
+            post_town=address.get("locality"),
+            country=address.get("country"),
+            accounts_category=last_accounts.get("type"),
+            source_url=CH_COMPANY_URL.format(number=number),
+        )
+
     def find_candidates(self, applicant_name: str) -> list[CandidateCompany]:
         query = normalise_company_name(applicant_name) or applicant_name
         cached = self._cache_get(query)
@@ -223,6 +285,16 @@ class CompaniesHouseBulkRegistry(CompanyRegistry):
                         "SELECT * FROM companies WHERE name_key LIKE ? LIMIT 25", (prefix + "%",)
                     ).fetchall()
         return [self._row_to_candidate(r) for r in rows]
+
+    def lookup_by_number(self, company_number: str) -> CandidateCompany | None:
+        """Read one company from the local snapshot (no network)."""
+        number = (company_number or "").strip().upper()
+        if not number:
+            return None
+        row = self.conn.execute(
+            "SELECT * FROM companies WHERE company_number = ? LIMIT 1", (number,)
+        ).fetchone()
+        return self._row_to_candidate(row) if row is not None else None
 
     @staticmethod
     def _row_to_candidate(row: sqlite3.Row) -> CandidateCompany:
@@ -379,6 +451,23 @@ class FixtureCompanyRegistry(CompanyRegistry):
             records = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
         self.records = records
 
+    @staticmethod
+    def _record_to_candidate(r: dict[str, Any]) -> CandidateCompany:
+        return CandidateCompany(
+            company_name=r["company_name"],
+            company_number=r["company_number"],
+            company_status=r.get("company_status"),
+            company_category=r.get("company_category"),
+            incorporation_date=_parse_ch_date(r.get("incorporation_date")),
+            dissolution_date=_parse_ch_date(r.get("dissolution_date")),
+            sic_codes=tuple(r.get("sic_codes") or ()),
+            region=r.get("region"),
+            post_town=r.get("post_town"),
+            country=r.get("country"),
+            accounts_category=r.get("accounts_category"),
+            source_url=CH_COMPANY_URL.format(number=r["company_number"]),
+        )
+
     def find_candidates(self, applicant_name: str) -> list[CandidateCompany]:
         key = company_name_key(applicant_name)
         out = []
@@ -386,23 +475,15 @@ class FixtureCompanyRegistry(CompanyRegistry):
             if company_name_key(r["company_name"]) == key or key in company_name_key(
                 r["company_name"]
             ):
-                out.append(
-                    CandidateCompany(
-                        company_name=r["company_name"],
-                        company_number=r["company_number"],
-                        company_status=r.get("company_status"),
-                        company_category=r.get("company_category"),
-                        incorporation_date=_parse_ch_date(r.get("incorporation_date")),
-                        dissolution_date=_parse_ch_date(r.get("dissolution_date")),
-                        sic_codes=tuple(r.get("sic_codes") or ()),
-                        region=r.get("region"),
-                        post_town=r.get("post_town"),
-                        country=r.get("country"),
-                        accounts_category=r.get("accounts_category"),
-                        source_url=CH_COMPANY_URL.format(number=r["company_number"]),
-                    )
-                )
+                out.append(self._record_to_candidate(r))
         return out
+
+    def lookup_by_number(self, company_number: str) -> CandidateCompany | None:
+        number = (company_number or "").strip().upper()
+        for r in self.records:
+            if str(r.get("company_number", "")).strip().upper() == number and number:
+                return self._record_to_candidate(r)
+        return None
 
 
 class NullCompanyRegistry(CompanyRegistry):

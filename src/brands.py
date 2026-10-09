@@ -34,7 +34,7 @@ from sqlalchemy.orm import Session
 
 from src.db.tables import Brand, Observation, OpportunityRow, ScoreEvent, StageChange
 from src.logging_setup import get_logger
-from src.models import Opportunity, PipelineResult
+from src.models import DomainSignals, Opportunity, PipelineResult
 from src.parse.normalise import normalise_company_name, normalise_text
 from src.settings import load_config
 
@@ -377,7 +377,11 @@ def domain_facts(opp: Opportunity) -> list[tuple[str, Any, date | None]]:
     The RDAP registration date is the only one with a ``source_date``; the
     rest describe the domain as it was when we looked.
     """
-    d = opp.domain
+    return domain_signal_facts(opp.domain)
+
+
+def domain_signal_facts(d: DomainSignals | None) -> list[tuple[str, Any, date | None]]:
+    """``domain_facts`` for bare ``DomainSignals`` (the rescan probes without an opportunity)."""
     if d is None or not d.checked or not d.domain:
         return []
     name = d.domain
