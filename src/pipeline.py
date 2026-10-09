@@ -27,6 +27,11 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--date", help="Explicit publication date, YYYY-MM-DD")
     parser.add_argument("--max-records", type=int, help="Cap records parsed (testing)")
     parser.add_argument("--no-db", action="store_true", help="Do not write to the database")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Process the journal even if it has already been processed",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:

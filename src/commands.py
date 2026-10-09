@@ -11,7 +11,9 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from src.brands import sync_brands
 from src.db import init_db, session_scope
 from src.db.repository import (
     add_suppression,
@@ -27,12 +29,14 @@ from src.db.tables import Customer, CustomerPreference, ErrorLog, OpportunityRow
 from src.deliver.csv_export import write_opportunities_csv
 from src.deliver.qa_report import format_qa_report
 from src.delivery_service import deliver_weekly, send_failure_alert
-from src.ingest.base import get_source
+from src.enrich.budget import MONTHLY_BUDGET, SearchBudget, SearchGuard
+from src.ingest.base import JournalSource, get_source
+from src.ingest.cache import FileCache
 from src.ingest.discovery import previous_journal_dates
 from src.logging_setup import get_logger
-from src.models import PipelineResult, RunStatus
+from src.models import JournalRef, PipelineResult, RunStatus
 from src.pipeline_core import Pipeline
-from src.settings import DATA_DIR, REPORTS_DIR, get_settings
+from src.settings import DATA_DIR, REPORTS_DIR, Settings, get_settings, load_config
 
 log = get_logger(__name__)
 
@@ -42,6 +46,46 @@ def _fresh_settings(args) -> object:  # type: ignore[no-untyped-def]
     if getattr(args, "source", None):
         settings = settings.model_copy(update={"journal_source": args.source})
     return settings
+
+
+def _resolve_ref(
+    source: JournalSource, journal_number: str | None, publication_date: date | None
+) -> JournalRef | None:
+    """Which journal a run would process, or None if that cannot be worked out.
+
+    None is not an error here: the pipeline resolves the ref again and turns
+    the same failure into a BLOCKED run with the reason recorded, exactly as
+    before this was resolved up front.
+    """
+    try:
+        return source.ref_for(journal_number=journal_number, publication_date=publication_date)
+    except Exception as exc:
+        log.info("commands.ref_unresolved", error=str(exc)[:200])
+        return None
+
+
+def search_budget_for_run(session: Session, settings: Settings) -> SearchBudget:
+    """The search allowance for one run: the per-run cap, or what is left of the rolling budget."""
+    guard = SearchGuard.load(settings)
+    since = guard.window_start()
+    used = 0
+    for counts, started_at in session.execute(
+        select(PipelineRun.counts, PipelineRun.started_at)
+    ).all():
+        if started_at is None:
+            continue
+        moment = started_at if started_at.tzinfo else started_at.replace(tzinfo=UTC)
+        if moment >= since:
+            used += int((counts or {}).get("search_calls", 0) or 0)
+    allowance, limited_by = guard.allowance(used)
+    if limited_by == MONTHLY_BUDGET:
+        log.warning(
+            "commands.search_monthly_budget_limits_run",
+            used=used,
+            monthly_budget=guard.monthly_budget,
+            allowance=allowance,
+        )
+    return SearchBudget(allowance, limited_by=limited_by)
 
 
 def _run_one(
@@ -55,13 +99,22 @@ def _run_one(
     source = get_source(settings=settings)  # type: ignore[arg-type]
     pipeline = Pipeline(settings=settings, source=source)  # type: ignore[arg-type]
 
+    # Resolved before the run so 'first trade mark for this applicant' is judged
+    # against journals *before* this one. Judging it against everything stored
+    # made every re-run of a journal see its own applicants as already known.
+    ref = _resolve_ref(source, journal_number, publication_date)
+
     known: set[str] = set()
+    budget: SearchBudget | None = None
     if write_db:
         init_db()
         with session_scope() as session:
-            known = known_applicant_names(session)
+            known = known_applicant_names(
+                session, before_journal=ref.journal_number if ref else None
+            )
             if history is None:
                 history = recent_run_counts(session)
+            budget = search_budget_for_run(session, settings)  # type: ignore[arg-type]
 
     result = pipeline.run(
         journal_number=journal_number,
@@ -69,6 +122,7 @@ def _run_one(
         max_records=getattr(args, "max_records", None),
         known_applicants=known,
         history=history,
+        search_budget=budget,
     )
 
     if write_db:
@@ -85,8 +139,30 @@ def _run_one(
                 except Exception as exc:  # persistence must not lose the run record
                     log.warning("commands.persist_source_failed", error=str(exc)[:200])
                 save_opportunities(session, result)
+                try:
+                    with session.begin_nested():
+                        sync_brands(session, result)
+                except Exception as exc:  # brand history must not lose the run record
+                    log.warning("commands.sync_brands_failed", error=str(exc)[:200])
+                    result.warnings.append(f"Brand history was not updated: {str(exc)[:200]}")
             save_run(session, result, mode=getattr(args, "command", "weekly"))
     return result
+
+
+def prune_caches(settings: Settings) -> int:
+    """Delete old journal downloads. Never raises: housekeeping must not fail a run."""
+    try:
+        ops = load_config("operations.json")
+        max_age = int(ops.get("cache_max_age_days", 30))
+        removed = 0
+        for sub in ops.get("cache_prune_subdirs", ["journals", "opendata"]):
+            root = Path(settings.cache_dir) / sub
+            if root.is_dir():
+                removed += FileCache(root).prune(max_age_days=max_age)
+        return removed
+    except Exception as exc:
+        log.warning("commands.cache_prune_failed", error=str(exc)[:200])
+        return 0
 
 
 def _print_result(result: PipelineResult) -> None:
@@ -107,13 +183,46 @@ def _print_result(result: PipelineResult) -> None:
 
 
 def cmd_weekly(args) -> int:  # type: ignore[no-untyped-def]
+    settings = _fresh_settings(args)
+    try:
+        return _weekly(args)
+    finally:
+        prune_caches(settings)  # type: ignore[arg-type]
+
+
+def _weekly(args) -> int:  # type: ignore[no-untyped-def]
     from src.pipeline import parse_date_arg
+
+    publication_date = parse_date_arg(getattr(args, "date", None))
+    journal_number = getattr(args, "journal", None)
+    write_db = not getattr(args, "no_db", False)
+
+    # A scheduled job fires several times a week. Once a journal is processed,
+    # later attempts stop here: no download, no search spend, no new run row.
+    if write_db and not getattr(args, "force", False):
+        source = get_source(settings=_fresh_settings(args))  # type: ignore[arg-type]
+        ref = _resolve_ref(source, journal_number, publication_date)
+        if ref is not None:
+            init_db()
+            with session_scope() as session:
+                done = journal_already_processed(session, ref.source_name, ref.journal_number)
+            if done:
+                log.info(
+                    "weekly.already_processed",
+                    journal=ref.journal_number,
+                    source=ref.source_name,
+                )
+                print(
+                    f"Journal {ref.journal_number} ({ref.source_name}) has already been "
+                    "processed; nothing to do. Use --force to process it again."
+                )
+                return 0
 
     result = _run_one(
         args,
-        publication_date=parse_date_arg(getattr(args, "date", None)),
-        journal_number=getattr(args, "journal", None),
-        write_db=not getattr(args, "no_db", False),
+        publication_date=publication_date,
+        journal_number=journal_number,
+        write_db=write_db,
     )
     _print_result(result)
 
@@ -156,13 +265,17 @@ def cmd_backfill(args) -> int:  # type: ignore[no-untyped-def]
 
     history: list[dict] = []
     failures = 0
+    check_processed = not getattr(args, "no_db", False) and not getattr(args, "force", False)
+    if check_processed:
+        # The check below reads the database; a fresh one has no tables yet.
+        init_db()
     for publication_date in dates:
         print(f"\n=== Journal week {publication_date.isoformat()} ===")
-        with session_scope() as session:
+        if check_processed:
             ref = source.ref_for(publication_date=publication_date)
-            if journal_already_processed(
-                session, ref.source_name, ref.journal_number
-            ) and not getattr(args, "no_db", False):
+            with session_scope() as session:
+                done = journal_already_processed(session, ref.source_name, ref.journal_number)
+            if done:
                 print(f"Already processed ({ref.journal_number}) — skipping.")
                 continue
         result = _run_one(

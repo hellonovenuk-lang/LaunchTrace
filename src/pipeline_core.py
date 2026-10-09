@@ -27,6 +27,7 @@ from src.deliver.consolidation import consolidate
 from src.deliver.csv_export import write_opportunities_csv
 from src.deliver.email_render import render_weekly_email, write_email_html
 from src.deliver.qa_report import build_qa_report, write_qa_report
+from src.enrich.budget import SearchBudget, SearchGuard
 from src.enrich.companies_house import CompanyRegistry, get_company_registry
 from src.enrich.entity_verification import EntityContext
 from src.enrich.web import WebEnricher, get_web_enricher
@@ -104,8 +105,18 @@ class Pipeline:
         known_applicants: set[str] | None = None,
         history: list[dict[str, Any]] | None = None,
         write_outputs: bool = True,
+        search_budget: SearchBudget | None = None,
     ) -> PipelineResult:
+        """Process one journal.
+
+        ``search_budget`` caps web-search calls for this run; the caller passes
+        one that accounts for the rolling monthly budget. Without one the
+        per-run cap from ``config/costs.json`` (or SEARCH_MAX_CALLS_PER_RUN)
+        applies.
+        """
         run_id = f"run_{datetime.now(UTC):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
+        budget = search_budget or SearchBudget(SearchGuard.load(self.settings).max_calls_per_run)
+        self.web.budget = budget
 
         # Resolving which journal to process can itself fail (no local file, an
         # unrecognised journal number, an empty fixture directory). That has to
@@ -151,6 +162,7 @@ class Pipeline:
             result.status = RunStatus.FAILED
             result.errors.append(f"{type(exc).__name__}: {exc}")
             log.error("pipeline.failed", run_id=run_id, error=str(exc)[:400])
+        result.counts.search_calls = budget.calls
 
         result.finished_at = datetime.now(UTC)
         if write_outputs:
@@ -456,6 +468,13 @@ class Pipeline:
                         attempted=True, provider=self.web.provider.name, error=str(exc)[:300]
                     )
             with_web.append((record, outcome, applicant_type, match, age, web))
+        budget_warning = self.web.budget.warning()
+        if budget_warning:
+            # Not a failure: the unsearched records are scored exactly as they
+            # would be with no search provider, and nothing already enriched
+            # changes. The run completes and says what it could not do.
+            result.warnings.append(budget_warning)
+            log.warning("pipeline.search_budget_exhausted", **self.web.budget.as_dict())
 
         # Stage 7: score, map buying intent, build opportunities.
         seen: set[str] = set()

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from src.enrich.budget import SearchBudget
 from src.enrich.entity_verification import (
     DomainClass,
     EntityContext,
@@ -97,6 +98,9 @@ class WebEnricher:
         self.provider = provider or get_search_provider(self.settings)
         self.verifier = verifier or get_entity_verifier()
         self.calls = 0
+        # Every provider.search call goes through this budget. The pipeline
+        # replaces it with a capped one at the start of each run.
+        self.budget = SearchBudget()
 
     @property
     def available(self) -> bool:
@@ -123,11 +127,17 @@ class WebEnricher:
             )
         ctx = context or EntityContext.for_brand(query_name, company_name)
 
+        second_query = bool(company_name and company_name.lower() != (brand_name or "").lower())
+        if not self.budget.reserve(2 if second_query else 1):
+            return WebEnrichment(
+                attempted=False, provider=self.provider.name, error="search_budget_exhausted"
+            )
+
         self.calls += 1
         try:
-            results = self.provider.search(f"{query_name} UK food brand", limit=8)
-            if company_name and company_name.lower() != (brand_name or "").lower():
-                results += self.provider.search(f'"{company_name}" products', limit=5)
+            results = self._search(f"{query_name} UK food brand", limit=8)
+            if second_query:
+                results += self._search(f'"{company_name}" products', limit=5)
         except Exception as exc:
             log.warning("web.search_failed", brand=query_name[:80], error=str(exc)[:200])
             return WebEnrichment(
@@ -137,6 +147,11 @@ class WebEnricher:
                 enriched_at=datetime.now(UTC),
             )
         return self.assess(query_name, results, provider=self.provider.name, context=ctx)
+
+    def _search(self, query: str, limit: int) -> list[SearchResult]:
+        """The only place a search provider is called, so every call is counted."""
+        self.budget.count()
+        return self.provider.search(query, limit=limit)
 
     # -- assessment --------------------------------------------------------
     @staticmethod

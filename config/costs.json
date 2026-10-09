@@ -5,6 +5,14 @@
   "verification_note": "Each entry carries a 'confidence' and a 'source_note'. 'assumed' means nobody has confirmed it. Replace assumed figures with your real bill as soon as you have one, then re-run: python -m src.admin business-status",
   "fx_note": "Vendor prices quoted in USD are converted at the rate below. Update it when it drifts.",
   "usd_to_gbp": 0.79,
+  "search_guard": {
+    "description": "Hard ceiling on web-search API calls, enforced by the pipeline (src/enrich/budget.py). Counts every call to the search provider; one candidate can take two calls. When either limit is reached mid-run, web enrichment stops for the rest of that run: the remaining candidates are scored without web evidence, a warning is recorded, and the run still completes. It never blocks a run.",
+    "max_calls_per_run": 200,
+    "_max_calls_per_run_note": "Per weekly run. The environment variable SEARCH_MAX_CALLS_PER_RUN overrides this (set it as a repository variable in GitHub Actions).",
+    "monthly_budget": 900,
+    "_monthly_budget_note": "Rolling budget: the sum of search_calls recorded on every pipeline run started in the last window_days. 900 leaves headroom under the 1,000/month Tavily free tier.",
+    "window_days": 30
+  },
   "line_items": [
     {
       "key": "search_enrichment",
