@@ -91,8 +91,9 @@ def build_snapshot(workdir: Path) -> dict[str, Any]:
 
     get_settings.cache_clear()
 
-    import src.commands as commands
     from replay_validation import RecordedSearchProvider
+
+    import src.commands as commands
     from src.classify.pipeline import ProductClassifier
     from src.enrich.companies_house import FixtureCompanyRegistry
     from src.enrich.providers import FixtureSearchProvider
