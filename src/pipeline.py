@@ -140,6 +140,9 @@ def build_parser() -> argparse.ArgumentParser:
         "movers-digest", help="Prepare this week's 'brands that moved' digest on its own"
     )
     movers.add_argument("--json", action="store_true", help="Print the summary as JSON")
+    from src.backtest.cli import add_backtest_parser
+
+    add_backtest_parser(sub)
 
     return parser
 
@@ -203,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
 
         handlers["rescan"] = cmd_rescan
         handlers["movers-digest"] = cmd_movers_digest
+    if args.command == "backtest":
+        from src.backtest.cli import cmd_backtest
+
+        handlers["backtest"] = cmd_backtest
     handler = handlers[args.command]
     try:
         return int(handler(args) or 0)

@@ -203,7 +203,9 @@ alembic downgrade -1                    # step back one revision
 * `0002_brands` — `brands`, `observations`, `stage_changes`, and nullable
   `brand_id` on `opportunities` and `score_events`. Downgrading removes only
   these; baseline rows are untouched.
-* Revision ids are explicit and ordered (`0003_*` next). Parallel branches each
+* `0003_outcomes` — `outcomes`: backtest launch labels per brand, horizon and
+  labeller version (docs/BACKTEST.md). Downgrading removes only this table.
+* Revision ids are explicit and ordered. Parallel branches each
   chain off the current head; whoever merges re-chains `down_revision`.
 
 `init_db()` handles four starting points without ever dropping data: already

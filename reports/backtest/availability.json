@@ -1,0 +1,166 @@
+{
+  "probed_at": "2026-10-09T16:12:09+00:00",
+  "host": "https://www.ipo.gov.uk/t-tmj/tm-journals",
+  "url_pattern": "https://www.ipo.gov.uk/t-tmj/tm-journals/<YYYY-NNN>/jnl.xml",
+  "user_agent": "LaunchTrace/0.1 (+https://launchtrace.co.uk; weekly trade marks journal ingest)",
+  "min_delay_seconds": 2.5,
+  "range": {
+    "from": "2020-042",
+    "to": "2026-041",
+    "weeks": 313
+  },
+  "outcome": "found",
+  "earliest_available": "2025-040",
+  "earliest_available_publication_date": "2025-10-03",
+  "earliest_exact": true,
+  "latest_available": "2026-041",
+  "journal_requests": 14,
+  "notes": [
+    "Binary search assumes every week from the earliest served journal to the latest is served (a contiguous archive).",
+    "This run predates the head_status field. For the HEAD+GET-range rows the HEAD answer was not trusted on its own: by the probe logic it was not 404/410/429/5xx, and after 2026-041 had been served a 403 would have been read as missing without a GET, so it was (almost certainly) a 200 carrying an HTML page; its Last-Modified, 21 Sep 2020, is that of a static not-found page. The 1 KB ranged GET then answered 404, which is the status recorded."
+  ],
+  "results": [
+    {
+      "journal_number": "2026-041",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2026-041/jnl.xml",
+      "outcome": "available",
+      "status": 200,
+      "method": "HEAD",
+      "content_type": "application/xml",
+      "content_length": null,
+      "last_modified": "Thu, 08 Oct 2026 06:27:15 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:30+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2023-041",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2023-041/jnl.xml",
+      "outcome": "missing",
+      "status": 404,
+      "method": "HEAD+GET-range",
+      "content_type": "text/html",
+      "content_length": null,
+      "last_modified": "Mon, 21 Sep 2020 00:59:59 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:31+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-015",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-015/jnl.xml",
+      "outcome": "missing",
+      "status": 404,
+      "method": "HEAD+GET-range",
+      "content_type": "text/html",
+      "content_length": null,
+      "last_modified": "Mon, 21 Sep 2020 00:59:59 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:35+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2026-002",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2026-002/jnl.xml",
+      "outcome": "available",
+      "status": 200,
+      "method": "HEAD",
+      "content_type": "application/xml",
+      "content_length": null,
+      "last_modified": "Thu, 08 Jan 2026 06:47:44 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:40+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-035",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-035/jnl.xml",
+      "outcome": "missing",
+      "status": 404,
+      "method": "HEAD+GET-range",
+      "content_type": "text/html",
+      "content_length": null,
+      "last_modified": "Mon, 21 Sep 2020 00:59:59 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:43+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-045",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-045/jnl.xml",
+      "outcome": "available",
+      "status": 200,
+      "method": "HEAD",
+      "content_type": "application/xml",
+      "content_length": null,
+      "last_modified": "Thu, 06 Nov 2025 06:48:27 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:48+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-040",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-040/jnl.xml",
+      "outcome": "available",
+      "status": 200,
+      "method": "HEAD",
+      "content_type": "application/xml",
+      "content_length": null,
+      "last_modified": "Thu, 02 Oct 2025 05:46:19 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:50+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-038",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-038/jnl.xml",
+      "outcome": "missing",
+      "status": 404,
+      "method": "HEAD+GET-range",
+      "content_type": "text/html",
+      "content_length": null,
+      "last_modified": "Mon, 21 Sep 2020 00:59:59 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:53+00:00",
+      "head_status": null
+    },
+    {
+      "journal_number": "2025-039",
+      "url": "https://www.ipo.gov.uk/t-tmj/tm-journals/2025-039/jnl.xml",
+      "outcome": "missing",
+      "status": 404,
+      "method": "HEAD+GET-range",
+      "content_type": "text/html",
+      "content_length": null,
+      "last_modified": "Mon, 21 Sep 2020 00:59:59 GMT",
+      "error": null,
+      "probed_at": "2026-10-09T16:11:58+00:00",
+      "head_status": null
+    }
+  ],
+  "open_data": {
+    "snapshot_url": "https://assets.publishing.service.gov.uk/media/5a82e5f4e5274a2e87dc387d/opendatadomestic.zip",
+    "landing_page": "https://www.gov.uk/government/publications/ipo-trade-mark-data-release",
+    "local_weeks": [
+      "2018-01-05",
+      "2018-01-12",
+      "2018-01-19",
+      "2018-01-26"
+    ],
+    "snapshot_status": 200,
+    "snapshot_content_length": "63238846",
+    "snapshot_last_modified": "Tue, 13 Feb 2018 13:19:48 GMT",
+    "landing_status": 200,
+    "landing_data_links": [
+      "https://assets.publishing.service.gov.uk/media/5a82a5f4e5274a2e8ab589f5/opendataIR.zip",
+      "https://assets.publishing.service.gov.uk/media/5a82e5f4e5274a2e87dc387d/opendatadomestic.zip"
+    ],
+    "landing_dates_mentioned": [
+      "13 February 2018",
+      "2 November 2016",
+      "21 November 2017",
+      "23 February 2015"
+    ]
+  },
+  "total_requests": 16
+}
