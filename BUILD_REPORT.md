@@ -26,8 +26,9 @@ prospect-specific preview → drafted email → sample → customer → weekly d
 → feedback → metrics, none of it requiring a credential and none of it able to
 send anything.
 
-531 tests pass, lint, formatting and type checks are clean, and the container
-image was built and served.
+531 tests passed at the end of these two sessions (the suite has since grown
+to 1,097 passed and 1 skipped with the structural upgrade), lint, formatting
+and type checks are clean, and the container image was built and served.
 
 The four-week January 2018 historical sanity test produced a real but marginal
 number, reported as it came out rather than framed favourably. It is an
@@ -191,7 +192,7 @@ unchanged from the run that produced them, and still use the older word
 | `test` | Lint (`ruff check .`) | pass |
 | `test` | Format check (`ruff format --check .`) | pass |
 | `test` | Type check (`mypy src`) | pass |
-| `test` | Tests (`pytest -q --cov=src`) | pass — 531 tests |
+| `test` | Tests (`pytest -q --cov=src`) | pass — 531 tests at the time |
 | `test` | Smoke test (whole pipeline on fixture data) | pass |
 | `test` | Verify the PostgreSQL migration applies | pass |
 | `migration` | Apply the schema to a real PostgreSQL 16 | pass |
@@ -333,6 +334,10 @@ Stated plainly rather than buried:
    environment, including through a real headless browser, while every other
    government host worked. The code is complete and has three fallbacks; it may
    work first time from your machine. See HANDOFF.md §3.1.
+   *Since corrected:* the 403s came from a wrong path and file name, not a
+   block (commits `d194dd9`, `59a08da`); journals have since been downloaded
+   unattended, and in the structural upgrade's Phase 3 ipo.gov.uk served
+   2025-040 to 2026-041 to this sandbox (`reports/backtest/availability.json`).
 2. **No email has been delivered to a real inbox.** Rendering is snapshot-tested
    and file-mode sending is verified; the Resend HTTP call itself has not run.
 3. **No real payment has been taken.** The webhook state machine is tested
@@ -411,7 +416,7 @@ point where a credential would have been needed.
   lost, scored, and prioritised. One real duplicate found and resolved.
 * **The sample report**, rendered in a browser and inspected as a customer
   would see it.
-* **531 tests**, `ruff check`, `ruff format --check`, `mypy src`, and the
+* **531 tests** (at the end of this session), `ruff check`, `ruff format --check`, `mypy src`, and the
   end-to-end smoke test.
 
 ### Defects found and fixed in this session
