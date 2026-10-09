@@ -47,3 +47,31 @@ blocks the code. Final ordering is set in Phase 4.
 - **Forcing a re-run** of a journal that has already been processed is now a
   manual choice: Actions → Weekly pipeline → Run workflow → tick `force`. It
   spends search calls again.
+
+## Phase 2 — public-feed
+
+- **Choose where the public feed is hosted.** Either the website's own
+  `/feed/` routes (already live wherever the FastAPI app runs, nothing to
+  do), or GitHub Pages from the `public-feed-<run>` artifact the weekly
+  workflow uploads. Nothing is published automatically. For Pages: Settings →
+  Pages → Source "GitHub Actions", set `public_base_url` in
+  `config/public_feed.json` to the Pages address, and add a deploy job
+  (`actions/upload-pages-artifact` + `actions/deploy-pages`) — see
+  docs/PUBLIC_FEED.md. Unlocks: a public, shareable sample page and feeds.
+- **Set the `SITE_URL` repository variable** (Settings → Secrets and
+  variables → Actions → Variables) if not already set. The static build's
+  footer (privacy, terms, attribution, opt-out) and its "Get the full weekly
+  list" link are built from it; blank makes them site-relative and broken on
+  any other host.
+- **Decide the commercial settings** in `config/public_feed.json`:
+  `top_n_per_week` (default 5), `delay_weeks` (default 1), `min_band` /
+  `bands_allowed` (default MEDIUM and above), `max_weeks_in_index` (12), and
+  the call-to-action wording.
+- **Have the privacy position reviewed before publishing.** The feed
+  publishes company-level data (company name and number, brand, category,
+  stage, filing date, region, one reason) for named UK companies on a public
+  web page. Confirm that the legitimate interests assessment and the privacy
+  notice cover publishing this (they were written for a private B2B feed),
+  and that sole-director companies are acceptable. No legal text was written.
+- **Review one built feed by hand** (download a `public-feed-*` artifact)
+  before the first publication.
