@@ -262,3 +262,19 @@ and flagged by `render_draft` warnings).
 - **Before changing any weight** from a report's suggestions: check the sample
   size banner, then edit `config/scoring.json` by hand and review the stability
   snapshot. Nothing is applied automatically.
+
+## Phase 4 — reviewer fixes
+
+- **Run once after upgrading an existing database:**
+  `python -m src.pipeline backfill-brands`. Leads stored before the brand
+  tables existed have no brand until then, so the rescan, public feed and
+  backtest ignore them. Safe to repeat; never changes a score (D-707).
+- **If the weekly job stops with "database history not found"** (no
+  `DATABASE_URL`, cache evicted and no backup artefact in the last 14 days):
+  either set `DATABASE_URL`, or put a known-good `launchtrace.sqlite` back, or
+  accept the loss and re-run the workflow by hand with **fresh_database**
+  ticked (D-702). Setting `DATABASE_URL` removes the risk altogether.
+- **Review the stricter name rule** (D-700): an unmatched applicant's own name
+  now appears only with a legal form such as Ltd, PLC or LLP and never with
+  "trading as" / "t/a". The list is `config/privacy.json`. Retention will
+  anonymise more stored names than before on its next `--apply`.

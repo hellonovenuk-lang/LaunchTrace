@@ -746,3 +746,15 @@ checks it lists every revision) and stamps the newest revision whose objects
 are all present, then upgrades. A database with only part of a revision's
 objects is stamped below that revision and its upgrade still fails loudly,
 as before: that state needs a person.
+
+**D-707 — `backfill-brands` links leads stored before the brand tables.** A
+database upgraded to `0002_brands` kept its old opportunities with `brand_id`
+NULL, invisible to the rescan, feed and backtest. The new command
+(`src/brands_backfill.py`) rebuilds them through the same `sync_brands` the
+weekly run uses, from the stored rows (`commands._rehydrate_result`), journal
+by journal in publication order, attributing them to the journal's latest
+completed run (so `score_events` link too) or to `backfill-brands` when there
+is none. Only rows with `brand_id` NULL are touched (idempotent) and the only
+opportunity column written is `brand_id`. Facts a stored row does not keep
+(raw web-search facts, domain signals, match confidence) are not invented, so
+back-filled brands have fewer observations than freshly scored ones.

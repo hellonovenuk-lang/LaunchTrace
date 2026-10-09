@@ -60,8 +60,16 @@ Downgrading a revision removes only what it added.
 
 `init-db` never drops data. It handles an up-to-date database (one query), a
 brand-new SQLite file (creates the tables and stamps the latest revision), a
-pre-Alembic database (brought up to the baseline additively, stamped, then
-upgraded), and an empty PostgreSQL database (replays every revision).
+pre-Alembic database (brought up to the baseline additively, stamped at the
+newest revision whose tables it already has, then upgraded), and an empty
+PostgreSQL database (replays every revision).
+
+**After upgrading a database that already held leads** to `0002_brands` or
+later, run `python -m src.pipeline backfill-brands` once. Leads stored before
+the brand tables existed have no brand, so the rescan, the public feed and the
+backtest cannot see them; the command links them (journal by journal, oldest
+first) and records the observations their stored rows support. It never
+changes a score, and a second run does nothing.
 
 **Adding a revision** (a schema change):
 
@@ -101,13 +109,14 @@ from one run to the next:
 The limits are real:
 
 * GitHub evicts a cache entry not used for **7 days**, and evicts old entries
-  once the repository passes **10 GB** of cache. A weekly schedule normally
-  touches it every week; one missed week or a pause loses the history
-  **silently**, and the next run starts from an empty database: journals look
-  unprocessed, every applicant looks new, the monthly search budget restarts
-  at zero, and brand history is gone.
-* The artefact copy is for manual recovery only. Nothing restores it
-  automatically; download it and use it locally, or load it into PostgreSQL.
+  once the repository passes **10 GB** of cache. When the cache misses, the
+  workflow restores the newest unexpired `launchtrace-db-*` artefact (step
+  "Recover the database if the cache missed"). If there is none (artefacts
+  last 14 days) it **stops** with an error and a note in the job summary,
+  rather than start from an empty database (journals unprocessed, every
+  applicant new, the search budget reset). Only the workflow's first ever run,
+  or a manual run with the `fresh_database` input ticked, starts empty, and
+  the job summary then says "History lost" (DECISIONS.md D-702).
 * The website (Fly.io / Render) cannot see the runner's SQLite file, so the
   `/feed` routes and the operator view need a shared database anyway.
 * The backfill workflow does not carry the SQLite file at all.

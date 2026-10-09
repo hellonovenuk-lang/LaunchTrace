@@ -140,6 +140,10 @@ def build_parser() -> argparse.ArgumentParser:
         "movers-digest", help="Prepare this week's 'brands that moved' digest on its own"
     )
     movers.add_argument("--json", action="store_true", help="Print the summary as JSON")
+    sub.add_parser(
+        "backfill-brands",
+        help="Link stored leads that have no brand yet (run once after upgrading a database)",
+    )
     from src.backtest.cli import add_backtest_parser
 
     add_backtest_parser(sub)
@@ -206,6 +210,10 @@ def main(argv: list[str] | None = None) -> int:
 
         handlers["rescan"] = cmd_rescan
         handlers["movers-digest"] = cmd_movers_digest
+    if args.command == "backfill-brands":
+        from src.brands_backfill import cmd_backfill_brands
+
+        handlers["backfill-brands"] = cmd_backfill_brands
     if args.command == "backtest":
         from src.backtest.cli import cmd_backtest
 
