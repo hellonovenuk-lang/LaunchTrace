@@ -317,14 +317,18 @@ def _reason_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
     out: list[tuple[str, re.Pattern[str]]] = []
     for section in ("positive_indicators", "negative_indicators"):
         indicators = scoring.get(section, {})
-        items = indicators.items() if isinstance(indicators, dict) else []
+        items = (
+            list(indicators.items())
+            if isinstance(indicators, dict)
+            else [(i.get("key"), i) for i in indicators if isinstance(i, dict)]
+        )
         for key, ind in items:
             template = ind.get("reason_template") if isinstance(ind, dict) else None
             if not template:
                 continue
             parts = re.split(r"\{[a-z_]+\}", template)
             pattern = ".+?".join(re.escape(p) for p in parts)
-            out.append((key, re.compile(f"^{pattern}$", re.DOTALL)))
+            out.append((str(key), re.compile(f"^{pattern}$", re.DOTALL)))
     return tuple(out)
 
 
