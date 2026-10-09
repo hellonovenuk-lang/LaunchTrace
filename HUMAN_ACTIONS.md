@@ -200,3 +200,31 @@ and flagged by `render_draft` warnings).
   unauthenticated; the per-run cap (60 domains) and 1 s spacing are well
   inside their published limits. Revisit if `max_domains_per_run` is raised a
   lot.
+
+## Phase 3 — rescan
+
+- **Decide the window and caps** in `config/rescan.json`: `window_weeks` (26),
+  `max_brands_per_run` (150), `max_domain_probes_per_run` (60),
+  `max_run_seconds` (900). The estimate in docs/RESCAN.md is at most ~60 RDAP,
+  ~180 DNS and ~120–480 HTTP requests, plus 0 Companies House calls with the
+  bulk index (or ≤ 150 with an API key) per Friday; the second and third
+  attempts make none. With a large backlog of checkable brands each is
+  re-checked every few weeks rather than weekly; raise `max_brands_per_run`
+  if weekly coverage matters (cheap with the bulk index).
+- **Review the movers digest copy before enabling sends.** Run the workflow (or
+  `python -m src.pipeline rescan` locally), download the `email-outbox-<n>`
+  artifact and read the `movers_digest` HTML. Only then set
+  `digest.send_enabled` to `true` in `config/rescan.json`; it also needs
+  `SEND_MODE=automatic`. Decide whether the "Stopped trading" section is wanted
+  (`digest.include_negative`).
+- **Optional: Companies House API key.** Without `COMPANIES_HOUSE_API_KEY` the
+  rescan reads company status from the monthly bulk snapshot, so a newly filed
+  set of accounts or a dissolution can take up to a month to show. The key is
+  free and makes the check current (one GET per brand, ≤ 150 a week).
+- **Optional: web search in the rescan** (`sources.web_search`, off). It finds
+  websites for brands that had none, at up to `web_search_max_calls` (20)
+  search calls a week, counted against the monthly search budget. Only worth
+  it once a search provider is configured for the weekly run.
+- **The outbox artifact holds recipient email addresses** (14-day retention).
+  Shorten or drop the "Upload the email outbox" workflow step if that is not
+  acceptable for this repository's visibility.
