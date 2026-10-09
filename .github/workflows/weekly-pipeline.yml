@@ -34,6 +34,11 @@ on:
         type: boolean
         default: false
         required: false
+      force:
+        description: "Process the journal even if it has already been processed (spends search calls again)"
+        type: boolean
+        default: false
+        required: false
 
 concurrency:
   group: weekly-pipeline
@@ -80,6 +85,30 @@ jobs:
         if: github.event.inputs.company_index != 'false' && steps.ch-cache.outputs.cache-hit != 'true'
         run: python -m src.pipeline build-company-index --download
 
+      # Without a DATABASE_URL secret the run uses the SQLite file, which a
+      # fresh runner would not have: restore the last one so 'already
+      # processed', known applicants and the monthly search budget carry over.
+      # Secrets cannot be used in 'if:', so test it in a shell step.
+      - name: Is a hosted database configured?
+        id: db
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "hosted=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hosted=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL is not set; using the SQLite file carried between runs in the Actions cache. Set DATABASE_URL (see HUMAN_ACTIONS.md) for durable history."
+          fi
+
+      - name: Restore the local SQLite database
+        if: steps.db.outputs.hosted != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/local/launchtrace.sqlite
+          key: lt-db-${{ github.run_id }}
+          restore-keys: lt-db-
+
       - name: Run the weekly pipeline
         id: pipeline
         env:
@@ -98,6 +127,8 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
           JOURNAL_SOURCE: ${{ github.event.inputs.source || 'ukipo_http' }}
+          # Optional repository variable; blank means config/costs.json decides.
+          SEARCH_MAX_CALLS_PER_RUN: ${{ vars.SEARCH_MAX_CALLS_PER_RUN }}
         run: |
           set -o pipefail
           # Say what this run actually has before it runs, so a degraded result
@@ -110,8 +141,38 @@ jobs:
           if [ "${{ github.event.inputs.send }}" = "true" ]; then
             ARGS="$ARGS --send"
           fi
+          # Only a person can force a re-run. Scheduled runs never do, so the
+          # later Friday attempts stop at 'already processed' at no cost.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
           python -m src.pipeline weekly $ARGS | tee pipeline.log
         continue-on-error: true
+
+      # Fold any write-ahead log into the database file so the cache holds all of it.
+      - name: Checkpoint the local SQLite database
+        if: always() && steps.db.outputs.hosted != 'true'
+        run: |
+          if [ -f data/local/launchtrace.sqlite ]; then
+            python -c "import sqlite3; c = sqlite3.connect('data/local/launchtrace.sqlite'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"
+          fi
+
+      - name: Save the local SQLite database
+        if: always() && steps.db.outputs.hosted != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/local/launchtrace.sqlite
+          key: lt-db-${{ github.run_id }}
+
+      # Cache entries are evicted after 7 days unused, so keep a copy as an artifact too.
+      - name: Back up the local SQLite database
+        if: always() && steps.db.outputs.hosted != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: launchtrace-db-${{ github.run_number }}
+          path: data/local/launchtrace.sqlite
+          retention-days: 14
+          if-no-files-found: warn
 
       - name: Upload the week's report and QA output
         if: always()
