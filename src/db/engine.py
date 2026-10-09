@@ -173,7 +173,11 @@ def init_db(database_url: str | None = None) -> None:
             outcome = "stamped"
         elif current is None and existing:
             added = _adopt_legacy(connection)
-            command.stamp(cfg, BASELINE_REVISION)
+            # An unstamped database may already hold a later revision's
+            # objects (made by create_all from an older version of this code):
+            # stamp the newest revision whose schema is fully present, so the
+            # upgrade does not try to create them again (D-706).
+            command.stamp(cfg, _highest_present_revision(connection))
             command.upgrade(cfg, "head")
             outcome = "adopted"
         else:
@@ -186,6 +190,36 @@ def init_db(database_url: str | None = None) -> None:
         to_revision=head,
         columns_added=len(added),
     )
+
+
+# What each revision after the baseline adds: tables, and (table, column)
+# pairs added to existing tables. Kept beside the revisions it mirrors;
+# tests/test_migrations.py checks it against the migrations themselves.
+REVISION_OBJECTS: tuple[tuple[str, frozenset[str], frozenset[tuple[str, str]]], ...] = (
+    (
+        "0002_brands",
+        frozenset({"brands", "observations", "stage_changes"}),
+        frozenset({("opportunities", "brand_id"), ("score_events", "brand_id")}),
+    ),
+    ("0003_outcomes", frozenset({"outcomes"}), frozenset()),
+)
+
+
+def _highest_present_revision(connection: Connection) -> str:
+    """The newest revision, walking up from the baseline, whose objects all exist."""
+    inspector = inspect(connection)
+    tables = set(inspector.get_table_names())
+    revision = BASELINE_REVISION
+    for name, new_tables, new_columns in REVISION_OBJECTS:
+        if not new_tables <= tables:
+            break
+        if any(
+            table not in tables or column not in {c["name"] for c in inspector.get_columns(table)}
+            for table, column in new_columns
+        ):
+            break
+        revision = name
+    return revision
 
 
 def _user_tables(connection: Connection) -> set[str]:

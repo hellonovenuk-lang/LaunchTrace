@@ -734,3 +734,15 @@ session end) unless they already point under the system temp dir, so a test
 that forgets its own database can no longer migrate or fill
 `data/local/launchtrace.sqlite` (verified: after removing `data/local`, a full
 `pytest` leaves no `data/local` or `data/cache`).
+
+**D-706 — Adopting an unstamped database stamps the newest revision it
+already has.** `init_db` treated every unstamped database that lacked some
+model column as pre-Alembic: it stamped `0001_baseline` and upgraded, so a
+database made by `create_all` at `0002_brands` (every table but `outcomes`)
+failed when `0002_brands` tried to create `brands` again. After the additive
+baseline adoption it now walks up from the baseline through
+`REVISION_OBJECTS` (the tables and columns each later revision adds; a test
+checks it lists every revision) and stamps the newest revision whose objects
+are all present, then upgrades. A database with only part of a revision's
+objects is stamped below that revision and its upgrade still fails loudly,
+as before: that state needs a person.

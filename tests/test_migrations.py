@@ -350,3 +350,50 @@ def test_journal_dates_are_still_dates_after_migration(tmp_path):
         session.commit()
         row = session.query(Journal).one()
         assert row.publication_date == date(2025, 12, 12)
+
+
+class TestIntermediateAdoption:
+    """LOW-4 (D-706): an unstamped database already at a later revision's schema."""
+
+    def test_everything_but_outcomes_is_stamped_at_0002_and_upgraded(self, tmp_path):
+        url = _url(tmp_path)
+        engine = create_engine(url)
+        Base.metadata.create_all(
+            engine, tables=[t for t in Base.metadata.sorted_tables if t.name != "outcomes"]
+        )
+        with engine.begin() as c:
+            c.execute(
+                text(
+                    "INSERT INTO suppression_rules (rule_type, value, active, created_at)"
+                    " VALUES ('company', 'X', 1, '2026-01-01')"
+                )
+            )
+        engine.dispose()
+
+        init_db(url)
+
+        engine = get_engine(url)
+        assert _revision(engine) == head_revision()
+        assert "outcomes" in inspect(engine).get_table_names()
+        assert _drift(engine) == []
+        with engine.connect() as c:
+            assert c.execute(text("SELECT count(*) FROM suppression_rules")).scalar_one() == 1
+
+    def test_highest_present_revision_walks_up_from_the_baseline(self, tmp_path):
+        from src.db.engine import _highest_present_revision
+
+        url = _url(tmp_path)
+        engine = create_engine(url)
+        for target in (BASELINE_REVISION, "0002_brands", "0003_outcomes"):
+            _upgrade(url, target)
+            with engine.connect() as c:
+                assert _highest_present_revision(c) == target
+
+    def test_revision_objects_cover_every_revision(self):
+        from alembic.script import ScriptDirectory
+
+        from src.db.engine import REVISION_OBJECTS
+
+        script = ScriptDirectory.from_config(alembic_config("sqlite://"))
+        later = [r.revision for r in reversed(list(script.walk_revisions()))][1:]
+        assert [name for name, _, _ in REVISION_OBJECTS] == later
