@@ -157,9 +157,8 @@ class Settings(BaseSettings):
     @property
     def resolved_domain_user_agent(self) -> str:
         """The honest user agent sent with every domain-layer request."""
-        return self.domain_user_agent.strip() or (
-            f"LaunchTrace/0.1 (+{self.site_url}; domain check)"
-        )
+        site = self.site_url.strip() or "https://launchtrace.co.uk"
+        return self.domain_user_agent.strip() or f"LaunchTrace/0.1 (+{site}; domain check)"
 
     @property
     def llm_enabled(self) -> bool:

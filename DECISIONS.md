@@ -164,3 +164,98 @@ weekly workflow restores the SQLite file from `actions/cache`
 (`lt-db-<run_id>`, restore-keys `lt-db-`), checkpoints the WAL into the file
 after the run, saves it, and uploads it as a 14-day artifact. The backfill
 workflow is unchanged (no DB carry-over), as before.
+
+## Domain layer (Phase 2)
+
+**D-200 — Where the domain layer sits.** `src/enrich/domain/` runs as stage 6b,
+after web enrichment and before scoring, through an injectable `DomainProber`
+(`Pipeline(domain=...)`). Without one, `DOMAIN_LAYER_ENABLED` (default `true`)
+picks `LiveDomainProber`, else `NullDomainProber`. Tests set
+`DOMAIN_LAYER_ENABLED=false` in `tests/conftest.py` (dnspython sends UDP, which
+the connect-based network guard would not catch). The smoke test uses
+`FixtureDomainProber` over `tests/fixtures/domain/probes.json`;
+`scripts/replay_validation.py` uses the null prober (a replay must not depend on
+today's internet); `validate` and `weekly` use the live default. The stage is
+wrapped twice: a failing probe becomes signals carrying an error, a failing
+stage becomes a run warning. Neither ever blocks a run.
+
+**D-201 — Only the verified website is probed.** The domain is the registrable
+domain of `opp.web.website` (entity-verified). `candidate_website` is off
+(`domain_selection.use_candidate_website: false`): probing an unproven guess
+would attach a stranger's registration date and shop to this brand. Domains are
+never guessed from brand names. Marketplace, social, retailer, directory and
+shared-platform hosts (`skip_hosts`, which now includes tripadvisor/yelp/
+trustpilot — the stability harness showed a tripadvisor.com "verified
+website"), IP literals and non-public names are never probed. Registrable domain
+uses a short list of two-label suffixes in config, not the full Public Suffix
+List (no new dependency); an unlisted suffix falls back to the last two labels.
+
+**D-202 — When there is nothing to probe.** No search attempted → no domain
+signals at all (`Opportunity.domain` is None): we do not know the website, so we
+claim nothing. Search attempted but no verified website → `web_presence_stage`
+`no_domain`, `checked=False`, no network call and no observation (it is a web
+search finding, not a domain fact). The per-run cap
+(`max_domains_per_run`, 60) counts distinct domains; a company's several marks
+share one probe. Leads past the cap get `domain_cap_reached` and a run warning.
+
+**D-203 — Politeness and failure rules.** RDAP: IANA bootstrap cached at
+`CACHE_DIR/rdap/dns.json` for 7 days (stale cache, then config fallbacks for
+.uk/.com/.net, when IANA is unreachable); 8 s timeout; one retry on timeout,
+transport error or 5xx; 1 s minimum per RDAP server; a 429 stops that server for
+30 s and marks the domain `rdap_rate_limited` (not fetched); a 404 is
+`rdap_not_found`. DNS: 3 s lifetime; a timeout is `None` (unknown), never
+`False`; NXDOMAIN makes everything `False` and skips the homepage. Homepage:
+robots.txt first (401/403/5xx = keep out, other 4xx = allowed; matched for the
+token `LaunchTrace` and the full user agent); https then http only if https is
+unreachable; 8 s timeout plus a wall-clock budget while streaming; body capped
+at 512 KB; at most 5 redirects; one page, no crawling. The `rdap` cache
+directory is outside the journal caches that `weekly` prunes.
+
+**D-204 — Platform, holding page and stage.** Fingerprints and phrases live in
+`config/domain_layer.json`. Holding phrases count only when no store marker is
+present (a live store often says "be the first to know" in its footer); a very
+short visible body (< 200 chars) without store markers is a holding page; a
+parked page is also a holding page. A homepage redirecting to a marketplace or
+social host is stage `unknown` and its platform is not recorded (the page is not
+the brand's). A redirect to another ordinary domain is assessed normally
+(brands move domains) but recorded as `redirect_target_kind: other_domain`. A
+shop platform (Shopify, WooCommerce, Big Cartel, Ecwid) that is not a holding
+page counts as `live_store` even without a store marker on the homepage. The CSV
+column `shop_platform` carries whatever platform was detected (including
+WordPress/Wix/Squarespace), named after the brief; `DomainSignals.shop_platform`
+says whether it is a shop platform.
+
+**D-205 — Which domain signals are point-in-time safe.** Only
+`domain_created` (RDAP `registration` event, `source_date` = registration date,
+source `rdap`). It is a dated historical fact knowable on that date. Caveat: a
+domain that lapsed or was dropped and re-registered shows the *latest*
+registration date, so it can make a domain look younger than its first use —
+never older, and never from the future relative to the observation. Not PIT
+safe: `domain_expires` (a future date that moves on each renewal),
+`domain_registrar` (domains change registrar), `dns_has_*` (DNS as it is when we
+looked), `homepage_status`, `site_platform`, `holding_page`,
+`web_presence_stage` (they describe the present site). RDAP "last changed" is
+kept on `DomainSignals` but not recorded as an observation (it is overwritten by
+each change, so it says nothing reliable about earlier dates). These are stored
+with `source_date` None. A failed check writes no observation for that check.
+
+**D-206 — Scoring at weight 0, outside the existing indicator lists.**
+`config/scoring.json` gains a separate `domain_indicators` list
+(`domain_registered_recently` — registered no more than 365 days before filing,
+or after it; `shop_platform_detected`; `holding_page_detected` — not parked;
+`has_mx_records`), all weight 0. They are outside `positive_indicators` /
+`negative_indicators`, so the existing config tests (positive weights > 0),
+the achievable-weight calibration and the missing-evidence scaling are
+untouched. The scorer computes them (`domain_indicator_keys`) and the pipeline
+lists the ones that fired on `Opportunity.domain.indicators`; a weight-0
+indicator adds nothing and produces no `ScoreReason`, so `score.reasons`,
+`reason_texts`, emails and the stability snapshot's `reason_keys` do not change.
+Proof: the stability harness now injects a fixture prober giving every verified
+website (20 probes over the 10 runs) signals that fire all four indicators, and
+the compare output is byte-identical to `reports/stability/phase1_diff.txt`.
+
+**D-207 — Persistence without a schema change.** `Opportunity.domain` is not
+stored in `opportunities` (no new revision); the facts are in `observations`.
+A run rebuilt from the database for `send --run-id` therefore has blank domain
+CSV columns, as it already lacks other non-persisted fields.
+`brands.website` is unchanged (still the verified website from web search).
