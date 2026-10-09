@@ -149,6 +149,31 @@ jobs:
           python -m src.pipeline weekly $ARGS | tee pipeline.log
         continue-on-error: true
 
+      # The public weekly feed is built from the database, so it runs even when
+      # the weekly step exited early on an already-processed journal. It never
+      # fails the run. Publishing the artifact (e.g. to GitHub Pages) is a
+      # human decision: see docs/PUBLIC_FEED.md.
+      - name: Build the public feed
+        if: always()
+        continue-on-error: true
+        env:
+          ENVIRONMENT: production
+          SITE_URL: ${{ vars.SITE_URL }}
+          LOG_FORMAT: json
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m src.pipeline build-feed --out public/
+
+      - name: Upload the public feed
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-feed-${{ github.run_number }}
+          path: public/
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: warn
+
       # Fold any write-ahead log into the database file so the cache holds all of it.
       - name: Checkpoint the local SQLite database
         if: always() && steps.db.outputs.hosted != 'true'

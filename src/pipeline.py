@@ -115,6 +115,12 @@ def build_parser() -> argparse.ArgumentParser:
     probe = sub.add_parser("probe-journal", help="Diagnose an unfamiliar journal XML file")
     probe.add_argument("path")
 
+    build_feed = sub.add_parser(
+        "build-feed", help="Write the public weekly feed (HTML, Atom, RSS, JSON) from the database"
+    )
+    build_feed.add_argument("--out", help="Output directory (default public/)")
+    build_feed.add_argument("--journal", help="Rebuild only this journal week's page and JSON")
+
     return parser
 
 
@@ -164,6 +170,10 @@ def main(argv: list[str] | None = None) -> int:
         "check-config": cmd_check_config,
         "probe-journal": cmd_probe_journal,
     }
+    if args.command == "build-feed":
+        from src.feed.command import cmd_build_feed
+
+        handlers["build-feed"] = cmd_build_feed
     handler = handlers[args.command]
     try:
         return int(handler(args) or 0)

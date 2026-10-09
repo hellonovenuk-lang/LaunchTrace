@@ -164,3 +164,69 @@ weekly workflow restores the SQLite file from `actions/cache`
 (`lt-db-<run_id>`, restore-keys `lt-db-`), checkpoints the WAL into the file
 after the run, saves it, and uploads it as a 14-day artifact. The backfill
 workflow is unchanged (no DB carry-over), as before.
+
+## public-feed (Phase 2)
+
+**D-300 — Delay measured against the newest journal, default one week.** A
+week becomes public once its publication date is at least `delay_weeks`
+(default 1) weeks before the newest journal in the database, not before
+today. That keeps the build a pure function of the database (byte-identical
+rebuilds) and means the latest week always stays with paying customers until
+the next week has been processed. A stale database therefore keeps showing its
+last public week rather than revealing more. A week with no publication date
+is never public.
+
+**D-301 — Reason selection.** The public reason is the first stored score
+reason (the customer-facing top reasons, in order) whose text matches the
+template of an indicator in `reason_keys_allowed`, contains no URL/`www.`/`@`
+and does not contain the applicant name; otherwise a fixed fallback sentence.
+The allowlist excludes every indicator whose text can carry a website or web
+evidence (`early_stage_website`, `active_launch_signals`) and all negative
+indicators. Matching is against the scoring templates, so only wording
+LaunchTrace itself wrote can appear.
+
+**D-302 — "Confirmed company match" is three checks.** Company number and
+company name on the lead, `applicant_type == corporate`, **and** the stored
+`company_matches` row for the lead says `matched` with the same number. A lead
+with no match row is excluded. Leads with review state `rejected` or
+`suppressed` are excluded as well as `suppressed=True`; `delivered` is not
+required (review-mode runs never set it).
+
+**D-303 — Suppression semantics for the feed.** `suppression_rules` are not
+applied anywhere else in the code base yet, so the feed defines its own
+matching (case-insensitive, trimmed): `company` → company name or number;
+`applicant` → applicant name (checked in memory, never output) or company
+name; `mark` → mark text or trade mark number; `email` → nothing to match. The
+outreach opt-out list (`prospect_suppressions`, kind `company`) is also
+honoured by normalised company name — conservative, though those rows concern
+LaunchTrace's own sales contacts.
+
+**D-304 — Region sanitising.** The lead's `company_region` is published only
+if it has no digit, does not look like a postcode and is not equal to the
+company's post town (e.g. "BRISTOL" for a Bristol company is dropped). Region
+is title-cased if stored in upper case.
+
+**D-305 — One entry per company per week.** The company's best-scoring mark
+represents it (tie → lower trade mark number), matching the customer CSV's
+consolidation. Ranking within a week: score desc, brand name, trade mark
+number. Scores and bands themselves are not published.
+
+**D-306 — UKIPO link.** The stored source URL is used only when it is `https`
+on an `ipo.gov.uk` host and contains the trade mark number; otherwise the
+standard case URL (`IPO_CASE_URL`). Locally ingested journals store
+`file://` paths that would leak runner paths.
+
+**D-307 — Website routes and CSP.** `/feed/...` pages are generated per
+request (no cache; the queries are small). They link `/feed/feed.css` instead
+of inlining CSS so the existing `style-src 'self'` policy is untouched; the
+static build inlines the same stylesheet. `/feed/feed.xml`, `/feed/rss.xml` and
+`/feed/feed.json` aliases exist so relative links behave identically in both.
+Atom/RSS/JSON use absolute links from `public_base_url`
+(default `SITE_URL/feed/`). Entry ids are `urn:launchtrace:feed:<journal>:<brand_uid>`
+so they do not change with the host.
+
+**D-308 — Output directory pruning.** The static build removes stale
+`.html/.json/.xml` files only from a directory that is new, empty or carries
+its `.launchtrace-feed` marker, so a mistaken `--out .` cannot delete anything.
+`--journal J` rewrites only that week's page and JSON and prunes nothing. A
+`.nojekyll` file is written for GitHub Pages.

@@ -1,0 +1,17 @@
+{% extends "_layout.html.j2" %}
+{% block content %}
+    <h1>{{ config.site_title }}</h1>
+    <p class="lede">{{ config.site_description }}</p>
+{% if feed.weeks %}
+    <ul class="weeks">
+{% for week in feed.weeks %}
+      <li>
+        <a href="{{ week.slug }}.html"><strong>Journal {{ week.journal_number }}</strong></a>
+        <span class="meta">· published {{ week.publication_date.isoformat() }} · {{ week.entries|length }} of {{ week.qualifying_count }} brands shown</span>
+      </li>
+{% endfor %}
+    </ul>
+{% else %}
+    <p class="lede"><strong>No weeks published yet.</strong> Each journal week appears here {{ config.delay_weeks }} week{{ "" if config.delay_weeks == 1 else "s" }} after it is published.</p>
+{% endif %}
+{% endblock %}
