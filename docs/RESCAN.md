@@ -172,7 +172,7 @@ redirects). Per Companies House API lookup: 1 GET (up to 3 attempts on 429 /
 | --- | --- | --- |
 | RDAP | ≤ 60 | 60 + 1 bootstrap |
 | DNS queries | ≤ 180 | 180 |
-| HTTP (robots + homepage) | ~120–180 | ~480 (every probe needing the http fallback and 5 redirects) |
+| HTTP (robots + homepage) | ~120–240 (2 per domain; 4 when https fails and http is tried) | not a fixed number: each of those requests may also follow up to 5 redirects |
 | Companies House, bulk index | 0 (local file) | 0 |
 | Companies House, API key | ≤ 150 GET | 150 (450 with every retry) |
 | Search | 0 (off) | 20 when enabled, and never above the weekly guard |

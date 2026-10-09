@@ -7,7 +7,7 @@ system enforces them.**
 
 | Data | Where | Retention | Why |
 | --- | --- | --- | --- |
-| Raw journal downloads | `data/cache/journals/` | 30 days, then pruned | Re-runs and debugging. There is no operational reason to keep large raw files longer. `KEEP_RAW_JOURNAL_FILES=false` deletes them sooner. |
+| Raw journal downloads | `data/cache/journals/` | 30 days, then pruned | Re-runs and debugging. There is no operational reason to keep large raw files longer. Pruned by age only (`config/operations.json` → `cache_max_age_days`); the `KEEP_RAW_JOURNAL_FILES` setting exists but no code reads it. `data/cache/backtest_runs/` (backtest run outputs) is not pruned — delete it freely. |
 | Journal metadata (number, date, checksum, record count) | `journals` | Indefinite | Small, and it is what prevents duplicate processing. |
 | Parsed trade mark records | `trademark_records` | [24] months | The source layer the pipeline can be re-run against without re-downloading. |
 | Company match results | `company_matches` | [24] months | Avoids repeating Companies House lookups; holds the match evidence. |
@@ -71,6 +71,11 @@ since the structural upgrade (Phase 2):
 2. Delete their rows from `opportunities`, `company_matches` and
    `web_enrichment`.
 3. Keep the suppression record. Confirm to the requester in writing.
+
+The suppression rule keeps the company out of the weekly list, the public
+feed and the movers digest. Its `brands` row (company name and number) and
+that brand's `observations` stay unless you delete them too; retention never
+touches them.
 
 ### From a supplier we approached
 

@@ -69,11 +69,11 @@ opt-outs. Contract: `docs/WEBSITE_INTEGRATION.md`.
 
 ### Quality
 
-531 tests pass. `ruff check`, `ruff format --check` and `mypy src` are clean.
+1,097 tests pass (1 skipped, which needs a PostgreSQL server). `ruff check`, `ruff format --check` and `mypy src` are clean.
 The smoke test passes end to end on fixture data with no network access.
 
-All of that also passes **on GitHub**, not just locally: the complete `Tests`
-workflow is green — install, lint, format check, type check, tests, smoke test,
+Before the structural upgrade, when the suite had 531 tests, all of that also
+passed **on GitHub**, not just locally: the complete `Tests` workflow was green — install, lint, format check, type check, tests, smoke test,
 the migration freshness check, and a second job applying the schema to a real
 PostgreSQL 16 ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)).
 
@@ -114,7 +114,7 @@ it, and what it blocks. Nothing here blocks the first ten outreach emails.
   historical figures.
 * **Blocks:** nothing. Genuinely optional.
 
-### 3. Supabase — hosted database · **blocks the scheduled run**
+### 3. Supabase — hosted database · **strongly recommended for the scheduled run**
 
 * **What it does:** somewhere for data to live that is not one laptop.
 * **Free plan enough?** Yes, including daily backups.
@@ -123,9 +123,11 @@ it, and what it blocks. Nothing here blocks the first ten outreach emails.
 * **Goes in:** `.env` as `DATABASE_URL=…`; GitHub secret `DATABASE_URL`.
 * **Test:** `python -m src.pipeline init-db`, then `check-config` shows
   `Database PostgreSQL`.
-* **Without it:** a local SQLite file, which is genuinely fine for months.
-* **Blocks:** the GitHub Actions Friday run, which has nowhere to persist
-  without it. Not needed while you run weekly by hand.
+* **Without it:** a local SQLite file, which is fine on your own computer.
+* **Blocks:** durable history for the GitHub Actions Friday run. Without it
+  the workflow carries the SQLite file in GitHub's cache, which is evicted
+  after 7 days unused, so one missed week silently restarts from an empty
+  database (docs/OPERATIONS.md §1). Not needed while you run weekly by hand.
 
 ### 4. Resend — email · **blocks delivery**
 
@@ -255,8 +257,10 @@ first real evidence. Three renewing customers is a business.
 
 ### Deliberately unproven
 
-* Live UKIPO retrieval has never run — this environment is blocked by IPO's
-  bot protection. HANDOFF.md §3.1 has the fallback, which takes two minutes.
+* A scheduled, unattended Friday fetch of the live journal on this branch has
+  not happened yet. The earlier "blocked by bot protection" finding was a
+  wrong URL; ipo.gov.uk has since served journals to automated clients
+  (HANDOFF.md §3.1, which also has the fallback).
 * The Stripe webhook has never seen a real Stripe event; it is tested against
   fixtures.
 * No email has been sent through Resend.

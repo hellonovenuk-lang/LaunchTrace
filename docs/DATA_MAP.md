@@ -46,9 +46,10 @@ Retention keys refer to `config/retention.json` → `classes.<key>`.
 | `prospect_state` | `generic_contact_email`, `named_contact`, `decision_maker_role`, `notes`, `suppression_reason` | Legitimate interests (B2B direct marketing; PECR corporate-subscriber position — confirm) | Operator research / replies | `prospect_contacts`: the four contact fields cleared [24] months after last interaction; row and opt-out flag kept; customers' prospects skipped | Sales CLI, outreach drafts (greeting uses `named_contact`), backups |
 | `prospect_suppressions` | `value` (email/domain/company), `company_name` | Legal obligation / legitimate interests | Opt-outs | **Indefinite; never touched** (insert-only) | Internal (blocks imports and drafts) |
 | `webhook_events` | `payload_summary` (Stripe ids; no card data) | Contract / legal obligation (payment audit) | Stripe | `webhook_events`: deleted after [24] months | Internal |
-| `brands` | None by design: no applicant name, only `applicant_key_hash` (sha256 of the normalised name); `company_name` (sole-trader risk); `region` only | Legitimate interests | Derived (`src/brands.py`) | Never touched (no personal data; a test asserts no name column) | Future public feed (company-level), backtests |
+| `brands` | None by design: no applicant name, only `applicant_key_hash` (sha256 of the normalised name); `company_name` (sole-trader risk); `region` only | Legitimate interests | Derived (`src/brands.py`) | Never touched (no personal data; a test asserts no name column) | Public feed and movers digest (company-level, confirmed companies only), backtests, rescans |
 | `observations` | None by design (values are dates, classes, company number, scores, web flags) | Legitimate interests | Derived | Never touched | Backtests, rescans |
-| `stage_changes` | None (stages; evidence holds journal and mark text) | Legitimate interests | Derived | Never touched | Rescans |
+| `stage_changes` | None (stages; evidence holds journal and mark text) | Legitimate interests | Derived (weekly run, rescan) | Never touched | Rescans, movers digest |
+| `outcomes` | None (backtest launch labels per brand and horizon; evidence lists observations) | Legitimate interests | Derived (`backtest label`) | Never touched | Backtest reports |
 
 The `applicant_key_hash` on `brands` is pseudonymous, not anonymous: anyone
 holding the applicant's name can recompute it. It is kept so a brand can be
@@ -60,6 +61,8 @@ recognised across weeks without storing the name.
 | --- | --- | --- | --- |
 | `data/cache/journals/`, `data/cache/opendata/` | Raw journals — **applicant names, incl. individuals** | `config/operations.json` → `cache_max_age_days` (30), pruned every weekly run | Re-downloadable public data |
 | `data/cache/` (Companies House API cache, bulk index) | Corporate fields only (no officers, PSCs, addresses of directors) | Own lifecycle (monthly index) | |
+| `data/cache/rdap/` | The IANA RDAP bootstrap file (no personal data) | Refreshed every 7 days | |
+| `data/cache/backtest_runs/` | Backtest run outputs (CSV, email, QA report), as `reports/runs/` | Not pruned; delete freely | |
 | `data/journals/`, `data/web_evidence/` (in git) | Recorded journals and web evidence used by tests/stability — **applicant names** | Kept (test fixtures) | Public data; see HUMAN_ACTIONS on committed files |
 | `data/local/launchtrace.sqlite` | The whole database (all of the above) | As the tables | Carried between workflow runs via the Actions cache (evicted after 7 days unused) |
 | `reports/runs/<journal>/` | `opportunities.csv`, `weekly_email.html`, `qa_report.json` | Gitignored; delete freely | Customer outputs contain no individual's name. The QA report names applicants only for rejected major brand owners (corporate). |
@@ -68,8 +71,10 @@ recognised across weeks without storing the name.
 | `reports/backups/` | Prospect state and suppression exports — **contact fields** | Gitignored; "do not keep a backup longer than the data in it" | Retention does not reach backups; owner deletes |
 | `reports/validation/` (in git) | Validation runs — `result.json`, `rejections.csv`, `4_week_summary.md` contain **applicant names, some of individuals** | In git | Owner decision (HUMAN_ACTIONS) |
 | `outreach/prospects_seed.csv` (in git) | Company research only; no personal fields by design | Kept | |
-| `public/` (public feed output, `src/feed`, other branch) | Company-level only by design | Owner decision | Whether publishing is within the LIA is open (HUMAN_ACTIONS). Must be added to `tests/test_no_individual_names.py` (`_feed_renderer`). |
+| `public/` (public feed output, `src/feed`; also served at `/feed/`) | Company-level only by design | Gitignored build output; owner decision once published | Whether publishing is within the LIA is open (HUMAN_ACTIONS). Covered by `tests/test_no_individual_names.py` (`_feed_renderer`). |
 | GitHub artifact `weekly-report-<n>` | `reports/runs/**` + `pipeline.log` | 60 days | Readable by anyone with repository read access |
+| GitHub artifact `public-feed-<n>` | The built public feed — company level only | 30 days | Same |
+| GitHub artifact `email-outbox-<n>` | `reports/outbox/` — **recipient addresses**, lead data (e.g. the movers digest) | 14 days | Same |
 | GitHub artifact `launchtrace-db-<n>` | The whole SQLite database — **all personal data above** | 14 days | Same |
 | GitHub artifact `backfill-<n>` | `reports/validation/**`, `reports/runs/**` — **applicant names in validation output** | 90 days | Same |
 | Logs (stdout, `pipeline.log`) | See below | With the artifact (60 days) / host log retention | |

@@ -27,23 +27,44 @@ Built, tested, and working right now with no external account of any kind.
 | **Web enrichment** | Search-provider abstraction over Tavily, Serper and Brave. Detects official website, contact page, marketplace and major-retailer presence, and launch signals |
 | **LaunchTrace Score** | Explainable 0–100 with plain-English reasons, calibrated so bands actually discriminate, capped where evidence is thin, and normalised for enrichment that did not run |
 | **Buying intent** | Nine supplier categories mapped per product group and adjusted by launch stage. Always phrased as inferred relevance, never as current purchasing |
-| **CSV export** | 26 sales-ready columns. Internal debug state deliberately excluded |
+| **CSV export** | 36 sales-ready columns (the last four are domain evidence, section "The structural upgrade" below). Internal debug state deliberately excluded |
 | **Email** | Weekly feed, welcome, sample and failure-alert templates, rendered independently of sending |
 | **QA report** | Full funnel, rejection reasons, major-brand detections, duplicate and volume checks, and cross-checks of the pipeline's own output |
 | **Fail-closed safety** | A run stops rather than delivering when retrieval fails, volume is implausible, enrichment broadly fails, scoring broadly fails, or the email will not render. One bad record is logged and skipped |
 | **Review mode** | `SEND_MODE=review` is the default. Nothing reaches a customer without explicit approval |
-| **Idempotency** | Journals are never processed twice, opportunities are updated rather than duplicated, and a delivery already made is never repeated |
+| **Idempotency** | A journal already processed is skipped before anything is downloaded or searched (`--force` to redo it), opportunities are updated rather than duplicated, and a delivery already made is never repeated |
+
+### The structural upgrade
+
+Added on the `structural-upgrade` branch, all with no credential of any kind.
+Each piece is described for the owner in README sections 22–27 and operated
+from [`docs/OPERATIONS.md`](docs/OPERATIONS.md).
+
+| | |
+| --- | --- |
+| **Persistent history** | `DATABASE_URL` (PostgreSQL) when set; otherwise the SQLite file, which the Friday workflow carries between runs in the Actions cache with an artefact backup. Schema changes are Alembic migrations, run by `init-db` |
+| **Brands across weeks** | `brands` (one row per brand or company, never the applicant's name), `observations` (append-only, dated facts, each marked safe or not for a backtest), `stage_changes`. Rules in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **Idempotent weekly + cost guard** | The second and third Friday attempts stop at "already processed" at no cost. Web searches are capped at 200 a run and 900 per rolling 30 days (`config/costs.json`); reaching the cap stops searching, never the run. Journal caches are pruned after 30 days |
+| **Domain layer** | Free RDAP, DNS and homepage checks of a brand's verified website (≤ 60 domains a run). Four indicators in `config/scoring.json` at **weight 0**: recorded, shown in the CSV, not scored |
+| **Public feed** | `build-feed` and the website's `/feed/` routes: top 5 confirmed companies per week, one week delayed, company level only. Built each Friday as an artefact; nothing is published automatically. [`docs/PUBLIC_FEED.md`](docs/PUBLIC_FEED.md) |
+| **Rescan and movers digest** | `rescan` re-checks brands first seen in the last 26 weeks (≤ 150 a run), records website and company stage changes, and prepares a weekly "brands that moved" email that stays in the outbox until you enable it. [`docs/RESCAN.md`](docs/RESCAN.md) |
+| **Retention** | `retention` (dry run) / `retention --apply`, from `config/retention.json`; applied every Friday with placeholder periods you must confirm. No output anywhere names an individual applicant |
+| **Backtest** | `backtest probe / ingest / label / report / run`: past journals scored point-in-time, outcomes labelled at +3/+6 months, precision and recall by band and indicator. First report in `reports/backtest/` — labels mature over the coming months. [`docs/BACKTEST.md`](docs/BACKTEST.md) |
+| **Stability harness** | `scripts/stability_snapshot.py` proves a change moved no lead; evidence in `reports/stability/` |
+
+Every judgement call is in [`DECISIONS.md`](DECISIONS.md); everything that
+needs a person is in [`HUMAN_ACTIONS.md`](HUMAN_ACTIONS.md).
 
 ### Everything else
 
-- **Database.** 14 tables, source data kept separate from derived data. PostgreSQL schema generated from the models and **verified against a real PostgreSQL 16**. Runs on local SQLite with zero setup
+- **Database.** 21 tables, source data kept separate from derived data. Alembic migrations, run upgrade → downgrade → upgrade on a real PostgreSQL 16 in CI. Runs on local SQLite with zero setup
 - **Website.** Landing page, sample-request form (honeypot, rate limit, disposable-domain rejection, IP stored only as a salted hash), self-service opt-out, legal pages, token-protected operator view, security headers and a content security policy
 - **Billing.** Stripe checkout, billing portal, cancellation, signature-verified webhooks with per-event idempotency, and the full subscription state machine. Runs in stub mode without a key so the whole flow is testable
-- **Operator CLI.** 20 commands covering runs, approval, sending, CSV regeneration, customers, suppression, errors and diagnostics
-- **Container.** Dockerfile **built and run in this session**: 369 MB, non-root, health-checked, serving the site
-- **Tests.** 531 tests, no test touching a live external API
+- **Operator CLI.** 23 commands covering runs, approval, sending, CSV regeneration, customers, suppression, errors, diagnostics, the rescan and digest, the public feed, retention and the backtest
+- **Container.** Dockerfile **built and run in the first build session** (369 MB then), non-root, health-checked, serving the site
+- **Tests.** 1,097 passed and 1 skipped (the skipped one needs a PostgreSQL server), no test touching the network — a guard blocks outbound sockets
 - **Quality gates.** `ruff check`, `ruff format --check` and `mypy src` all clean
-- **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and the historical sanity test, and a deploy workflow that is a build check until you opt in. **The tests workflow is green on GitHub** — lint, format, `mypy src`, 531 tests, the smoke test and the PostgreSQL migration, plus a second job applying the schema to a real PostgreSQL 16 ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152))
+- **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and the historical sanity test, and a deploy workflow that is a build check until you opt in. The tests workflow runs lint, format, `mypy src`, the suite, the smoke test, the migration freshness check, and Alembic upgrade → downgrade → upgrade on a real PostgreSQL 16. It was last confirmed green on GitHub before the structural upgrade, when the suite had 531 tests ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152))
 - **Documentation.** README written for a non-technical owner, plus privacy notice, terms, data-source attribution, legitimate interests assessment and a retention note — all labelled as drafts needing your review
 - **Prospecting.** 60 researched UK supplier companies with the reason each one fits, a defined schema, and three editable email templates. The research is in git; every live contact detail, reply and opt-out is in the database instead. **No code in this repository can send any of it**
 
@@ -127,7 +148,7 @@ detail of each one.
 | --- | --- |
 | **Provider** | Tavily (recommended), Serper, or Brave Search |
 | **URL** | <https://tavily.com/> · <https://serper.dev/> · <https://brave.com/search/api/> |
-| **Account** | Free tier. Tavily gives 1,000 searches/month; a weekly run uses under 150 |
+| **Account** | Free tier. Tavily gives 1,000 searches/month; a weekly run uses one or two per emerging candidate and is hard-capped at 200, with at most 900 in any 30 days (`config/costs.json` → `search_guard`) |
 | **Credential** | An API key |
 | **Where it goes** | `.env` as `SEARCH_PROVIDER=tavily` and `SEARCH_API_KEY=...`; GitHub secret `SEARCH_API_KEY` and variable `SEARCH_PROVIDER` |
 | **How to verify** | `python -m src.pipeline check-config` shows `Web enrichment  tavily` |
@@ -175,7 +196,7 @@ detail of each one.
 | **Without it** | The checkout button leads to a page explaining subscriptions are not open yet, rather than to a broken checkout. You can still add customers by hand and invoice manually |
 | **Cost** | 1.5% + 20p per transaction. Nothing until you are paid |
 
-### 2.5 Supabase — hosted database
+### 2.5 Supabase — hosted database (strongly recommended)
 
 | | |
 | --- | --- |
@@ -184,8 +205,8 @@ detail of each one.
 | **Account** | Free tier. Create a project in the **London** region |
 | **Credential** | The connection string from **Project Settings → Database → Connection string → URI**, with `[YOUR-PASSWORD]` replaced |
 | **Where it goes** | `.env` as `DATABASE_URL=postgresql://...`; GitHub secret `DATABASE_URL` |
-| **How to verify** | `python -m src.pipeline init-db` then `check-config` shows `Database  PostgreSQL` |
-| **Without it** | A local SQLite file, which is genuinely fine for months. **You need this before the GitHub Actions run is useful**, because a scheduled run has nowhere else to persist |
+| **How to verify** | `python -m src.pipeline init-db` (runs the Alembic migrations) then `check-config` shows `Database  PostgreSQL` |
+| **Without it** | On your own computer, a local SQLite file, which is fine. On GitHub, the Friday workflow carries that file between runs in the Actions cache and uploads a 14-day artefact copy. The cache is a fallback, not storage: GitHub evicts an entry unused for 7 days (or when the repository passes 10 GB of cache), so one missed week silently restarts from an empty database — journals look unprocessed, every applicant looks new, the monthly search budget resets, and brand history, observations and rescan state are lost. The artefact is for manual recovery only. The website also cannot read the runner's file, so its `/feed` routes need the shared database. Details: [`docs/OPERATIONS.md`](docs/OPERATIONS.md) §1 |
 | **Cost** | £0 |
 
 ### 2.6 An LLM — optional accuracy
@@ -215,48 +236,52 @@ detail of each one.
 
 ## 3. BLOCKED
 
-One thing could not be completed in this environment, and one is a judgement
-call that is yours to make.
+One question about live retrieval has been mostly answered since this was
+first written, and one is a judgement call that is yours to make.
 
-### 3.1 Live UKIPO retrieval could not be exercised from this sandbox
+### 3.1 Live UKIPO retrieval: now reachable, with one thing left to watch
 
-**What happened.** Every request to `ipo.gov.uk` from this build environment
-returned **HTTP 403 with a bot-protection captcha page**, on every path and
-with every user agent tried, including through a real headless browser. Other
-government hosts (`gov.uk`, `data.gov.uk`, `assets.publishing.service.gov.uk`,
-`download.companieshouse.gov.uk`) all worked normally, so this is IPO's own
-protection reacting to a datacentre IP range, not a network fault and not a bug
-in the code.
+**What happened first.** In the first build sessions every automated request
+to `ipo.gov.uk` returned **HTTP 403**, and it was read as bot protection
+blocking a datacentre network. That diagnosis was wrong. The code was asking
+for the wrong file: the path was `/types/tm/t-os/t-tmj/tm-journals/` instead of
+`/t-tmj/tm-journals/`, and the IPO's real file name, `jnl.xml`, was not among
+the names it tried — and ipo.gov.uk answers **403, not 404, for a file that
+does not exist**. The correct URL was recorded when the live 2026-036 journal
+was added (commit `767c27d`), fixed in the code (`d194dd9`), and the
+browser-based workaround removed once a plain download worked (`59a08da`,
+whose message records journal 2026-037 being fetched unattended on a GitHub
+runner — 3,973 records with goods text).
 
-**What this means.** The live ingest path (`JOURNAL_SOURCE=ukipo_http`) is fully
-implemented — journal-number arithmetic verified against the IPO's own URL
-scheme, index-page link discovery, ten fallback filename patterns, streaming
-download, retry with backoff, caching and checksums — but it has **never been
-run against the live endpoint**. It may work first time from your machine or
-from a GitHub Actions runner. It may need the filename pattern adjusting.
+**What Phase 3 showed.** On 2026-10-09 `ipo.gov.uk` was reachable from this
+sandbox with no captcha. The backtest probe
+([`reports/backtest/availability.json`](reports/backtest/availability.json))
+found journals served from **2025-040** (published 2025-10-03) to **2026-041**,
+a rolling archive of about 53 weeks; journals 2025-040 and 2025-041 were
+downloaded in full (233 MB and 200 MB) and run through the pipeline.
 
-**What was done instead.** The validation used the **official IPO Open Data
-release**, which is the same authority publishing the same records under the
-same licence, and which is reachable. That is real UKIPO data, not a
-substitute.
+**What is still not proven.** A *scheduled* Friday run of this branch fetching
+the week's journal at 13:00 UTC without anyone watching. Nothing suggests it
+will fail, but it has not happened yet, and the IPO's bot policy is theirs to
+change.
 
-**What you should do.** On the first Friday, run:
+**What you should do.** On the first Friday, check the run, or run:
 
 ```bash
 python -m src.pipeline weekly
 ```
 
 - If it works, you are done — nothing further is needed.
-- If it returns `journal_retrieval_failed` with a 403, download the journal by
-  hand from <https://www.ipo.gov.uk/t-tmj.htm>, save it as
-  `data/journals/2026-036.xml`, and run
-  `JOURNAL_SOURCE=local python -m src.pipeline weekly --journal 2026-036`.
-  Then send me — or whoever picks this up next — the actual file, and the
-  parser can be tuned to it in minutes. `python -m src.pipeline probe-journal
-  <file>` prints exactly what is needed.
+- If it returns `journal_retrieval_failed` with a 403, first check the journal
+  number (a 403 usually means "no such file"). If the host really is blocking
+  you, download the journal by hand from <https://www.ipo.gov.uk/t-tmj.htm>,
+  save it as `data/journals/<journal>.xml`, and run
+  `JOURNAL_SOURCE=local python -m src.pipeline weekly --journal <journal>`.
+  `python -m src.pipeline probe-journal <file>` diagnoses an unfamiliar file.
 
-The system was built so this cannot stop you: three working sources, and a
-fail-closed run that tells you what it tried.
+The system was built so this cannot stop you: three working sources (live
+UKIPO, IPO Open Data, a local file), and a fail-closed run that tells you what
+it tried.
 
 ### 3.2 The historical result is marginal, and the real test has not been run
 
@@ -288,6 +313,13 @@ one live Friday, and read that week's numbers. Only that run answers what the
 product is worth, because only that run scores brands on what is knowable about
 them in the week they are published.
 
+**Since then:** a current-data precision audit of journals 2026-036 and
+2026-037 ([`reports/validation/CURRENT_PRECISION_AUDIT.md`](reports/validation/CURRENT_PRECISION_AUDIT.md))
+measured useful precision at **67.6%** against a desired ~80%. It used current
+journals, goods text and a full Companies House snapshot, but web evidence
+gathered by hand and replayed, not a live Tavily run. One live Friday with
+Tavily connected is still the outstanding test.
+
 The commercial test follows it and is not technical: send that week's
 opportunities to five real suppliers and ask whether these are companies they
 would want to reach. If five suppliers say yes to 5 brands a week, you have a
@@ -300,6 +332,14 @@ build.
 
 In order. Steps 1–4 take about 30 minutes and get you a real sample you can
 show to a supplier. Everything after that is optional until someone says yes.
+
+**The structural upgrade added owner actions of its own** — the `DATABASE_URL`
+secret, where to host the public feed and whether to publish it at all,
+confirming every retention period (they are enforced from the first Friday
+after merge), reviewing the movers digest before enabling it, and where to run
+the backtest. [`HUMAN_ACTIONS.md`](HUMAN_ACTIONS.md) is the complete list, in
+order, with what each one unlocks; the steps below cover only getting to a
+first customer and going live.
 
 ### Get a sample you can sell with (about 30 minutes)
 
@@ -412,7 +452,9 @@ these ordered by what each one unblocks.
 21. Project Settings → Database → Connection string → URI. Copy it, replace
     `[YOUR-PASSWORD]` with your password, and put it in `.env` as
     `DATABASE_URL=`.
-22. Run `python -m src.pipeline init-db`.
+22. Run `python -m src.pipeline init-db`. It runs the database migrations and
+    is safe to repeat. (Do this earlier — before the first scheduled Friday —
+    if you turn the schedule on first: see section 2.5.)
 23. **Create a Resend account** at <https://resend.com/>. Add your domain and
     add the DNS records it gives you wherever your domain is registered.
 24. Resend → API Keys → Create API Key, sending access. Copy it into `.env` as
@@ -438,8 +480,10 @@ these ordered by what each one unblocks.
 
 33. In this repository on GitHub: **Settings → Secrets and variables →
     Actions**.
-34. Under **Secrets**, add `DATABASE_URL`, `SEARCH_API_KEY`, `RESEND_API_KEY`
-    (and `LLM_API_KEY` if you added one), each with the value from your `.env`.
+34. Under **Secrets**, add `DATABASE_URL` (strongly recommended — without it
+    the run's history lives only in GitHub's 7-day cache), `SEARCH_API_KEY`,
+    `RESEND_API_KEY` (and `LLM_API_KEY` if you added one), each with the value
+    from your `.env`.
 35. Under **Variables**, add `SEND_MODE` = `review`, `SITE_URL`,
     `ADMIN_EMAIL`, `SEARCH_PROVIDER` = `tavily`, `EMAIL_FROM`.
 36. **Actions → Weekly pipeline → Run workflow** to test it now rather than
@@ -465,37 +509,31 @@ these ordered by what each one unblocks.
 
 ## 5. Publishing state
 
-All work is committed on the branch
-`claude/launchrace-commercial-readiness-ungyuf` and pushed to
-<https://github.com/hellonovenuk-lang/LaunchTrace>.
+`main` holds the pipeline and the commercial layer as they stood before the
+structural upgrade (commit `81f511e`). The structural upgrade is integrated on
+the local branch `structural-upgrade` and pushed to
+`claude/launchtrace-structural-upgrade-8umgor` on
+<https://github.com/hellonovenuk-lang/LaunchTrace> (DECISIONS.md D-001); it
+has **not** been merged into `main`. Whether to rename that remote branch is
+in HUMAN_ACTIONS.md.
 
-That branch contains the full history: the original pipeline build (previously
-on `claude/launchtrace-food-mvp-7h7bc6`) plus this commercial-readiness pass on
-top of it. **`main` is still an empty initial commit**, so neither has been
-merged yet.
-
-If a push had failed, the commits would still be here locally and the remaining
-action would have been:
-
-```bash
-git push -u origin claude/launchrace-commercial-readiness-ungyuf
-```
-
-The visible effect of the push: the branch appears on GitHub with the full
-implementation, and the four workflows become available under the **Actions**
-tab. **The Friday schedule only fires from the default branch**, so merging
-this branch into `main` is what actually starts the weekly run.
+**The Friday schedule only fires from the default branch**, so until the
+upgrade is merged, the scheduled run is the pre-upgrade workflow (no rescan,
+retention, feed build or SQLite carry-over). Before merging, decide the
+retention periods: the merged workflow applies them on its first run
+(HUMAN_ACTIONS.md, Phase 2 — compliance).
 
 ### One-off commands after pulling this branch
 
 ```bash
 pip install -r requirements-dev.txt
-python -m src.pipeline init-db      # adds new columns to an existing database
+python -m src.pipeline init-db      # runs the Alembic migrations
 ```
 
-`init-db` is additive: it creates missing tables and adds missing columns
-without dropping anything, so an existing database keeps its customers. Run it
-once after updating.
+`init-db` never drops anything. On a database created before Alembic it adds
+whatever is missing to reach the baseline, records it, then applies the new
+migrations (`brands`, `observations`, `stage_changes`, `outcomes`), so an
+existing database keeps its customers. Run it once after updating.
 
 ## 6. Ideas deliberately not built
 
