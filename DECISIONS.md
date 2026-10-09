@@ -659,3 +659,26 @@ returned to a user. RDAP (LOW-6): domain answers are streamed and abandoned
 past `rdap.max_response_bytes` (256 KB, error `rdap_response_too_large`) and
 the IANA bootstrap past `rdap.bootstrap_max_bytes` (1 MB, falls back to the
 configured servers) before any JSON is parsed.
+
+**D-702 — A lost Actions-cache database stops the run instead of starting
+empty.** Without `DATABASE_URL` the weekly workflow carries the SQLite file in
+the Actions cache, which GitHub evicts after 7 days unused or when the
+repository's cache is full; a miss used to start an empty database silently
+(history, "already processed" and the month's search spend gone, and the empty
+file then cached as the new truth). A new step `dbrecover` runs after the cache
+restore: if the file is missing it downloads the newest unexpired
+`launchtrace-db-*` artifact (any run of the workflow, found through the REST
+artifacts API with `gh` and the job's `GITHUB_TOKEN`; the job now declares
+`permissions: contents: read, actions: read`). If there is none it continues
+only when (a) no earlier completed run of the workflow exists (first ever run)
+or (b) a person dispatched the run with the new `fresh_database` input; both
+write `data/local/.fresh-database`, a `::warning::` and a "History lost"
+section to the job summary. Otherwise -- including when the run history cannot
+be read -- the step fails with `::error::` and every later step that writes or
+caches the database (`rescan`, `retention`, `build-feed`, checkpoint, cache
+save, backup artifact) is skipped, so an empty database is never cached over
+the real one. The newest artifact is chosen whatever the run's conclusion,
+matching the cache, which is also saved by failed runs. LOW-6: workflow inputs
+(`journal`, `send`, `force`, `fresh_database`) now reach scripts only as
+environment variables, and the weekly arguments are a bash array, so a crafted
+input can neither run shell nor add arguments.

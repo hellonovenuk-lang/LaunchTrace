@@ -39,6 +39,11 @@ on:
         type: boolean
         default: false
         required: false
+      fresh_database:
+        description: "Only without DATABASE_URL: if neither the cache nor a backup artifact has the SQLite database, start an empty one anyway (history, 'already processed' and the search budget are lost)"
+        type: boolean
+        default: false
+        required: false
 
 concurrency:
   group: weekly-pipeline
@@ -48,6 +53,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # 'actions: read' lets the job find and download the last database backup
+    # artifact when the Actions cache has lost the SQLite file.
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
 
@@ -109,6 +119,70 @@ jobs:
           key: lt-db-${{ github.run_id }}
           restore-keys: lt-db-
 
+      # Cache entries are evicted after 7 days unused (or when the repository's
+      # cache is full). Losing the file must never be silent: try the newest
+      # 'launchtrace-db-*' backup artifact; if there is none, carry on only on
+      # the workflow's first ever run or when a person asked for a fresh
+      # database, and say so in the job summary. Otherwise stop here, before
+      # anything can write (and cache) an empty database. DECISIONS.md D-702.
+      - name: Recover the database if the cache missed
+        if: steps.db.outputs.hosted != 'true'
+        id: dbrecover
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FRESH_DATABASE: ${{ github.event.inputs.fresh_database }}
+          EVENT_NAME: ${{ github.event_name }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          DB=data/local/launchtrace.sqlite
+          if [ -s "$DB" ]; then
+            echo "source=cache" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::warning::The SQLite database was not in the Actions cache; looking for the latest backup artifact."
+          mkdir -p data/local
+          ARTIFACT=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.name | startswith("launchtrace-db-")) | select(.expired | not)] | sort_by(.created_at) | last | select(. != null) | "\(.workflow_run.id) \(.name)"' 2>/dev/null || true)
+          if [ -n "$ARTIFACT" ]; then
+            read -r RUN NAME <<< "$ARTIFACT"
+            TMP=$(mktemp -d)
+            if gh run download "$RUN" --repo "$GITHUB_REPOSITORY" --name "$NAME" --dir "$TMP" \
+               && [ -s "$TMP/launchtrace.sqlite" ]; then
+              mv "$TMP/launchtrace.sqlite" "$DB"
+              echo "source=artifact" >> "$GITHUB_OUTPUT"
+              echo "::warning::Restored the database from artifact $NAME (run $RUN). Anything written after that backup is lost."
+              {
+                echo "### Database restored from a backup artifact"
+                echo "The Actions cache had no database; restored \`$NAME\` from run $RUN."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          fi
+          PREVIOUS=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow weekly-pipeline.yml \
+            --limit 20 --json databaseId,status \
+            --jq "[.[] | select(.databaseId != ${CURRENT_RUN_ID}) | select(.status == \"completed\")] | length" \
+            2>/dev/null || echo "unknown")
+          if [ "$PREVIOUS" = "0" ]; then
+            REASON="this is the workflow's first run"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$FRESH_DATABASE" = "true" ]; then
+            REASON="a person asked for a fresh database (fresh_database input)"
+          else
+            echo "::error::The SQLite database is in neither the Actions cache nor a backup artifact, and earlier runs exist ($PREVIOUS). Refusing to start from an empty database: history, 'already processed' and the monthly search budget would be lost silently. Set DATABASE_URL, restore data/local/launchtrace.sqlite, or re-run by hand with fresh_database=true."
+            {
+              echo "### Run stopped: database history not found"
+              echo "Neither the Actions cache nor a \`launchtrace-db-*\` artifact had the SQLite database."
+              echo "Re-run by hand with **fresh_database = true** to start an empty one, or set \`DATABASE_URL\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          touch data/local/.fresh-database
+          echo "source=fresh" >> "$GITHUB_OUTPUT"
+          echo "::warning::Starting from an EMPTY database: $REASON."
+          {
+            echo "### History lost: this run started from an empty database"
+            echo "Reason: $REASON. Earlier journals, known applicants and this month's search spend are not known to this run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run the weekly pipeline
         id: pipeline
         env:
@@ -127,6 +201,13 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
           JOURNAL_SOURCE: ${{ github.event.inputs.source || 'ukipo_http' }}
+          # Inputs reach the script as environment variables, never pasted into
+          # it, so a crafted input cannot inject shell (D-702).
+          JOURNAL: ${{ github.event.inputs.journal }}
+          SEND: ${{ github.event.inputs.send }}
+          FORCE: ${{ github.event.inputs.force }}
+          EVENT_NAME: ${{ github.event_name }}
+          DB_SOURCE: ${{ steps.dbrecover.outputs.source }}
           # Optional repository variable; blank means config/costs.json decides.
           SEARCH_MAX_CALLS_PER_RUN: ${{ vars.SEARCH_MAX_CALLS_PER_RUN }}
           # Domain layer (free RDAP / DNS / homepage checks). Optional variables;
@@ -138,19 +219,22 @@ jobs:
           # Say what this run actually has before it runs, so a degraded result
           # is never mistaken for a finding about the signal.
           python -m src.pipeline check-config
-          ARGS=""
-          if [ -n "${{ github.event.inputs.journal }}" ]; then
-            ARGS="--journal ${{ github.event.inputs.journal }}"
+          if [ "$DB_SOURCE" = "fresh" ]; then
+            echo "::warning::This weekly run starts from an empty database (see the job summary)."
           fi
-          if [ "${{ github.event.inputs.send }}" = "true" ]; then
-            ARGS="$ARGS --send"
+          ARGS=()
+          if [ -n "$JOURNAL" ]; then
+            ARGS+=(--journal "$JOURNAL")
+          fi
+          if [ "$SEND" = "true" ]; then
+            ARGS+=(--send)
           fi
           # Only a person can force a re-run. Scheduled runs never do, so the
           # later Friday attempts stop at 'already processed' at no cost.
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force }}" = "true" ]; then
-            ARGS="$ARGS --force"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$FORCE" = "true" ]; then
+            ARGS+=(--force)
           fi
-          python -m src.pipeline weekly $ARGS | tee pipeline.log
+          python -m src.pipeline weekly "${ARGS[@]}" | tee pipeline.log
         continue-on-error: true
 
       # Re-check recently seen brands (config/rescan.json, docs/RESCAN.md), record
@@ -160,7 +244,7 @@ jobs:
       # idempotent per week. Never fails the job. The digest only goes to the
       # outbox until SEND_MODE=automatic AND digest.send_enabled is true.
       - name: Re-scan recent brands
-        if: always()
+        if: always() && steps.dbrecover.outcome != 'failure'
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -184,7 +268,7 @@ jobs:
       # Housekeeping only: it never runs inside a pipeline run and never fails the job.
       # Runs before the feed build so the feed is built from retained data only.
       - name: Apply data retention
-        if: always()
+        if: always() && steps.dbrecover.outcome != 'failure'
         continue-on-error: true
         env:
           ENVIRONMENT: production
@@ -197,7 +281,7 @@ jobs:
       # fails the run. Publishing the artifact (e.g. to GitHub Pages) is a
       # human decision: see docs/PUBLIC_FEED.md.
       - name: Build the public feed
-        if: always()
+        if: always() && steps.dbrecover.outcome != 'failure'
         continue-on-error: true
         env:
           ENVIRONMENT: production
@@ -219,14 +303,14 @@ jobs:
 
       # Fold any write-ahead log into the database file so the cache holds all of it.
       - name: Checkpoint the local SQLite database
-        if: always() && steps.db.outputs.hosted != 'true'
+        if: always() && steps.db.outputs.hosted != 'true' && steps.dbrecover.outcome != 'failure'
         run: |
           if [ -f data/local/launchtrace.sqlite ]; then
             python -c "import sqlite3; c = sqlite3.connect('data/local/launchtrace.sqlite'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"
           fi
 
       - name: Save the local SQLite database
-        if: always() && steps.db.outputs.hosted != 'true'
+        if: always() && steps.db.outputs.hosted != 'true' && steps.dbrecover.outcome != 'failure'
         uses: actions/cache/save@v4
         with:
           path: data/local/launchtrace.sqlite
@@ -234,7 +318,7 @@ jobs:
 
       # Cache entries are evicted after 7 days unused, so keep a copy as an artifact too.
       - name: Back up the local SQLite database
-        if: always() && steps.db.outputs.hosted != 'true'
+        if: always() && steps.db.outputs.hosted != 'true' && steps.dbrecover.outcome != 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: launchtrace-db-${{ github.run_number }}
