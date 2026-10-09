@@ -12,6 +12,14 @@ House, researches how established the brand already is, scores the opportunity,
 works out what kind of supplier that brand is likely to need, and sends
 subscribers an email and a CSV.
 
+It also remembers. Every brand it has seen is kept as one record across weeks,
+with a dated history of what was observed about it. After the weekly run it
+re-checks recent brands (has the holding page become a shop? has the company
+filed trading accounts?) and prepares a short "brands that moved" digest,
+builds a delayed public sample feed, and applies the data-retention rules. A
+backtest measures how well the score would have ranked past filings, using
+only what was knowable at the time.
+
 **LaunchTrace is not** trade mark legal advice, a trade mark watching service, a
 trade mark database, or a CRM. It is a commercial signal, and it says so
 everywhere it can be misread.
@@ -20,11 +28,14 @@ everywhere it can be misread.
 
 | | |
 | --- | --- |
-| `python -m src.pipeline` | **The product.** Ingest a journal, score it, deliver the feed. Sections 4–21 below. |
-| `python -m src.admin` | **The business.** Prospects, outreach, samples, customers, feedback, cost. Section 22. |
+| `python -m src.pipeline` | **The product.** Ingest a journal, score it, deliver the feed, follow brands afterwards. Sections 4–27 below. |
+| `python -m src.admin` | **The business.** Prospects, outreach, samples, customers, feedback, cost. Section 28. |
 
 Both print `--help`. If you are here to get a customer rather than to run a
 pipeline, start at [`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md).
+If you run the machine week to week, keep
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md) open: database, the Friday
+workflow, re-runs, the cost guard and the external-call budget.
 
 ---
 
@@ -51,7 +62,13 @@ pipeline, start at [`FIRST_CUSTOMER_PLAYBOOK.md`](FIRST_CUSTOMER_PLAYBOOK.md).
 19. [When something goes wrong](#19-when-something-goes-wrong)
 20. [Adding another product category later](#20-adding-another-product-category-later)
 21. [What it costs to run](#21-what-it-costs-to-run)
-22. [Running the business: prospects, outreach and customers](#22-running-the-business-prospects-outreach-and-customers)
+22. [Following brands across weeks](#22-following-brands-across-weeks)
+23. [The domain layer](#23-the-domain-layer)
+24. [Re-scanning brands and the movers digest](#24-re-scanning-brands-and-the-movers-digest)
+25. [The public feed](#25-the-public-feed)
+26. [Data retention](#26-data-retention)
+27. [Backtesting the score](#27-backtesting-the-score)
+28. [Running the business: prospects, outreach and customers](#28-running-the-business-prospects-outreach-and-customers)
 
 ---
 
@@ -69,14 +86,27 @@ Each week, in order:
    that match is.
 5. **Research.** For the survivors, look for the brand's website, whether it is
    selling yet, and whether it is already in the supermarkets.
-6. **Score.** Produce a 0–100 LaunchTrace Score with plain-English reasons.
-7. **Map.** Work out which supplier categories a brand at that stage typically
+6. **Check the domain.** For a brand whose website was verified, look up when
+   the domain was registered, whether it has DNS and email records, and what
+   its homepage is (holding page, site, shop). Free, and recorded only — it
+   does not move the score yet (section 23).
+7. **Score.** Produce a 0–100 LaunchTrace Score with plain-English reasons.
+8. **Map.** Work out which supplier categories a brand at that stage typically
    needs.
-8. **Deliver.** Write a CSV, render the email, produce a QA report — and, in
-   review mode, wait for you to approve it before anything is sent.
+9. **Remember.** File every scored lead under its brand, with a dated record
+   of what was seen (section 22).
+10. **Deliver.** Write a CSV, render the email, produce a QA report — and, in
+    review mode, wait for you to approve it before anything is sent.
 
 Each stage is deliberately cheaper than the next, so the expensive research
-only ever runs against records that already earned it.
+only ever runs against records that already earned it, and a hard cap stops
+web searches before they can exceed the monthly allowance (section 21).
+
+After the weekly run, the Friday workflow also re-checks recent brands and
+prepares the movers digest (section 24), applies data retention (section 26)
+and builds the public feed (section 25). A journal that has already been
+processed is not processed again, so the second and third Friday attempts cost
+nothing.
 
 ## 2. How the pieces fit together
 
@@ -85,23 +115,35 @@ src/
   ingest/      getting the journal (live UKIPO, IPO Open Data, local file, fixtures)
   parse/       reading journal XML and Open Data into records
   classify/    the packaged-food filter, and the optional LLM classifier
-  enrich/      Companies House matching, and web research
+  enrich/      Companies House matching, web research, the search cost guard
+    domain/    RDAP / DNS / homepage checks of a verified website
   score/       the LaunchTrace Score, launch stage, supplier buying intent
   deliver/     CSV, email templates, the internal QA report
+  brands.py    one record per brand across weeks, and its observations
+  rescan/      re-checking recent brands, change detection, the movers digest
+  feed/        the public weekly feed (static build and /feed routes)
+  backtest/    availability probe, past-journal ingest, point-in-time scoring,
+               outcome labels, the precision/recall report
+  retention.py data-retention enforcement
+  privacy.py   the one place that decides how a lead's owner is named
   billing/     Stripe subscriptions and webhooks
-  db/          database tables and persistence
+  db/          database tables, and the Alembic migrations (db/alembic/)
   web/         the website, sample form and operator view
   pipeline.py  the command line
 config/        all the business rules, as JSON you can edit
-data/journals/ four real UKIPO journal weeks (January 2018), for the historical
-               sanity test
-migrations/    the PostgreSQL schema
-reports/       everything the pipeline produces
+data/journals/ real UKIPO journals: four January 2018 weeks (historical sanity
+               test) and two 2026 weeks
+migrations/    0001_initial.sql: the full schema as SQL, for pasting into a
+               *new* Supabase database (Alembic is the real migration tool)
+reports/       everything the pipeline produces; reports/backtest/ and
+               reports/stability/ are committed evidence
+scripts/       the stability snapshot and other maintenance scripts
 tests/         the test suite
 outreach/      your own prospect *research* and email templates (nothing sends).
                Live contacts, replies, dates and opt-outs are in the database,
                not here
-docs/          privacy, terms, attribution, retention, legitimate interests
+docs/          operations, architecture, the feed, rescan, backtest, privacy,
+               terms, attribution, retention, data map, legitimate interests
 ```
 
 The project is installed rather than picked up from whichever directory you
@@ -121,13 +163,49 @@ edit the JSON. You do not need to touch Python.
 | `config/buying_intent.json` | Which suppliers each product category needs |
 | `config/customer_plans.json` | Plans, prices and recipient limits |
 | `config/validation_bands.json` | The volume bands and safety guardrails |
+| `config/costs.json` | Vendor unit costs, and the search cost guard (`search_guard`) |
+| `config/signals.json` | Every observation a brand can have, and whether it is safe to use in a backtest |
+| `config/domain_layer.json` | Which domain checks run, their limits, platform and holding-page fingerprints |
+| `config/rescan.json` | Which brands are re-checked, caps, the stage ladders, the movers digest |
+| `config/public_feed.json` | How many brands the public feed shows, after what delay |
+| `config/retention.json` | How long each kind of data is kept (every period is a placeholder for you to confirm) |
+| `config/backtest.json` | Backtest rules: the point-in-time policy, outcome labels, report thresholds |
+| `config/operations.json` | Housekeeping: how long downloaded journals are cached |
+
+The rest tune finer judgements: `commercial_mode` (product business or
+hospitality/service), `web_verification` (does a website really belong to the
+applicant), `supplier_profiles` (which leads suit which supplier) and
+`icp_scoring` (which prospects to approach first). Each file starts with a
+description of what it controls.
+
+### Every command
+
+| Command | What it does |
+| --- | --- |
+| `weekly` | Process the latest (or a given) journal. Skips a journal already processed unless `--force` |
+| `backfill --weeks N` | Process several past journals |
+| `smoke-test` | The whole pipeline on built-in test data |
+| `validate --weeks 4` | The January 2018 historical sanity test |
+| `status`, `errors`, `opportunities`, `customers` | Look at what is stored |
+| `approve`, `send`, `regenerate-csv` | Review-mode delivery |
+| `add-customer`, `suppress` | Customers and removal requests |
+| `fetch-open-data`, `build-company-index`, `probe-journal` | Data sources and diagnosis |
+| `init-db`, `check-config` | Database setup and what is connected |
+| `rescan`, `movers-digest` | Re-check recent brands; the "brands that moved" email (section 24) |
+| `build-feed` | Write the public feed (section 25) |
+| `retention` | Apply the retention rules; a dry run unless `--apply` (section 26) |
+| `backtest probe / ingest / label / report / run` | Measure the score on past journals (section 27) |
 
 ### Continuous integration
 
-`.github/workflows/tests.yml` runs on every push and is **green on GitHub**:
-lint, format check, `mypy src`, 531 tests, the end-to-end smoke test, a check
-that `migrations/0001_initial.sql` still matches the models, and a second job
-that applies that schema to a real PostgreSQL 16
+`.github/workflows/tests.yml` runs on every push: lint, format check,
+`mypy src`, the test suite (1,097 passed and 1 skipped locally on the
+structural-upgrade branch; the skipped test needs a PostgreSQL server), the
+end-to-end smoke test, a check that `migrations/0001_initial.sql` still
+matches the models, and a second job that runs the Alembic migrations up, down
+and up again on a real PostgreSQL 16 and applies the generated SQL to a second
+database. The workflow was last confirmed green on GitHub before the
+structural upgrade, when the suite had 531 tests
 ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152)).
 
 ## 3. Setting it up on your computer
@@ -161,7 +239,9 @@ pip install -r requirements-dev.txt
 # 5. Create your settings file
 cp .env.example .env
 
-# 6. Create the database (a local file, no server needed)
+# 6. Create the database (a local file, data/local/launchtrace.sqlite,
+#    no server needed). Safe to run again at any time: it brings the
+#    database up to date and never deletes anything.
 python -m src.pipeline init-db
 ```
 
@@ -209,6 +289,15 @@ python -m src.pipeline weekly --date 2026-09-04
 ```
 
 Results go to `reports/runs/<journal number>/`.
+
+**A journal is only processed once.** If the database says that journal has
+already been processed, `weekly` prints one line and stops before downloading
+or searching anything. To process it again on purpose (it spends search calls
+again):
+
+```bash
+python -m src.pipeline weekly --journal 2026-036 --force
+```
 
 **If the live UKIPO download fails**, you have two fallbacks:
 
@@ -344,8 +433,17 @@ To confirm it worked: `python -m src.pipeline check-config` should show
 
 ## 10. Connecting a database (Supabase)
 
-LaunchTrace uses a local file database by default, which is fine for months.
-When you want a hosted one:
+LaunchTrace uses a local file database by default, which is fine on your own
+computer. **For the scheduled Friday run on GitHub, a hosted database is
+strongly recommended.** LaunchTrace now keeps history that matters week to
+week — which journals are done, every brand and what was seen about it, the
+monthly search allowance — and without `DATABASE_URL` the workflow can only
+carry the SQLite file between runs in GitHub's cache, which GitHub deletes
+after 7 days without use. A missed week means starting again from an empty
+database. [`docs/OPERATIONS.md`](docs/OPERATIONS.md) explains the fallback and
+its limits.
+
+To set one up:
 
 1. Go to <https://supabase.com/> and create a free account
 2. **New project**. Name it "launchtrace", pick the London region, and set a
@@ -360,10 +458,16 @@ When you want a hosted one:
 python -m src.pipeline init-db
 ```
 
-Or paste `migrations/0001_initial.sql` into the Supabase SQL editor and run it.
+`init-db` runs the database migrations (Alembic) and is the one command to
+remember: on a new database it creates every table, on an existing one it
+adds whatever is missing, and it never drops anything. Run it again after
+pulling a new version. (Pasting `migrations/0001_initial.sql` into the
+Supabase SQL editor also works, but only for a **new, empty** database; run
+`init-db` afterwards and it recognises the result.)
 
 To confirm: `python -m src.pipeline check-config` should show
-`Database  PostgreSQL`.
+`Database  PostgreSQL`. Then add the same connection string as the GitHub
+secret `DATABASE_URL` (section 16).
 
 ## 11. Connecting Resend for email
 
@@ -437,8 +541,11 @@ capped below the HIGH band — which is why the January 2018 sanity test shows 0
 HIGH. Connecting it and then running one **current** week is the decisive
 product test; connecting it and re-running 2018 is not.
 
-Any one of these works. Free tiers are ample — a weekly run makes at most a few
-hundred lookups.
+Any one of these works. Free tiers are ample: a weekly run makes one or two
+searches per emerging candidate, and a built-in guard stops at 200 searches
+per run and 900 in any 30 days, inside Tavily's 1,000 a month. If the guard is
+reached, the rest of that week's candidates are scored as if search were not
+connected and the run still completes (`config/costs.json` → `search_guard`).
 
 | Provider | Where | Free tier |
 | --- | --- | --- |
@@ -511,7 +618,7 @@ Under **Secrets** → **New repository secret**, add each one you have:
 
 | Secret | Value |
 | --- | --- |
-| `DATABASE_URL` | Your Supabase connection string |
+| `DATABASE_URL` | Your Supabase connection string — strongly recommended (section 10) |
 | `COMPANIES_HOUSE_API_KEY` | Only if you use the API rather than the bulk index |
 | `SEARCH_API_KEY` | Your search provider key |
 | `LLM_API_KEY` | Your LLM key, if using one |
@@ -528,6 +635,15 @@ Under **Variables** → **New repository variable**:
 | `LLM_PROVIDER` | `anthropic`, `openai` or `none` |
 | `EMAIL_FROM` | `LaunchTrace <feed@launchtrace.co.uk>` |
 
+Optional variables, all with sensible defaults when left unset:
+
+| Variable | Value |
+| --- | --- |
+| `LLM_MODEL` | Defaults to `claude-haiku-4-5-20251001` |
+| `SEARCH_MAX_CALLS_PER_RUN` | Overrides the 200-search per-run cap in `config/costs.json` |
+| `DOMAIN_LAYER_ENABLED` | `false` switches the domain checks off (default on) |
+| `DOMAIN_USER_AGENT` | The user agent for domain checks; worth adding a contact address once you have a monitored mailbox |
+
 **Secrets are hidden; variables are visible. Never put a key in a variable.**
 
 ## 17. How the scheduled runs work
@@ -535,13 +651,37 @@ Under **Variables** → **New repository variable**:
 `.github/workflows/weekly-pipeline.yml` runs at **13:00, 16:00 and 19:00 UTC
 every Friday**. Three attempts, because the journal is not always up at the
 first one — a journal that has not been published yet is a normal condition,
-not a failure.
+not a failure. Once one attempt has processed the journal, the later attempts
+see it is done and stop at no cost.
 
-Every run uploads its report and QA output as a downloadable artefact, kept for
-60 days, so you can inspect a run even if you were not watching.
+Each run, in order:
+
+1. Restore this month's Companies House index (building it on the first run
+   of a month), and — if `DATABASE_URL` is not set — the SQLite database from
+   the last run.
+2. **weekly** — the journal.
+3. **rescan** — re-check recent brands and prepare the movers digest.
+4. **retention** — apply the retention rules.
+5. **build-feed** — build the public feed into `public/`.
+6. Save the SQLite database (when there is no `DATABASE_URL`) and upload the
+   artefacts.
+
+Steps 3–5 run even when the weekly step stopped early, and none of them can
+fail the job. What each one guarantees on a repeat run is in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md).
+
+Downloadable artefacts per run:
+
+| Artefact | Contents | Kept |
+| --- | --- | --- |
+| `weekly-report-<n>` | The week's CSV, email, QA report, `pipeline.log`, `rescan.log` | 60 days |
+| `public-feed-<n>` | The built public feed (nothing is published automatically) | 30 days |
+| `email-outbox-<n>` | Emails written instead of sent, e.g. the movers digest — holds recipient addresses | 14 days |
+| `launchtrace-db-<n>` | The SQLite database, only when `DATABASE_URL` is not set | 14 days |
 
 To run it by hand: **Actions** → **Weekly pipeline** → **Run workflow**. You
-can give it a specific journal number.
+can give it a specific journal number, a source, and tick **force** to
+process a journal again that has already been processed.
 
 To change the timing, edit the `cron:` lines. They are in UTC — remember
 British Summer Time.
@@ -588,19 +728,24 @@ python -m src.pipeline check-config   # what is connected
 | Symptom | What it means | What to do |
 | --- | --- | --- |
 | `journal_not_yet_published` | The journal is not up yet | Nothing. The later attempts will retry |
-| `journal_retrieval_failed` with a 403 | ipo.gov.uk is challenging your network | Download by hand and use `JOURNAL_SOURCE=local` (§5) |
+| `journal_retrieval_failed` with a 403 | ipo.gov.uk answers 403 for a file that does not exist, so usually a wrong journal number or URL; occasionally a real block | Check the journal number. If it really is blocked, download by hand and use `JOURNAL_SOURCE=local` (§5) |
+| `Journal … has already been processed; nothing to do` | That journal was done by an earlier attempt | Nothing. Use `--force` (or tick **force**) only if you mean to redo it |
+| `pipeline.search_budget_exhausted` in the log | The cost guard stopped web searches for the rest of the run | Nothing urgent: the run completed. See `docs/OPERATIONS.md` if it happens every week |
 | `volume_anomaly` | The record count is far outside normal | Check the journal downloaded fully. Adjust `config/validation_bands.json` if the IPO's volumes have genuinely changed |
 | `enrichment_broadly_failed` | Companies House is failing | Check the API key, or rebuild the bulk index |
 | No opportunities at all | The filters may be too tight | Look at `rejections.csv` — it names the reason for every dropped record |
 | `Delivery not performed: SEND_MODE=review` | Working as designed | Approve the run (§7) |
 
 **To restore after a failure:** re-run the same journal. Every stage is
-idempotent — journals are not processed twice, opportunities are updated rather
-than duplicated, and a delivery already sent is never sent again.
+idempotent — a failed or blocked attempt does not mark the journal processed,
+opportunities are updated rather than duplicated, and a delivery already sent
+is never sent again.
 
 ```bash
 python -m src.pipeline weekly --journal 2026-036
 ```
+
+A journal that did complete is skipped on a re-run; add `--force` to redo it.
 
 **To diagnose an unfamiliar journal file** (for instance if the IPO changes its
 XML format):
@@ -637,9 +782,13 @@ Per weekly run, with everything connected:
 | UKIPO journal | £0 (Open Government Licence) |
 | Companies House | £0 (bulk snapshot, or the free API) |
 | LLM classification (~100 candidates at a cheap model) | ~£0.06 |
-| Web search (~60 enrichments) | £0 on a free tier |
+| Web search (capped at 200 searches a run, 900 a month) | £0 on Tavily's free tier |
+| Domain checks, rescan (RDAP, DNS, homepage, Companies House) | £0 — free public services |
 | Email (a handful of subscribers) | £0 on Resend's free tier |
 | **Per run** | **under £0.10** |
+
+How many outside requests a week that adds up to, per service, is tabled in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md#weekly-external-call-budget).
 
 Fixed monthly:
 
@@ -653,11 +802,133 @@ Fixed monthly:
 
 Well inside the £30 target. The main cost discipline is architectural: web
 research and LLM calls run only against records that already survived the free
-filters, and results are cached.
+filters, results are cached, and the search guard is a hard ceiling rather
+than an estimate.
+
+## 22. Following brands across weeks
+
+Until now every week stood alone. LaunchTrace now keeps **one record per
+brand** (the `brands` table): several marks from one company are one brand, and
+a brand seen again in a later journal is the same row. Alongside it:
+
+- **`observations`** — a dated, append-only log of facts about the brand: its
+  filing date, incorporation date, website, retail presence, domain
+  registration date, and so on. Each fact records when we looked and, where
+  known, when it was true. Nothing edits or deletes an observation; a changed
+  fact is a new row.
+- **`stage_changes`** — when a brand moves, e.g. from pre-launch to early
+  launch, or from a holding page to a live shop.
+
+The applicant's name is never stored on a brand, only a one-way hash of it, so
+an individual applicant cannot be read back from these tables.
+
+The database layout is managed with Alembic migrations, which `init-db` runs
+for you. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) has the full rules, and
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md) the migration commands.
+
+## 23. The domain layer
+
+For each brand whose website the web search **verified** as the applicant's,
+the weekly run makes a few free checks: when the domain was registered (RDAP),
+whether it has web, email and name-server records (DNS), and one look at the
+homepage — is it a parked domain, a "coming soon" page, a site, or a shop on
+Shopify, WooCommerce and the like. At most 60 domains a run, politely spaced,
+and every failure is recorded rather than stopping the run. Domains are never
+guessed from brand names.
+
+**None of it changes the score yet.** The four domain indicators are in
+`config/scoring.json` with weight 0. They show in four new CSV columns
+(`domain_created`, `web_presence_stage`, `shop_platform`, `has_mx`) and are
+recorded as observations, so a backtest can show whether they deserve a
+weight before anyone gives them one. To switch the layer off, set
+`DOMAIN_LAYER_ENABLED=false`.
+
+## 24. Re-scanning brands and the movers digest
+
+A trade mark is filed before the brand trades. Weeks later the holding page
+becomes a shop, or the dormant company files trading accounts — often the
+moment it starts buying packaging. So every Friday, after the weekly run:
+
+```bash
+python -m src.pipeline rescan              # re-check, record changes, prepare the digest
+python -m src.pipeline rescan --dry-run    # list what would be checked; no calls, no writes
+python -m src.pipeline movers-digest       # the digest on its own
+```
+
+The rescan looks again at brands first seen in the last 26 weeks (up to 150 a
+run): their verified website through the domain layer, and their company by
+number at Companies House. Real moves are recorded as stage changes; a brand
+that reaches a live shop is marked launched. Each customer then gets a short
+"brands that moved" email, filtered by their preferences and company-level
+only.
+
+The digest is **doubly held back**: in `SEND_MODE=review` it is only written to
+`reports/outbox/`, and even in automatic mode it stays there until you set
+`digest.send_enabled` to `true` in `config/rescan.json` after reading the copy.
+Details: [`docs/RESCAN.md`](docs/RESCAN.md).
+
+## 25. The public feed
+
+A free, delayed sample of the weekly list for prospective customers: the top
+five companies per journal week, at least one week behind what customers get,
+company level only — never an individual's name, never a website, score or
+contact detail.
+
+```bash
+python -m src.pipeline build-feed                  # writes public/ (HTML, Atom, RSS, JSON)
+python -m src.pipeline build-feed --out site/
+```
+
+The website also serves it live at `/feed/`. The Friday workflow builds it and
+uploads it as an artefact, but **nothing is published automatically**: where
+it goes (the website's `/feed/` routes or GitHub Pages) and whether it should
+be public at all are decisions for you and your solicitor (HUMAN_ACTIONS.md).
+Rules and publishing steps: [`docs/PUBLIC_FEED.md`](docs/PUBLIC_FEED.md).
+
+## 26. Data retention
+
+`config/retention.json` says how long each kind of data is kept. Retention
+removes individual applicants' names from old records rather than deleting the
+records, deletes old run logs, delivery logs, sample requests and web results,
+and clears old prospect contact fields. Suppression lists, customers and brand
+history are never touched.
+
+```bash
+python -m src.pipeline retention          # dry run: what would change
+python -m src.pipeline retention --apply  # change it
+```
+
+**The Friday workflow runs `--apply` every week**, and every period in the file
+is a placeholder for you to confirm. Run the dry run against your real
+database before relying on it. Details:
+[`docs/DATA_RETENTION.md`](docs/DATA_RETENTION.md) and
+[`docs/DATA_MAP.md`](docs/DATA_MAP.md).
+
+## 27. Backtesting the score
+
+The score claims to spot brands about to launch. The backtest checks that
+claim: it runs past journals through the pipeline, re-scores every lead using
+**only what was knowable on its filing date**, labels whether each brand had
+launched three and six months later, and reports precision and recall by band
+and by indicator.
+
+```bash
+python -m src.pipeline backtest probe     # which past journals the IPO still serves
+python -m src.pipeline backtest ingest --source ukipo_http --from 2026-010 --to 2026-041 --max-journals 32
+python -m src.pipeline backtest run       # label outcomes and write the report
+```
+
+It never uses web search or the LLM. Labels need observations from inside each
+brand's three- and six-month window, which the weekly run and the rescan add
+from now on, so the backtest becomes useful over the coming months rather than
+today. Reports go to `reports/backtest/`; weight suggestions are advice only
+and never applied. **Before ingesting into your production database, read the
+caveat in [`docs/OPERATIONS.md`](docs/OPERATIONS.md#running-the-full-historical-backtest).**
+Method: [`docs/BACKTEST.md`](docs/BACKTEST.md).
 
 ---
 
-## 22. Running the business: prospects, outreach and customers
+## 28. Running the business: prospects, outreach and customers
 
 Everything in this section is `python -m src.admin`. **None of it sends an
 email to a prospect** — there is no send command and no code path to one. It
@@ -805,6 +1076,20 @@ including the questions still open.
   not validated
 - [`HANDOFF.md`](HANDOFF.md) — what is built, what is waiting on you, and the
   exact steps to finish it
+- [`HUMAN_ACTIONS.md`](HUMAN_ACTIONS.md) — every action from the structural
+  upgrade that needs a person (secrets, hosting, legal and retention
+  decisions), and [`DECISIONS.md`](DECISIONS.md) — every judgement call made
+  along the way and why
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — running it week to week:
+  database and migrations, the Friday workflow, re-runs, the cost guard,
+  publishing the feed, the backtest, retention, the stability check and the
+  weekly external-call budget
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — brands, observations,
+  stage changes and the migrations;
+  [`docs/RESCAN.md`](docs/RESCAN.md), [`docs/PUBLIC_FEED.md`](docs/PUBLIC_FEED.md),
+  [`docs/BACKTEST.md`](docs/BACKTEST.md) — one each for those features
+- [`docs/DATA_MAP.md`](docs/DATA_MAP.md) — every place data is kept, what in
+  it is personal data, and how long it stays
 - [`BUILD_REPORT.md`](BUILD_REPORT.md) — what works, what was tested, and how
 - [`reports/validation/4_week_summary.md`](reports/validation/4_week_summary.md)
   — the January 2018 four-week historical sanity test
