@@ -12,3 +12,13 @@ The baseline re-runs differ from the first runs: every lead loses
 `first_trademark_for_applicant` on a re-run (the `known_applicant_names`
 bug in `src/commands.py`). That is the one change the Phase 1 fix is expected
 to produce.
+
+## Phase 1 (foundation)
+
+`phase1_diff.txt` is `--compare baseline.json <phase 1 snapshot>`;
+`phase1_verified.txt` is the output of
+`scripts/verify_phase1_stability.py baseline.json <phase 1 snapshot>`: every
+re_run now equals its first_run, and four of five first_run entries are
+unchanged. The fifth (open-data 2018-01-05, BUNK 11 → 22, still SUPPRESS) is
+the same bug seen through the harness running 2026 journals before 2018 ones;
+see DECISIONS.md D-104.
