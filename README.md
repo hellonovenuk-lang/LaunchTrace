@@ -199,7 +199,7 @@ description of what it controls.
 ### Continuous integration
 
 `.github/workflows/tests.yml` runs on every push: lint, format check,
-`mypy src`, the test suite (1,097 passed and 1 skipped locally on the
+`mypy src`, the test suite (1,195 passed and 1 skipped locally on the
 structural-upgrade branch; the skipped test needs a PostgreSQL server), the
 end-to-end smoke test, a check that `migrations/0001_initial.sql` still
 matches the models, and a second job that runs the Alembic migrations up, down

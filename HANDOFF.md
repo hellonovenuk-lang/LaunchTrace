@@ -62,7 +62,7 @@ needs a person is in [`HUMAN_ACTIONS.md`](HUMAN_ACTIONS.md).
 - **Billing.** Stripe checkout, billing portal, cancellation, signature-verified webhooks with per-event idempotency, and the full subscription state machine. Runs in stub mode without a key so the whole flow is testable
 - **Operator CLI.** 23 commands covering runs, approval, sending, CSV regeneration, customers, suppression, errors, diagnostics, the rescan and digest, the public feed, retention and the backtest
 - **Container.** Dockerfile **built and run in the first build session** (369 MB then), non-root, health-checked, serving the site
-- **Tests.** 1,097 passed and 1 skipped (the skipped one needs a PostgreSQL server), no test touching the network — a guard blocks outbound sockets
+- **Tests.** 1,195 passed and 1 skipped (the skipped one needs a PostgreSQL server), no test touching the network — a guard blocks outbound sockets
 - **Quality gates.** `ruff check`, `ruff format --check` and `mypy src` all clean
 - **CI/CD.** Four workflows: tests, the Friday pipeline with three retry windows, manual backfill and the historical sanity test, and a deploy workflow that is a build check until you opt in. The tests workflow runs lint, format, `mypy src`, the suite, the smoke test, the migration freshness check, and Alembic upgrade → downgrade → upgrade on a real PostgreSQL 16. It was last confirmed green on GitHub before the structural upgrade, when the suite had 531 tests ([run 34396020152](https://github.com/hellonovenuk-lang/LaunchTrace/actions/runs/34396020152))
 - **Documentation.** README written for a non-technical owner, plus privacy notice, terms, data-source attribution, legitimate interests assessment and a retention note — all labelled as drafts needing your review

@@ -27,7 +27,7 @@ prospect-specific preview → drafted email → sample → customer → weekly d
 send anything.
 
 531 tests passed at the end of these two sessions (the suite has since grown
-to 1,097 passed and 1 skipped with the structural upgrade), lint, formatting
+to 1,195 passed and 1 skipped with the structural upgrade), lint, formatting
 and type checks are clean, and the container image was built and served.
 
 The four-week January 2018 historical sanity test produced a real but marginal

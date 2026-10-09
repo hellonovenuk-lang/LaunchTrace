@@ -69,7 +69,7 @@ opt-outs. Contract: `docs/WEBSITE_INTEGRATION.md`.
 
 ### Quality
 
-1,097 tests pass (1 skipped, which needs a PostgreSQL server). `ruff check`, `ruff format --check` and `mypy src` are clean.
+1,195 tests pass (1 skipped, which needs a PostgreSQL server). `ruff check`, `ruff format --check` and `mypy src` are clean.
 The smoke test passes end to end on fixture data with no network access.
 
 Before the structural upgrade, when the suite had 531 tests, all of that also
