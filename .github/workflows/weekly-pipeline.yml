@@ -149,6 +149,17 @@ jobs:
           python -m src.pipeline weekly $ARGS | tee pipeline.log
         continue-on-error: true
 
+      # Anonymise / delete data past its retention period (config/retention.json).
+      # Housekeeping only: it never runs inside a pipeline run and never fails the job.
+      - name: Apply data retention
+        if: always()
+        continue-on-error: true
+        env:
+          ENVIRONMENT: production
+          LOG_FORMAT: json
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m src.pipeline retention --apply
+
       # Fold any write-ahead log into the database file so the cache holds all of it.
       - name: Checkpoint the local SQLite database
         if: always() && steps.db.outputs.hosted != 'true'

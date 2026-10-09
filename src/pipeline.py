@@ -115,6 +115,12 @@ def build_parser() -> argparse.ArgumentParser:
     probe = sub.add_parser("probe-journal", help="Diagnose an unfamiliar journal XML file")
     probe.add_argument("path")
 
+    retention = sub.add_parser(
+        "retention", help="Apply config/retention.json (dry run unless --apply)"
+    )
+    retention.add_argument("--apply", action="store_true", help="Make the changes")
+    retention.add_argument("--json", action="store_true", help="Print the report as JSON")
+
     return parser
 
 
@@ -164,6 +170,10 @@ def main(argv: list[str] | None = None) -> int:
         "check-config": cmd_check_config,
         "probe-journal": cmd_probe_journal,
     }
+    if args.command == "retention":
+        from src.retention import cmd_retention
+
+        handlers["retention"] = cmd_retention
     handler = handlers[args.command]
     try:
         return int(handler(args) or 0)
