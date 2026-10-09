@@ -372,3 +372,41 @@ class TestCli:
 
         assert "retention" not in inspect.getsource(core)
         assert "run_retention" not in inspect.getsource(commands)
+
+
+class TestSoleTraders:
+    """D-700: names the food filter types corporate but that have no legal form."""
+
+    SOLE = (
+        "Peregrine Quillfeather trading as Crumbledge",
+        "Thessaly Okonkwo-Vane t/a Moorfoot Foods",
+        "Ambrose Penhallow-Ruiz & Co",
+        "Maria Sa",
+        "Crumbledge Foods",
+    )
+
+    def test_sole_traders_are_anonymised_everywhere(self, factory):
+        with factory() as s:
+            for i, name in enumerate(self.SOLE):
+                s.add_all(
+                    [
+                        _tm(100 + i, name, OLD_DATE),
+                        _opp(100 + i, name, "corporate", OLD_DATE),
+                        CompanyMatchRow(dedupe_key=f"cs{i}", applicant_name=name, created_at=OLD),
+                    ]
+                )
+            s.add_all(
+                [
+                    _tm(200, "Crumbledge Foods Ltd", OLD_DATE),
+                    _opp(200, "Crumbledge Foods Ltd", "corporate", OLD_DATE),
+                    CompanyMatchRow(
+                        dedupe_key="cs-ltd", applicant_name="Crumbledge Foods Ltd", created_at=OLD
+                    ),
+                ]
+            )
+            s.commit()
+        run_retention(factory, apply=True, now=NOW)
+        with factory() as s:
+            for model in (TrademarkRecordRow, OpportunityRow, CompanyMatchRow):
+                kept = {n for n in s.execute(select(model.applicant_name)).scalars() if n}
+                assert kept == {"Crumbledge Foods Ltd"}, model.__tablename__

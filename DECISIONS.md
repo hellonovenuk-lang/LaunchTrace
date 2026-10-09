@@ -609,3 +609,29 @@ evidence) and the first real report. The two downloaded journals (2025-040,
 2025-041; 233 MB and 200 MB, ~10 MB each once artwork is stripped) are not
 committed: they stay in the gitignored cache and the DB, and the IPO still
 serves them for a few weeks.
+
+## Reviewer fixes (Phase 4)
+
+**D-700 — Applicant names are shown only with a legal form, never a sole
+trader's.** The privacy test reused the food filter's broad corporate-suffix
+list (`trading`, `co`, `company`, `foods`, `brands`, `group`, `sa`, ...), so
+"Jane Smith trading as Smith Foods", "X t/a Y Foods", "X & Co" and "Maria Sa"
+were rendered in the weekly email, outbox and CLI, and retention never
+anonymised them. `src/privacy.py` now shows an applicant's own name only when
+(a) Companies House confirmed the company -- the *registered* name is shown,
+and `display_party_for` ignores a company name on an unmatched match -- or (b)
+the applicant is not typed `natural_person`, the name contains a legal form
+from the new `config/privacy.json` (`display_legal_forms`: ltd, limited, plc,
+llp, cic, community interest company, lp, limited partnership, gmbh, sarl,
+inc, llc, b.v., n.v., s.p.a., pty, and dotted variants) as a whole word or
+phrase, and contains none of `sole_trader_patterns` ("trading as", "t/a",
+"t/as"; "& co"/"and co" only when no legal form follows). Short ambiguous
+tokens (`sa`, `ag`, `co`, `spa`) are deliberately absent, and a legal form
+glued to a hyphen ("Ltd-Smith") does not count. Everything else is an
+individual. Retention uses the same test for all three name classes, so it now
+anonymises more rows (conservative; the D-405 trade-off for the
+first-trade-mark signal applies to them too). The broad list in
+`config/exclusions.json` is unchanged: it types applicants for the food filter
+and scoring, and changing it would move scores. Residual: a one-person company
+"Jane Smith Ltd" is still shown as Companies House publishes it (D-400 LIA
+note).
