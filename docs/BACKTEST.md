@@ -32,8 +32,8 @@ captcha page. The result goes to `reports/backtest/availability.json`.
 
 **Finding (2026-10-09, 16 requests in total):** the journal archive is served
 from this sandbox, with no captcha. (The 403s recorded in `HANDOFF.md` §3.1 are
-explained by the wrong path and file name the code used then — see commit
-767c27d. In this session ipo.gov.uk answered 403 for a journal's missing
+explained by the wrong path and file name the code used then — recorded in
+commit 767c27d, fixed in d194dd9 and 59a08da. In this session ipo.gov.uk answered 403 for a journal's missing
 `index.html`; for a missing `jnl.xml` a HEAD came back as an HTML page and the
 ranged GET as 404, which is why the probe never trusts an HTML answer to a
 HEAD.) The newest journal, 2026-041, was served; the **earliest served is

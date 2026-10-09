@@ -37,8 +37,8 @@ on (see PLAN.md, "Phase 1 — foundation"). Names do not change.
 | `product_category`, `region`, `website` | latest known; `region` is a region, never finer; `website` is a verified site only |
 | `first_seen_journal`, `first_seen_at`, `first_filing_date` | see "first and last seen" |
 | `last_seen_journal`, `current_stage`, `current_score`, `current_band` | state as of the newest journal seen |
-| `last_checked_at` | last time a web search (later: a rescan) looked at this brand |
-| `launched_at` | set by later rescan/outcome work when a launch is detected |
+| `last_checked_at` | last time a web search or a rescan looked at this brand |
+| `launched_at` | set once by the rescan when the brand reaches a launched web stage (`live_store`); the backtest labeller does not touch it |
 | `created_at`, `updated_at` | row bookkeeping |
 
 ### Dedupe rules
@@ -103,11 +103,12 @@ sets `launched_at` when a brand reaches a launched stage (docs/RESCAN.md).
 
 `observations` is an **append-only** log of facts about a brand. There is no
 update or delete function: what we saw, and when, is the record. A changed fact
-is a new row. (Retention, when it comes, is the only thing that deletes.)
+is a new row. Retention never touches observations; they go only if their
+brand row is deleted (`ON DELETE CASCADE`).
 
 | column | meaning |
 | --- | --- |
-| `source` | where the fact came from: `trademark`, `companies_house`, `web_search`, `score` today; `rdap`, `dns`, `homepage`, `rescan`, `outcome` reserved |
+| `source` | where the fact came from: `trademark`, `companies_house`, `web_search`, `score`, `rdap`, `dns`, `homepage` (domain layer), `rescan` (the derived `company_stage`); `outcome` reserved and unused (backtest labels go to the `outcomes` table) |
 | `signal` | a name registered in `config/signals.json` — unregistered names are refused |
 | `value` | JSON: a scalar or a small object; `null` is meaningful (searched, not found) |
 | `observed_at` | when **we** looked |
