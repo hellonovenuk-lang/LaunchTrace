@@ -47,8 +47,13 @@ def _volume_flags(result: PipelineResult, history: list[dict[str, Any]] | None) 
 
 
 def _major_brand_detections(result: PipelineResult) -> list[str]:
+    """Rejected major-brand filings. The match is a substring test, so an
+    individual whose name contains a brand ("... Mars") can land here: the
+    applicant is shown through the same privacy rule as every output (D-708)."""
+    from src.privacy import display_party
+
     return [
-        f"{r.trademark_number} — {r.applicant_name} ({r.detail})"
+        f"{r.trademark_number} — {display_party(None, r.applicant_name)} ({r.detail})"
         for r in result.rejected
         if r.reason == "major_brand_owner"
     ][:20]

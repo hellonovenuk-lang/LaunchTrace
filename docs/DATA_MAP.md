@@ -15,8 +15,11 @@ Two facts shape most rows:
   name. LaunchTrace stores it (it drives the "first trade mark for this
   applicant" signal) but never outputs it: every renderer goes through
   `src/privacy.py`, and `tests/test_no_individual_names.py` checks every
-  output (DECISIONS.md D-400). An applicant is treated as an individual when it
-  is typed `natural_person` **or** its name has no corporate suffix.
+  output (DECISIONS.md D-400). Unless Companies House confirms the company (then
+  the registered name is shown), an applicant is treated as an individual when
+  it is typed `natural_person`, its name has no legal form ("Ltd", "PLC", "LLP",
+  "CIC" ... -- `config/privacy.json`), or it contains a sole-trader pattern
+  ("trading as", "t/a", "& Co" without a legal form) (D-700).
 * **A company name can be personal data** when it is a sole trader's or a
   one-person company's own name ("Jane Smith Ltd"). Company names are shown as
   Companies House publishes them; this is a residual risk for the LIA, not

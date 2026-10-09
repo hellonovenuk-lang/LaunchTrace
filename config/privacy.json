@@ -1,0 +1,37 @@
+{
+  "$schema_version": "1.0",
+  "description": "When an applicant's own name may appear in any LaunchTrace output (email, CSV, outbox, CLI, website, feed). Read by src/privacy.py and src/retention.py. Nothing here changes a score: the broad corporate_suffixes list in exclusions.json (used by the food filter and scoring) is separate and untouched.",
+  "_comment": "An applicant name is shown ONLY when (a) there is a confirmed Companies House match -- then the registered company name is shown instead -- or (b) the applicant is not typed natural_person, its name contains one of display_legal_forms as a whole word or phrase, and it contains none of sole_trader_patterns. Everything else is treated as an individual: withheld in outputs, anonymised by retention. Forms are matched case-insensitively on the lower-cased name with commas and brackets turned into spaces; dotted forms are listed without their trailing dot (a trailing dot still matches). Short tokens that are also common surnames or words (sa, ag, co, spa) are deliberately absent. See DECISIONS.md D-700.",
+  "display_legal_forms": [
+    "ltd",
+    "limited",
+    "plc",
+    "p.l.c",
+    "llp",
+    "l.l.p",
+    "cic",
+    "c.i.c",
+    "community interest company",
+    "lp",
+    "l.p",
+    "limited partnership",
+    "gmbh",
+    "s.a.r.l",
+    "sarl",
+    "inc",
+    "llc",
+    "l.l.c",
+    "b.v",
+    "n.v",
+    "s.p.a",
+    "pty"
+  ],
+  "sole_trader_patterns": [
+    "trading as",
+    "t/a",
+    "t/as",
+    "& co",
+    "and co"
+  ],
+  "sole_trader_patterns_note": "'& co' and 'and co' block display only when no legal form follows them (\"Smith & Co Ltd\" is a company; \"Smith & Co\" is not -- and without a legal form it is withheld anyway). 'trading as', 't/a' and 't/as' always block display, whatever else the name contains."
+}

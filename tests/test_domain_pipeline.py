@@ -317,3 +317,44 @@ class TestQaReport:
         assert section["probed"] == 2
         assert section["live_store"] == 1 and section["holding_or_parked"] == 1
         assert section["with_errors"] == 1 and section["rdap_dates"] == 1
+
+
+class TestDomainStageTimeBudget:
+    """D-703: a wall-clock budget for the whole domain stage; never fails the run."""
+
+    class SlowProber(FixtureDomainProber):
+        def __init__(self, clock: list[float], seconds_per_probe: float) -> None:
+            super().__init__(default=RICH)
+            self.clock = clock
+            self.seconds = seconds_per_probe
+
+        def probe(self, domain: str) -> DomainSignals:
+            self.clock[0] += self.seconds
+            return super().probe(domain)
+
+    def _run(self, settings: Settings, tmp_path: Path, seconds_per_probe: float, n: int = 6):
+        from src.models import JournalRef, PipelineResult, WebEnrichment
+
+        now = [0.0]
+        prober = self.SlowProber(now, seconds_per_probe)
+        pipeline = _pipeline(settings, tmp_path, domain=prober)
+        pipeline.clock = lambda: now[0]
+        result = PipelineResult(
+            run_id="r",
+            journal=JournalRef(journal_number="2025-050", publication_date=date(2025, 12, 12)),
+        )
+        webs = [WebEnrichment(attempted=True, website=f"https://brand{i}.co.uk") for i in range(n)]
+        return pipeline._domain_stage(result, webs), result, prober
+
+    def test_stops_probing_once_the_budget_is_spent(self, settings, tmp_path):
+        max_seconds = float(load_config("domain_layer.json")["max_stage_seconds"])
+        out, result, prober = self._run(settings, tmp_path, seconds_per_probe=max_seconds / 2.5)
+        # probes at t=0, 0.4, 0.8 of the budget run; t=1.2 is past it
+        assert len(prober.calls) == 3
+        assert [o is not None for o in out] == [True, True, True, False, False, False]
+        assert any("time budget" in w and "3 lead(s)" in w for w in result.warnings)
+
+    def test_a_fast_stage_is_untouched(self, settings, tmp_path):
+        out, result, prober = self._run(settings, tmp_path, seconds_per_probe=0.01)
+        assert len(prober.calls) == 6 and all(o is not None for o in out)
+        assert not any("time budget" in w for w in result.warnings)

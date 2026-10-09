@@ -609,3 +609,172 @@ evidence) and the first real report. The two downloaded journals (2025-040,
 2025-041; 233 MB and 200 MB, ~10 MB each once artwork is stripped) are not
 committed: they stay in the gitignored cache and the DB, and the IPO still
 serves them for a few weeks.
+
+## Reviewer fixes (Phase 4)
+
+**D-700 — Applicant names are shown only with a legal form, never a sole
+trader's.** The privacy test reused the food filter's broad corporate-suffix
+list (`trading`, `co`, `company`, `foods`, `brands`, `group`, `sa`, ...), so
+"Jane Smith trading as Smith Foods", "X t/a Y Foods", "X & Co" and "Maria Sa"
+were rendered in the weekly email, outbox and CLI, and retention never
+anonymised them. `src/privacy.py` now shows an applicant's own name only when
+(a) Companies House confirmed the company -- the *registered* name is shown,
+and `display_party_for` ignores a company name on an unmatched match -- or (b)
+the applicant is not typed `natural_person`, the name contains a legal form
+from the new `config/privacy.json` (`display_legal_forms`: ltd, limited, plc,
+llp, cic, community interest company, lp, limited partnership, gmbh, sarl,
+inc, llc, b.v., n.v., s.p.a., pty, and dotted variants) as a whole word or
+phrase, and contains none of `sole_trader_patterns` ("trading as", "t/a",
+"t/as"; "& co"/"and co" only when no legal form follows). Short ambiguous
+tokens (`sa`, `ag`, `co`, `spa`) are deliberately absent, and a legal form
+glued to a hyphen ("Ltd-Smith") does not count. Everything else is an
+individual. Retention uses the same test for all three name classes, so it now
+anonymises more rows (conservative; the D-405 trade-off for the
+first-trade-mark signal applies to them too). The broad list in
+`config/exclusions.json` is unchanged: it types applicants for the food filter
+and scoring, and changing it would move scores. Residual: a one-person company
+"Jane Smith Ltd" is still shown as Companies House publishes it (D-400 LIA
+note).
+
+**D-701 — Homepage fetch: every hop is resolved and checked; RDAP bodies are
+capped.** httpx followed redirects itself, and `is_public_hostname` only looked
+at how the first host was spelt, so a brand's homepage (or robots.txt) could
+redirect the fetcher to `169.254.169.254`, `127.0.0.1`, a name resolving to
+`10.x`, or `[::1]`. `HomepageFetcher` now follows redirects by hand (at most
+`homepage.max_redirects`) and, before every request, refuses a non-http(s)
+scheme (`blocked_scheme`), a non-default port unless
+`homepage.allow_non_default_ports` (`blocked_port`), and any host that
+resolves -- through an injectable resolver, `socket.getaddrinfo` by default --
+to an address that is private, loopback, link-local, multicast, reserved,
+unspecified or not globally routable, including IPv4-mapped, 6to4 and Teredo
+forms (`blocked_private_address`). A refused hop ends the fetch (no http
+fallback); a name that does not resolve is "unreachable" as before.
+**Residual risk, accepted:** httpx resolves the host again when it connects, so
+a hostile DNS server that answers with a public address for our check and a
+private one milliseconds later (DNS rebinding) is not excluded. Pinning the
+connection to the checked IP needs a custom transport that keeps SNI and
+certificate checks on the host name; that is more code than the risk warrants
+for a GET with no credentials whose body is only fingerprinted, never
+returned to a user. RDAP (LOW-6): domain answers are streamed and abandoned
+past `rdap.max_response_bytes` (256 KB, error `rdap_response_too_large`) and
+the IANA bootstrap past `rdap.bootstrap_max_bytes` (1 MB, falls back to the
+configured servers) before any JSON is parsed.
+
+**D-702 — A lost Actions-cache database stops the run instead of starting
+empty.** Without `DATABASE_URL` the weekly workflow carries the SQLite file in
+the Actions cache, which GitHub evicts after 7 days unused or when the
+repository's cache is full; a miss used to start an empty database silently
+(history, "already processed" and the month's search spend gone, and the empty
+file then cached as the new truth). A new step `dbrecover` runs after the cache
+restore: if the file is missing it downloads the newest unexpired
+`launchtrace-db-*` artifact (any run of the workflow, found through the REST
+artifacts API with `gh` and the job's `GITHUB_TOKEN`; the job now declares
+`permissions: contents: read, actions: read`). If there is none it continues
+only when (a) no earlier completed run of the workflow exists (first ever run)
+or (b) a person dispatched the run with the new `fresh_database` input; both
+write `data/local/.fresh-database`, a `::warning::` and a "History lost"
+section to the job summary. Otherwise -- including when the run history cannot
+be read -- the step fails with `::error::` and every later step that writes or
+caches the database (`rescan`, `retention`, `build-feed`, checkpoint, cache
+save, backup artifact) is skipped, so an empty database is never cached over
+the real one. The newest artifact is chosen whatever the run's conclusion,
+matching the cache, which is also saved by failed runs. LOW-6: workflow inputs
+(`journal`, `send`, `force`, `fresh_database`) now reach scripts only as
+environment variables, and the weekly arguments are a bash array, so a crafted
+input can neither run shell nor add arguments.
+
+**D-703 — Search spend is durable mid-run; the domain stage has a wall-clock
+budget; volume history holds only comparable runs.** A run's search calls were
+written only by the final `save_run`, so a killed run's spend vanished from
+the rolling monthly budget. `_run_one` now creates the run id up front
+(`pipeline_core.new_run_id`, passed to `Pipeline.run(run_id=...)`), inserts a
+`pipeline_runs` row with status `running` and `counts.search_calls = 0` before
+the pipeline starts (only when it writes to the database), and gives the
+`SearchBudget` an `on_call` hook that writes the running total to that row in
+its own short session after every counted call (at most a few hundred small
+updates a run; a failing update is logged and never breaks the run). The final
+`save_run` completes the same row, so a run is still one row.
+`search_budget_for_run` already sums every row in the window whatever its
+status, so a killed run's `running` row counts; it does not make the journal
+"processed" (that is the `journals` table). `recent_run_counts` -- the
+volume-anomaly history -- now reads only `completed` runs whose mode is
+`weekly` or `backfill`, so killed, blocked, `rescan` and `backtest-ingest` rows
+no longer pollute it (this also settles D-508 (c)). The stability snapshot is
+byte-identical. The weekly domain stage stops probing once
+`max_stage_seconds` (config/domain_layer.json, 600 s; 0 disables) of wall
+clock have passed: the remaining leads get no domain signals, as when the
+layer is off, and the run carries a warning; it never fails the run. A
+`running` row left by a killed process stays `running` (visible in the admin
+run list); nothing tidies it, deliberately, because it is the evidence of the
+spend.
+
+**D-704 — Every billed HTTP attempt counts, retries included.** The HTTP
+search providers retry up to three times (tenacity), but the budget counted
+one call per query, so the cap was not a ceiling on billed requests.
+`SearchProvider.before_attempt` now asks a per-search `attempt_guard` before
+every attempt; `WebEnricher._search` wires it to `SearchBudget.take_attempt`,
+which counts the attempt or, when the allowance is spent, refuses it (raising
+`SearchBudgetExhaustedError`, which tenacity does not retry, and marking the
+budget exhausted). A provider that makes no HTTP request (fixture, none) still
+counts one call per search, so fixture-based runs and the stability snapshot
+are unchanged.
+
+**D-705 — The test guard also blocks UDP and name resolution; tests never
+touch the real database.** The autouse guard in `tests/conftest.py` blocked
+TCP `connect`/`connect_ex`/`create_connection` only, so a UDP `sendto` (a
+dnspython query) or a `getaddrinfo` DNS lookup could leave the machine. It now
+also wraps `socket.socket.sendto`, `socket.socket.sendmsg` (non-loopback
+destination) and `socket.getaddrinfo` (anything but loopback addresses and
+`localhost`); dnspython sends through `sendto`, so its queries are covered
+(tested). Starlette's TestClient resolves nothing, so no allowance for
+`testserver` was needed, and no existing test had to change. At import time,
+before any `Settings` is built, the conftest points `DATABASE_URL` and
+`CACHE_DIR` at a per-session `launchtrace-tests-*` temp directory (removed at
+session end) unless they already point under the system temp dir, so a test
+that forgets its own database can no longer migrate or fill
+`data/local/launchtrace.sqlite` (verified: after removing `data/local`, a full
+`pytest` leaves no `data/local` or `data/cache`).
+
+**D-706 — Adopting an unstamped database stamps the newest revision it
+already has.** `init_db` treated every unstamped database that lacked some
+model column as pre-Alembic: it stamped `0001_baseline` and upgraded, so a
+database made by `create_all` at `0002_brands` (every table but `outcomes`)
+failed when `0002_brands` tried to create `brands` again. After the additive
+baseline adoption it now walks up from the baseline through
+`REVISION_OBJECTS` (the tables and columns each later revision adds; a test
+checks it lists every revision) and stamps the newest revision whose objects
+are all present, then upgrades. A database with only part of a revision's
+objects is stamped below that revision and its upgrade still fails loudly,
+as before: that state needs a person.
+
+**D-707 — `backfill-brands` links leads stored before the brand tables.** A
+database upgraded to `0002_brands` kept its old opportunities with `brand_id`
+NULL, invisible to the rescan, feed and backtest. The new command
+(`src/brands_backfill.py`) rebuilds them through the same `sync_brands` the
+weekly run uses, from the stored rows (`commands._rehydrate_result`), journal
+by journal in publication order, attributing them to the journal's latest
+completed run (so `score_events` link too) or to `backfill-brands` when there
+is none. Only rows with `brand_id` NULL are touched (idempotent) and the only
+opportunity column written is `brand_id`. Facts a stored row does not keep
+(raw web-search facts, domain signals, match confidence) are not invented, so
+back-filled brands have fewer observations than freshly scored ones.
+
+**D-708 — Smaller reviewer items: PIT applicant history, QA-report names,
+feed caching.** (a) The backtest's `applicant_history` counted every stored
+record in an earlier journal as "earlier", including journals published after
+the filing date, which are in the future of the PIT cutoff. The PIT scorer now
+passes its cutoff (`filing_date + pit_window_days`, config/backtest.json) and
+only records from earlier journals **published on or before the cutoff** count;
+a record without a publication date is left out rather than assumed early. The
+weekly run is unchanged (no cutoff: every earlier journal), so live scores and
+the stability snapshot are untouched; backtest scores can only change toward
+"first trade mark" for applicants whose earlier mark was published after the
+filing. (b) The internal QA report's `major_brand_detections` printed the raw
+applicant name. Major-brand matching is a substring test, so an individual
+whose name contains a brand ("Bruno Mars") could appear; the applicant is now
+shown through `src.privacy.display_party` (company names with a legal form
+still show, as with "Nestle UK Ltd"). (c) The website's `/feed` routes rebuilt
+the feed from the database on every request; the rendered site is now kept in
+memory for `web_cache_seconds` (config/public_feed.json, 300; 0 disables). A
+newly processed week therefore appears on the website up to five minutes
+later; the static `build-feed` is not cached.

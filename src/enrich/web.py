@@ -149,9 +149,26 @@ class WebEnricher:
         return self.assess(query_name, results, provider=self.provider.name, context=ctx)
 
     def _search(self, query: str, limit: int) -> list[SearchResult]:
-        """The only place a search provider is called, so every call is counted."""
-        self.budget.count()
-        return self.provider.search(query, limit=limit)
+        """The only place a search provider is called, so every call is counted.
+
+        An HTTP provider asks the budget before each billed attempt, retries
+        included (D-704); a provider that makes no HTTP request (fixtures)
+        counts as one call, as before.
+        """
+        asked = False
+
+        def guard() -> bool:
+            nonlocal asked
+            asked = True
+            return self.budget.take_attempt()
+
+        self.provider.attempt_guard = guard
+        try:
+            return self.provider.search(query, limit=limit)
+        finally:
+            self.provider.attempt_guard = None
+            if not asked:
+                self.budget.count()
 
     # -- assessment --------------------------------------------------------
     @staticmethod

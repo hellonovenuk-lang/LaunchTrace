@@ -181,22 +181,30 @@ def record_from_row(row: TrademarkRecordRow) -> TrademarkRecord:
     )
 
 
-def applicant_history(session: Session, record: TrademarkRecord) -> tuple[bool, int]:
+def applicant_history(
+    session: Session, record: TrademarkRecord, cutoff: date | None = None
+) -> tuple[bool, int]:
     """(first trade mark for this applicant, marks by this applicant in this journal).
 
-    Both from stored source records only: journals before this one, and this
-    journal itself -- the same definitions the weekly run uses.
+    Both from stored source records only. "Earlier" means a journal before this
+    one **published on or before ``cutoff``** (the PIT cutoff, filing date +
+    ``pit_window_days``): a journal published between the filing and this
+    record's own journal is in the future of the cutoff and must not count
+    (D-708). A stored record without a publication date is left out, never
+    assumed early. Without ``cutoff`` it is the weekly run's definition
+    (every earlier journal). The count is this journal itself, as weekly.
     """
     name = (record.applicant_name or "").strip().lower()
     if not name:
         return True, 1
+    earlier_filter = [
+        func.lower(func.trim(TrademarkRecordRow.applicant_name)) == name,
+        TrademarkRecordRow.journal_number < record.journal_number,
+    ]
+    if cutoff is not None:
+        earlier_filter.append(TrademarkRecordRow.publication_date <= cutoff)
     earlier = session.execute(
-        select(func.count())
-        .select_from(TrademarkRecordRow)
-        .where(
-            func.lower(func.trim(TrademarkRecordRow.applicant_name)) == name,
-            TrademarkRecordRow.journal_number < record.journal_number,
-        )
+        select(func.count()).select_from(TrademarkRecordRow).where(*earlier_filter)
     ).scalar_one()
     same = session.execute(
         select(func.count())
@@ -254,7 +262,7 @@ class PitScorer:
             return None
         cutoff = self.policy.cutoff(record.filing_date)
         facts = pit_facts(session, brand_id, cutoff, self.policy)
-        first, mark_count = applicant_history(session, record)
+        first, mark_count = applicant_history(session, record, cutoff)
 
         if facts.matched:
             match = CompanyMatch(

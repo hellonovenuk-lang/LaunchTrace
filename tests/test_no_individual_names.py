@@ -1,7 +1,9 @@
 """No output LaunchTrace produces may contain an individual applicant's name.
 
-One scenario -- a matched company, a natural-person applicant and an untyped
-applicant whose name does not look corporate -- is pushed through every
+One scenario -- a matched company, a natural-person applicant, an untyped
+applicant whose name does not look corporate, and four sole traders whose
+names carry words the food filter's broad corporate-suffix list contains
+("trading as", "t/a ... Foods", "& Co", "Sa") -- is pushed through every
 customer-, prospect- and public-facing renderer. Each renderer is registered in
 ``OUTPUT_RENDERERS``; the test asserts:
 
@@ -21,6 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy.orm import sessionmaker
@@ -47,7 +50,26 @@ from tests.conftest import make_prospect
 
 INDIVIDUAL = "Zebedee Quillfeather"
 UNTYPED_INDIVIDUAL = "Ottoline Brackenbury"
-FORBIDDEN = (INDIVIDUAL, UNTYPED_INDIVIDUAL, "Quillfeather", "Brackenbury")
+# Sole traders typed corporate by the food filter's broad suffix list (D-700):
+# (applicant name, brand name). None has a legal form, so none may be shown.
+SOLE_TRADERS = (
+    ("Peregrine Quillfeather trading as Crumbledge", "PEREGRINE PANTRY"),
+    ("Thessaly Okonkwo-Vane t/a Moorfoot Foods", "MOORFOOT MUESLI"),
+    ("Ambrose Penhallow-Ruiz & Co", "AMBROSIA OATS"),
+    ("Maria Sa", "SOL BARS"),
+)
+FORBIDDEN = (
+    INDIVIDUAL,
+    UNTYPED_INDIVIDUAL,
+    "Quillfeather",
+    "Brackenbury",
+    *(name for name, _ in SOLE_TRADERS),
+    "Peregrine Q",
+    "Okonkwo",
+    "Thessaly",
+    "Penhallow",
+    "Maria Sa",
+)
 CORPORATE_COMPANY = "CRUMBLEDGE FOODS LTD"
 JOURNAL = "2025-050"
 PUBLISHED = date(2025, 12, 12)
@@ -136,12 +158,24 @@ def build_result() -> PipelineResult:
         70,
         ScoreBand.MEDIUM,
     )
+    sole_traders = [
+        _opp(
+            f"k-sole-{i}",
+            f"UK0000390001{i}",
+            brand,
+            applicant,
+            ApplicantType.CORPORATE,
+            72,
+            ScoreBand.MEDIUM,
+        )
+        for i, (applicant, brand) in enumerate(SOLE_TRADERS)
+    ]
     return PipelineResult(
         run_id="run-privacy",
         journal=JournalRef(journal_number=JOURNAL, publication_date=PUBLISHED),
         status=RunStatus.COMPLETED,
         started_at=datetime(2025, 12, 12, tzinfo=UTC),
-        opportunities=[corporate, person, untyped],
+        opportunities=[corporate, person, untyped, *sole_traders],
     )
 
 
@@ -441,7 +475,7 @@ def _movers_digest_all(s: Scenario) -> str:
         since = datetime.now(UTC) - timedelta(days=7)
         movers = movers_from(meaningful_changes(session, since), require_company=False)
         session.rollback()
-    assert len(movers) == 3
+    assert len(movers) == 3 + len(SOLE_TRADERS)
     rendered = render_movers_digest(movers, since=since, settings=s.settings)
     return rendered.subject + rendered.html + rendered.text
 
@@ -503,11 +537,13 @@ def test_the_corporate_company_does_appear(outputs):
 
 def test_individual_leads_are_still_delivered_just_unnamed(outputs, scenario):
     """Redaction, not removal: the leads exist and are shown without a name."""
-    assert len(scenario.result.deliverable) == 3
+    assert len(scenario.result.deliverable) == 3 + len(SOLE_TRADERS)
     assert "QUILLBERRY CRUNCH" in outputs["weekly_email_html"]
     assert INDIVIDUAL_WITHHELD in outputs["weekly_email_html"]
     assert INDIVIDUAL_WITHHELD in outputs["weekly_email_text"]
     assert "BRACKEN BITES" in outputs["weekly_csv"]
+    assert "MOORFOOT MUESLI" in outputs["weekly_email_html"]
+    assert "AMBROSIA OATS" in outputs["cli_opportunities_listing"]
 
 
 def test_every_named_output_is_registered():
@@ -547,8 +583,51 @@ class TestPrivacyRules:
     def test_display_withholds_an_individual(self):
         assert display_party(None, "Jane Doe", "natural_person") == INDIVIDUAL_WITHHELD
 
-    def test_display_keeps_a_corporate_unmatched_applicant(self):
-        assert display_party(None, "Acme Foods Ltd", "corporate") == "Acme Foods Ltd"
+    def test_display_keeps_an_unmatched_applicant_with_a_legal_form(self):
+        assert display_party(None, "Crumbledge Foods Ltd", "corporate") == "Crumbledge Foods Ltd"
+        assert display_party(None, "Crumbledge Foods Ltd", None) == "Crumbledge Foods Ltd"
+        assert display_party(None, "Moorfoot (Holdings) Limited", "unknown") == (
+            "Moorfoot (Holdings) Limited"
+        )
+        assert display_party(None, "Smith & Co Ltd", "corporate") == "Smith & Co Ltd"
+        assert display_party(None, "Acme L.L.P.", "corporate") == "Acme L.L.P."
+
+    def test_display_withholds_a_corporate_typed_name_without_a_legal_form(self):
+        # "Foods" alone is a food-filter corporate suffix, not a legal form.
+        assert display_party(None, "Crumbledge Foods", "corporate") == INDIVIDUAL_WITHHELD
+        assert display_party(None, "Acme Brands Group", "corporate") == INDIVIDUAL_WITHHELD
+
+    @pytest.mark.parametrize("name", [name for name, _ in SOLE_TRADERS])
+    def test_display_withholds_sole_traders(self, name):
+        assert is_individual_applicant(name, "corporate")
+        assert display_party(None, name, "corporate") == INDIVIDUAL_WITHHELD
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "Jane Smith trading as Smith Foods Ltd",
+            "Jane Smith T/A Acme Ltd",
+            "Acme Ltd t/as Acme",
+            "Jane Ltd-Smith",
+        ],
+    )
+    def test_a_legal_form_does_not_rescue_a_sole_trader_pattern(self, name):
+        assert is_individual_applicant(name, "corporate")
+
+    def test_the_confirmed_company_name_is_shown_not_the_applicant(self):
+        assert display_party("MOORFOOT FOODS LTD", SOLE_TRADERS[1][0], "corporate") == (
+            "MOORFOOT FOODS LTD"
+        )
+
+    def test_an_unconfirmed_company_name_on_an_opportunity_is_not_shown(self):
+        from src.privacy import display_party_for
+
+        opp = SimpleNamespace(
+            company=CompanyMatch(matched=False, company_name="SOMEONE LTD"),
+            applicant_name="Jane Doe",
+            applicant_type="corporate",
+        )
+        assert display_party_for(opp) == INDIVIDUAL_WITHHELD
 
     def test_display_falls_back_to_empty_text_when_nothing_is_known(self):
         assert display_party(None, None, None, empty="unknown company") == "unknown company"

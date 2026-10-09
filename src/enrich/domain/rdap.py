@@ -35,6 +35,21 @@ log = get_logger(__name__)
 RDAP_ACCEPT = "application/rdap+json, application/json;q=0.9"
 
 
+class ResponseTooLarge(Exception):
+    """A response body went past its byte cap; it was not read further."""
+
+
+def _get_capped(client: httpx.Client, url: str, max_bytes: int) -> tuple[int, bytes]:
+    """GET ``url`` and read at most ``max_bytes`` of the body (D-701)."""
+    with client.stream("GET", url) as resp:
+        body = bytearray()
+        for chunk in resp.iter_bytes():
+            body.extend(chunk)
+            if len(body) > max_bytes:
+                raise ResponseTooLarge(url)
+        return resp.status_code, bytes(body)
+
+
 @dataclass
 class RdapResult:
     domain: str
@@ -181,19 +196,21 @@ class RdapClient:
         url = str(self.cfg.get("bootstrap_url", "https://data.iana.org/rdap/dns.json"))
         try:
             with self._client() as client:
-                resp = client.get(url)
-            if resp.status_code != 200:
-                log.warning("rdap.bootstrap_http", status=resp.status_code)
+                status, body = _get_capped(
+                    client, url, int(self.cfg.get("bootstrap_max_bytes", 1_048_576))
+                )
+            if status != 200:
+                log.warning("rdap.bootstrap_http", status=status)
                 return None
-            payload = resp.json()
+            payload = json.loads(body)
             bases = parse_bootstrap(payload)
             if not bases:
                 return None
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             self.cache_path.write_text(json.dumps(payload), encoding="utf-8")
             return bases
-        except (httpx.HTTPError, ValueError, OSError) as exc:
-            log.warning("rdap.bootstrap_failed", error=str(exc)[:200])
+        except (httpx.HTTPError, ValueError, OSError, ResponseTooLarge) as exc:
+            log.warning("rdap.bootstrap_failed", error=type(exc).__name__)
             return None
 
     def bases(self) -> dict[str, str]:
@@ -227,6 +244,7 @@ class RdapClient:
         server = urlparse(base).hostname or base
         url = f"{base}domain/{domain}"
         attempts = 1 + max(int(self.cfg.get("max_retries", 1)), 0)
+        max_bytes = int(self.cfg.get("max_response_bytes", 262_144))
         last_error = "rdap_error"
         for _ in range(attempts):
             if self.pacer.is_blocked(server):
@@ -234,20 +252,22 @@ class RdapClient:
             self.pacer.wait(server)
             try:
                 with self._client() as client:
-                    resp = client.get(url)
+                    status, body = _get_capped(client, url, max_bytes)
+            except ResponseTooLarge:
+                return RdapResult(domain=domain, server=server, error="rdap_response_too_large")
             except httpx.TimeoutException:
                 last_error = "rdap_timeout"
                 continue
             except httpx.HTTPError as exc:
                 last_error = f"rdap_transport_error: {type(exc).__name__}"
                 continue
-            if resp.status_code == 429:
+            if status == 429:
                 self.pacer.block(server, float(self.cfg.get("backoff_on_429_seconds", 30)))
                 log.warning("rdap.rate_limited", server=server)
                 return RdapResult(
                     domain=domain, server=server, status_code=429, error="rdap_rate_limited"
                 )
-            if resp.status_code == 404:
+            if status == 404:
                 # The registry has no such domain: it is not registered.
                 return RdapResult(
                     domain=domain,
@@ -256,18 +276,18 @@ class RdapClient:
                     status_code=404,
                     error="rdap_not_found",
                 )
-            if resp.status_code >= 500:
-                last_error = f"rdap_http_{resp.status_code}"
+            if status >= 500:
+                last_error = f"rdap_http_{status}"
                 continue
-            if resp.status_code != 200:
+            if status != 200:
                 return RdapResult(
                     domain=domain,
                     server=server,
-                    status_code=resp.status_code,
-                    error=f"rdap_http_{resp.status_code}",
+                    status_code=status,
+                    error=f"rdap_http_{status}",
                 )
             try:
-                payload = resp.json()
+                payload = json.loads(body)
             except ValueError:
                 return RdapResult(
                     domain=domain, server=server, status_code=200, error="rdap_bad_json"

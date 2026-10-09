@@ -46,7 +46,7 @@ from src.db.tables import (
     WebhookEvent,
 )
 from src.logging_setup import get_logger
-from src.privacy import is_individual_applicant, looks_corporate
+from src.privacy import is_individual_applicant
 from src.settings import load_config
 
 log = get_logger(__name__)
@@ -171,7 +171,7 @@ def _trademark_records(session: Session, cutoff: datetime, cfg: dict, apply: boo
         r.id
         for r in rows
         if _older(r.publication_date or r.created_at, cutoff)
-        and not looks_corporate(r.applicant_name)
+        and is_individual_applicant(r.applicant_name)
     ]
     return _anonymise(session, TrademarkRecordRow, ids, apply)
 
@@ -202,7 +202,9 @@ def _company_matches(session: Session, cutoff: datetime, cfg: dict, apply: bool)
         ).where(CompanyMatchRow.applicant_name.is_not(None))
     ).all()
     ids = [
-        r.id for r in rows if _older(r.created_at, cutoff) and not looks_corporate(r.applicant_name)
+        r.id
+        for r in rows
+        if _older(r.created_at, cutoff) and is_individual_applicant(r.applicant_name)
     ]
     # The match evidence quotes words of the applicant's name, and a provider
     # error can quote the request URL that carried it: both go with the name.
