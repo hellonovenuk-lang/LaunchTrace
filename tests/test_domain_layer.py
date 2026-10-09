@@ -426,8 +426,18 @@ def _fetcher(site: Site, **overrides: Any) -> HomepageFetcher:
     cfg["homepage"].update(overrides)
     clock = FakeClock()
     return HomepageFetcher(
-        UA, cfg, transport=httpx.MockTransport(site), clock=clock, sleep=clock.sleep
+        UA,
+        cfg,
+        transport=httpx.MockTransport(site),
+        clock=clock,
+        sleep=clock.sleep,
+        resolver=public_resolver,
     )
+
+
+def public_resolver(host: str) -> list[str]:
+    """Every test host resolves to a public documentation-free address."""
+    return ["93.184.215.14"]
 
 
 class TestHomepage:
@@ -769,6 +779,7 @@ class TestLiveProber:
                     transport=httpx.MockTransport(site),
                     clock=clock,
                     sleep=clock.sleep,
+                    resolver=public_resolver,
                 ),
             ),
             site,

@@ -635,3 +635,27 @@ first-trade-mark signal applies to them too). The broad list in
 and scoring, and changing it would move scores. Residual: a one-person company
 "Jane Smith Ltd" is still shown as Companies House publishes it (D-400 LIA
 note).
+
+**D-701 — Homepage fetch: every hop is resolved and checked; RDAP bodies are
+capped.** httpx followed redirects itself, and `is_public_hostname` only looked
+at how the first host was spelt, so a brand's homepage (or robots.txt) could
+redirect the fetcher to `169.254.169.254`, `127.0.0.1`, a name resolving to
+`10.x`, or `[::1]`. `HomepageFetcher` now follows redirects by hand (at most
+`homepage.max_redirects`) and, before every request, refuses a non-http(s)
+scheme (`blocked_scheme`), a non-default port unless
+`homepage.allow_non_default_ports` (`blocked_port`), and any host that
+resolves -- through an injectable resolver, `socket.getaddrinfo` by default --
+to an address that is private, loopback, link-local, multicast, reserved,
+unspecified or not globally routable, including IPv4-mapped, 6to4 and Teredo
+forms (`blocked_private_address`). A refused hop ends the fetch (no http
+fallback); a name that does not resolve is "unreachable" as before.
+**Residual risk, accepted:** httpx resolves the host again when it connects, so
+a hostile DNS server that answers with a public address for our check and a
+private one milliseconds later (DNS rebinding) is not excluded. Pinning the
+connection to the checked IP needs a custom transport that keeps SNI and
+certificate checks on the host name; that is more code than the risk warrants
+for a GET with no credentials whose body is only fingerprinted, never
+returned to a user. RDAP (LOW-6): domain answers are streamed and abandoned
+past `rdap.max_response_bytes` (256 KB, error `rdap_response_too_large`) and
+the IANA bootstrap past `rdap.bootstrap_max_bytes` (1 MB, falls back to the
+configured servers) before any JSON is parsed.
