@@ -403,3 +403,115 @@ stored in `opportunities` (no new revision); the facts are in `observations`.
 A run rebuilt from the database for `send --run-id` therefore has blank domain
 CSV columns, as it already lacks other non-persisted fields.
 `brands.website` is unchanged (still the verified website from web search).
+
+## Rescan (Phase 3)
+
+**D-600 — Re-checked facts go under their native signals.** The rescan writes
+`web_presence_stage`, `holding_page`, `site_platform`, `dns_has_*`, `domain_*`
+with the domain layer's sources (`homepage`, `dns`, `rdap`, via the same
+`domain_signal_facts` that `sync_brands` uses), and `company_status`,
+`sic_codes`, `accounts_category` with source `companies_house`, so
+`latest_observations` compares a rescan reading with a weekly one directly.
+The only new signal is the derived `company_stage` (source `rescan`,
+registered in the `rescan` group). Observation `run_id` is `rescan_<ts>_<hex>`.
+
+**D-601 — No schema change; transitions are namespaced.** Rescan transitions go
+into the existing `stage_changes` table as `web:<stage>` / `company:<stage>`
+(at most 21 characters, within the 32-character column), so they cannot be
+confused with the weekly run's launch-stage transitions (`pre_launch` →
+`early_launch`) in the same table. `evidence.detected_by = "rescan"`, plus the
+dimension, old/new values, sources, observation times and the
+`meaningful` / `negative` / `launched` flags. No Alembic revision
+(`0004_rescan` was not needed).
+
+**D-602 — `brands.current_stage` stays the pipeline's launch stage.** It holds
+`LaunchStage` values that the weekly upsert compares to detect its own
+transitions; writing a web or company stage into it would make the next weekly
+appearance record a spurious change back. Reaching a launched stage
+(`live_store`) sets `brands.launched_at` once and nothing else; the brand then
+leaves the rescan selection. The web-presence and company stages live in
+observations and `stage_changes`.
+
+**D-603 — The first reading is a baseline; companies are compared only with
+rescan readings.** No transition is recorded from "never observed". The
+company stage is compared only against the previous `company_stage`
+observation, which only the rescan writes: the weekly match can come from the
+API search route, which reports no accounts category, so comparing a rescan
+reading with it would invent `no_accounts` → `trading` moves. A null `website`
+observation newer than the last `web_presence_stage` reads as `no_domain`
+(searched, no site), the bottom of the web ladder, which the domain layer
+never records itself.
+
+**D-604 — Meaningful means a new high, or a company stopping.** Upward moves
+to `holding_page` / `site_no_store` / `live_store` / `trading` are alert-worthy
+only if the brand has never been observed at that rank or higher, so a DNS or
+hosting blip (site → `no_dns` → site) is recorded both ways but alerts nobody.
+Downward moves are recorded and not alert-worthy, except a company going to
+`dissolved` or `in_insolvency` (negative, shown in its own digest section so a
+sales team stops chasing it). `unknown` (a failed check) is never a stage.
+Consecutive identical transitions are never written twice.
+
+**D-605 — A failed check still marks the brand checked.** `last_checked_at` is
+set even when a probe or lookup raised, so a broken domain is retried next
+week instead of on all three Friday attempts. Cost stays bounded by the caps;
+errors are counted and logged per brand, and a savepoint rolls back only that
+brand's writes.
+
+**D-606 — Selection.** The window is measured from the publication date of the
+brand's first journal (the `journals` table), falling back to the earliest
+filing date, then `first_seen_at` (wall clock, a last resort: a back-filled
+2018 journal has a journal row, so it is correctly out of window). Brands with
+nothing to check (no verified website, no confirmed company number, search
+off) are not selected, so they do not use the cap. Brands of suppressed leads
+are included, as docs/ARCHITECTURE.md intends ("a rescan needs to watch
+them"); the digest's own filters decide what a customer sees. Order: oldest
+check first, then newest brand.
+
+**D-607 — Web search is off, and capped twice when on.** Only brands with no
+website are searched, through the normal `WebEnricher` and entity verifier (a
+website is recorded only when verified). The allowance is
+min(`web_search_max_calls`, the weekly guard's current allowance from
+`search_budget_for_run`). When a rescan makes any search call it writes a
+`pipeline_runs` row (`mode="rescan"`, `counts.search_calls`) so the rolling
+monthly budget sees it. Such a row has no `raw_records`, so the weekly volume
+checks ignore it, though it occupies one of the six recent-run slots they read.
+
+**D-608 — The digest reuses the weekly feed's rules.** Eligibility is
+`active_customers` (status, past-due grace, `delivery_enabled`); the email
+suppression list removes a recipient; company and mark suppression rules and
+opted-out companies (the public feed's `Suppressions`) remove a brand; band,
+category and region preferences are applied to the brand's current band,
+category and region. Only company-confirmed brands (company number, company
+name, applicant typed `corporate`) are listed, shown by
+`display_party(company_name, ...)`. One digest per customer, recipient and ISO
+week; the recipient is hashed in the idempotency key so a long address cannot
+overflow the 128-character column. A recipient's window starts at their last
+delivered digest (else `lookback_days` ago). No movers → no email and no
+delivery row.
+
+**D-609 — Sending is doubly gated.** `SEND_MODE=review` writes the digest to
+the outbox and never sends, even with a Resend key or an injected live sender.
+With `SEND_MODE=automatic` it still only writes to the outbox until
+`config/rescan.json` → `digest.send_enabled` is set to `true` after a human
+has reviewed the copy. An outbox render counts as delivered for that week
+(the same rule as the weekly feed).
+
+**D-610 — CLI and workflow.** `rescan` runs the job, then the digest
+(`--no-digest` skips it), then `prune_caches`; `--dry-run` lists the plan and
+makes no external call, no write and no digest. `movers-digest` runs the digest
+alone. The workflow step runs after the weekly step and before retention and
+the feed build, `if: always()`, `continue-on-error: true`, with a 20-minute
+step timeout. Outbox files are uploaded as their own 14-day artifact because
+they hold recipient addresses.
+
+**D-611 — Companies House by number.** `lookup_by_number` was added to every
+registry: API `GET /company/{number}` (not cached — it is a refresh; 404 →
+None; retried on 429/5xx up to 3 attempts; spaced ≥ 0.6 s by the rescan), the
+bulk index by `company_number` (indexed already; local, but only as fresh as
+the monthly snapshot), the fixture registry by record. The API reports the
+accounts category as e.g. `micro-entity`, the bulk file as `MICRO ENTITY`; the
+company-stage rules normalise case, hyphens and underscores so both map alike.
+
+**D-612 — No score moves.** Nothing in `config/scoring.json` changed and the
+rescan never runs inside a pipeline run or the stability harness. The
+stability compare is byte-identical to `reports/stability/phase1_diff.txt`.

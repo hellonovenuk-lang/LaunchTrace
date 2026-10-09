@@ -1,0 +1,90 @@
+{
+  "$schema_version": "1.0",
+  "description": "Weekly re-scan of recently seen brands (enrichment layer 5, src/rescan/). Re-checks the brand's own verified website through the domain layer and its Companies House record by company number, records what changed as observations and stage_changes, and sends customers a weekly 'brands that moved' digest. Nothing here changes a score: the rescan never runs inside a pipeline run. See docs/RESCAN.md.",
+  "_comment": "Keys starting with '_' are comments. Every external check is free, rate-limited, time-outed and fail-soft. Web search is off by default: it is the only check that costs money.",
+
+  "window_weeks": 26,
+  "_window_weeks_note": "Only brands first seen in a journal published within this many weeks are re-checked. The date used is the publication date of the brand's first journal, else its earliest filing date, else when LaunchTrace first created the row.",
+  "min_days_between_checks": 6,
+  "_min_days_between_checks_note": "A brand checked (by a rescan or by the weekly web search) less than this many days ago is skipped. Six days makes the three Friday cron attempts idempotent: the second and third attempt find nothing due and make no external call.",
+  "max_brands_per_run": 150,
+  "max_domain_probes_per_run": 60,
+  "_max_domain_probes_per_run_note": "Distinct domains probed per rescan (each: 1 RDAP request, 3 DNS queries, robots.txt and 1-2 homepage requests). Brands beyond the cap still get their Companies House check.",
+  "max_run_seconds": 900,
+  "_max_run_seconds_note": "Wall-clock budget. Once exceeded, no further brand is started; the rest wait for next week (oldest check first, so nobody starves).",
+
+  "sources": {
+    "domain": true,
+    "companies_house": true,
+    "web_search": false
+  },
+  "_sources_note": "domain: the domain layer (src/enrich/domain) on the brand's verified website; it also needs DOMAIN_LAYER_ENABLED. companies_house: a lookup by company number for brands with a confirmed match (bulk index: no network; API key: one GET /company/{number} each). web_search: look for a website for brands that have none, through the search provider and the search cost guard (config/costs.json); off by default.",
+  "web_search_max_calls": 20,
+  "_web_search_max_calls_note": "Hard cap on search calls per rescan when web_search is enabled. The allowance is the smaller of this and what the weekly search guard (per-run cap, rolling monthly budget) would allow; the calls are recorded as a pipeline_runs row (mode 'rescan') so they count against the monthly budget.",
+
+  "politeness": {
+    "seconds_between_brands": 1.0,
+    "_seconds_between_brands_note": "Pause after each brand that made a network call. The domain layer adds its own per-host spacing for RDAP and homepage servers.",
+    "companies_house_api_min_interval_seconds": 0.6,
+    "_companies_house_api_min_interval_seconds_note": "Companies House allows 600 requests per 5 minutes (2 a second); 0.6 s keeps well inside it. Not applied to the bulk index, which is a local file."
+  },
+
+  "transitions": {
+    "_comment": "The stage model. Each dimension is an ordered ladder (lowest first). A change from one ladder value to another is written to stage_changes as '<prefix>:<from>' -> '<prefix>:<to>' with evidence. Values not on the ladder (e.g. 'unknown') are never a stage: they neither start nor end a transition. A transition is 'meaningful' (alert-worthy, shown in the digest) when a rule matches: direction 'up' or 'down' the ladder, ending in one of 'to'. With require_new_high, an upward move is meaningful only if the brand has never been observed at that stage or higher before, so a DNS blip that drops a site and brings it back is not an alert. 'launched' stages set brands.launched_at (once) when reached; brands.current_stage is not changed (D-602).",
+    "web_presence": {
+      "prefix": "web",
+      "signal": "web_presence_stage",
+      "ladder": ["no_domain", "no_dns", "parked", "holding_page", "site_no_store", "live_store"],
+      "meaningful": [
+        {"direction": "up", "to": ["holding_page", "site_no_store", "live_store"], "require_new_high": true, "negative": false}
+      ],
+      "launched": ["live_store"],
+      "labels": {
+        "no_domain": "no website",
+        "no_dns": "domain not set up",
+        "parked": "parked domain",
+        "holding_page": "holding page",
+        "site_no_store": "website, no online shop",
+        "live_store": "online shop live"
+      }
+    },
+    "company_status": {
+      "prefix": "company",
+      "signal": "company_stage",
+      "ladder": ["dissolved", "in_insolvency", "dormant", "no_accounts", "trading"],
+      "meaningful": [
+        {"direction": "up", "to": ["trading"], "require_new_high": true, "negative": false},
+        {"direction": "down", "to": ["dissolved", "in_insolvency"], "require_new_high": false, "negative": true}
+      ],
+      "launched": [],
+      "labels": {
+        "dissolved": "dissolved",
+        "in_insolvency": "in liquidation or administration",
+        "dormant": "dormant",
+        "no_accounts": "no accounts filed yet",
+        "trading": "filed trading accounts"
+      }
+    }
+  },
+
+  "company_stage": {
+    "_comment": "How company_stage is derived from the Companies House status and latest accounts category. Values are compared lower-cased with '-' and '_' read as spaces. The first matching rule wins: dissolved, then in_insolvency, then (for a live company) dormant / no_accounts / trading by accounts category. A status that is none of these is 'unknown' (not a stage).",
+    "dissolved_statuses": ["dissolved", "closed", "converted closed", "removed"],
+    "insolvency_statuses": ["liquidation", "administration", "in administration", "receivership", "receiver action", "insolvency proceedings", "voluntary arrangement", "live but receiver manager on at least one charge"],
+    "live_statuses": ["active", "open", "registered", "active proposal to strike off"],
+    "dormant_accounts": ["dormant"],
+    "no_accounts": ["", "null", "none", "no accounts filed", "accounts type not available"]
+  },
+
+  "digest": {
+    "enabled": true,
+    "lookback_days": 7,
+    "_lookback_days_note": "A recipient's first digest covers moves detected in this many days; later ones cover everything since their previous digest.",
+    "send_enabled": false,
+    "_send_enabled_note": "Even with SEND_MODE=automatic the digest is only written to reports/outbox/ until this is true. Review the copy first (HUMAN_ACTIONS.md, Phase 3 - rescan). In SEND_MODE=review it is never sent, whatever this says.",
+    "send_when_empty": false,
+    "max_brands_per_email": 25,
+    "include_negative": true,
+    "_include_negative_note": "Show brands whose company was dissolved or went into insolvency, in a separate section, so a sales team stops chasing them."
+  }
+}

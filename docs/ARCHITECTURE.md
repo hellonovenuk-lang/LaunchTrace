@@ -95,7 +95,9 @@ When a brand appears in a **later** journal with a different `launch_stage`,
 `sync_brands` appends a `stage_changes` row (`from_stage`, `to_stage`,
 `detected_at`, `evidence` with the journal and mark, `run_id`). Two marks of one
 company in the same week with different stages are not a transition. Later
-work (rescan) records its own transitions with `record_stage_change`.
+work (rescan) records its own transitions with `record_stage_change`, namespaced
+`web:<stage>` / `company:<stage>` with `evidence.detected_by = "rescan"`, and
+sets `launched_at` when a brand reaches a launched stage (docs/RESCAN.md).
 
 ## Observations
 
@@ -154,7 +156,8 @@ own score (it depends on today's code and on non-PIT inputs).
 
 `config/signals.json` groups signals by source (`trademark`, `companies_house`,
 `web_search`, `score`, `domain` (enrichment layer 3, `src/enrich/domain/`), and
-the empty `rescan` group reserved for later work). Each signal declares `source`, `point_in_time_safe` and
+`rescan` (enrichment layer 5, `src/rescan/`: the derived `company_stage`; the
+rescan writes everything else under the native signals — see docs/RESCAN.md). Each signal declares `source`, `point_in_time_safe` and
 `description`. Names are unique across groups (a test enforces it).
 
 ## Weekly run: idempotency and cost

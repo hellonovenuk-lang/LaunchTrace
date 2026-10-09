@@ -380,6 +380,72 @@ def _feed_renderer(s: Scenario) -> str:
     return "\n".join(parts)
 
 
+def _movers_rows(s: Scenario, session):  # type: ignore[no-untyped-def]
+    """Sync the scenario's brands and give every one a meaningful rescan move."""
+    from sqlalchemy import select
+
+    from src.brands import record_stage_change, sync_brands
+    from src.db.tables import Brand
+
+    sync_brands(session, s.result)
+    for brand in session.execute(select(Brand)).scalars():
+        record_stage_change(
+            session,
+            brand.id,
+            "web:holding_page",
+            "web:live_store",
+            {
+                "detected_by": "rescan",
+                "dimension": "web_presence",
+                "old_value": "holding_page",
+                "new_value": "live_store",
+                "meaningful": True,
+                "negative": False,
+                "launched": True,
+            },
+        )
+    session.flush()
+
+
+@renderer("movers_digest")
+def _movers_digest(s: Scenario) -> str:
+    """The rescan's 'brands that moved' email, through the real selection and send path."""
+    from src.db.tables import Customer, CustomerPreference
+    from src.deliver.resend_client import EmailSender
+    from src.rescan.digest import send_movers_digests
+
+    outbox = s.tmp_path / "movers_outbox"
+    with s.session() as session:
+        _movers_rows(s, session)
+        customer = Customer(company="Pouchworks Ltd", subscription_status="active")
+        session.add(customer)
+        session.flush()
+        session.add(
+            CustomerPreference(customer_id=customer.id, recipient_email="buyer@pouchworks.test")
+        )
+        session.flush()
+        send_movers_digests(session, s.settings, sender=EmailSender(s.settings, outbox=outbox))
+        session.commit()
+    return "\n".join(p.read_text(encoding="utf-8") for p in sorted(outbox.glob("*")))
+
+
+@renderer("movers_digest_unfiltered")
+def _movers_digest_all(s: Scenario) -> str:
+    """The digest renderer fed every brand that moved, confirmed company or not."""
+    from datetime import timedelta
+
+    from src.rescan.digest import meaningful_changes, movers_from, render_movers_digest
+
+    with s.session() as session:
+        _movers_rows(s, session)
+        since = datetime.now(UTC) - timedelta(days=7)
+        movers = movers_from(meaningful_changes(session, since), require_company=False)
+        session.rollback()
+    assert len(movers) == 3
+    rendered = render_movers_digest(movers, since=since, settings=s.settings)
+    return rendered.subject + rendered.html + rendered.text
+
+
 # ---------------------------------------------------------------------------
 # the scenario and the assertions
 # ---------------------------------------------------------------------------
@@ -429,6 +495,8 @@ def test_the_corporate_company_does_appear(outputs):
         "outreach_draft",
         "website_and_api",
         "public_feed",
+        "movers_digest",
+        "movers_digest_unfiltered",
     ):
         assert required in showing, f"{required} did not render the corporate lead"
 
@@ -457,6 +525,8 @@ def test_every_named_output_is_registered():
         "transactional_emails",
         "website_and_api",
         "public_feed",
+        "movers_digest",
+        "movers_digest_unfiltered",
     }
     assert expected <= set(OUTPUT_RENDERERS)
 

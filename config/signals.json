@@ -158,6 +158,11 @@
     }
   },
   "rescan": {
-    "_comment": "Reserved for the rescan job (Phase 3). Signals observed by later re-checks of a known brand go here, with source 'rescan' (or 'outcome' for labelled outcomes)."
+    "_comment": "The rescan job (Phase 3, src/rescan). Re-checked facts are written under their native signals and sources (company_status / companies_house, web_presence_stage / homepage, ...) so latest_observations compares like with like; only derived facts with no native home are registered here.",
+    "company_stage": {
+      "source": "rescan",
+      "point_in_time_safe": false,
+      "description": "dissolved / in_insolvency / dormant / no_accounts / trading, derived from the Companies House status and latest accounts category read by number at a rescan (rules in config/rescan.json -> company_stage). Value: {company_number, stage, company_status, accounts_category, provider}. Written only by the rescan, so successive values come from the same lookup and can be compared."
+    }
   }
 }
