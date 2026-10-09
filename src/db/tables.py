@@ -547,3 +547,36 @@ class StageChange(Base):
     detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     evidence: Mapped[Any] = mapped_column(JSON, default=dict)
     run_id: Mapped[str | None] = mapped_column(String(64))
+
+
+class Outcome(Base):
+    """Did a brand launch within ``horizon_months`` of filing? (revision 0003_outcomes)
+
+    Written by the backtest labeller (src/backtest/labeller.py) from stored
+    observations only. ``label`` is ``launched``, ``not_launched`` or
+    ``unknown``; ``criteria_met`` says what each criterion found and
+    ``evidence`` lists the observations behind it. One row per brand, horizon
+    and labeller version: relabelling replaces it, because labels mature as
+    later observations arrive.
+    """
+
+    __tablename__ = "outcomes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    brand_id: Mapped[int] = mapped_column(
+        ForeignKey("brands.id", ondelete="CASCADE", name="fk_outcomes_brand_id_brands"),
+        index=True,
+    )
+    horizon_months: Mapped[int] = mapped_column(Integer)
+    label: Mapped[str] = mapped_column(String(16))
+    criteria_met: Mapped[Any] = mapped_column(JSON, default=dict)
+    evidence: Mapped[Any] = mapped_column(JSON, default=list)
+    labelled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    as_of_date: Mapped[date] = mapped_column(Date)
+    labeller_version: Mapped[str] = mapped_column(String(16))
+
+    __table_args__ = (
+        UniqueConstraint(
+            "brand_id", "horizon_months", "labeller_version", name="uq_outcome_brand_horizon"
+        ),
+    )

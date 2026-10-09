@@ -126,6 +126,10 @@ def build_parser() -> argparse.ArgumentParser:
     retention.add_argument("--apply", action="store_true", help="Make the changes")
     retention.add_argument("--json", action="store_true", help="Print the report as JSON")
 
+    from src.backtest.cli import add_backtest_parser
+
+    add_backtest_parser(sub)
+
     return parser
 
 
@@ -183,6 +187,10 @@ def main(argv: list[str] | None = None) -> int:
         from src.retention import cmd_retention
 
         handlers["retention"] = cmd_retention
+    if args.command == "backtest":
+        from src.backtest.cli import cmd_backtest
+
+        handlers["backtest"] = cmd_backtest
     handler = handlers[args.command]
     try:
         return int(handler(args) or 0)

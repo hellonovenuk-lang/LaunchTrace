@@ -410,6 +410,23 @@ CREATE INDEX IF NOT EXISTS ix_opportunities_suppressed ON opportunities (suppres
 CREATE INDEX IF NOT EXISTS ix_opportunities_trademark_number ON opportunities (trademark_number);
 CREATE INDEX IF NOT EXISTS ix_opportunity_band_score ON opportunities (score_band, launchtrace_score);
 
+CREATE TABLE IF NOT EXISTS outcomes (
+	id SERIAL NOT NULL, 
+	brand_id INTEGER NOT NULL, 
+	horizon_months INTEGER NOT NULL, 
+	label VARCHAR(16) NOT NULL, 
+	criteria_met JSON NOT NULL, 
+	evidence JSON NOT NULL, 
+	labelled_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	as_of_date DATE NOT NULL, 
+	labeller_version VARCHAR(16) NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_outcome_brand_horizon UNIQUE (brand_id, horizon_months, labeller_version), 
+	CONSTRAINT fk_outcomes_brand_id_brands FOREIGN KEY(brand_id) REFERENCES brands (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_outcomes_brand_id ON outcomes (brand_id);
+
 CREATE TABLE IF NOT EXISTS score_events (
 	id SERIAL NOT NULL, 
 	dedupe_key VARCHAR(64) NOT NULL, 

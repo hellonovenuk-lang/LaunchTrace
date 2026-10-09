@@ -1,0 +1,106 @@
+{
+  "$schema_version": "1.0",
+  "description": "Backtest rules (src/backtest/): which past journals can be fetched, how they are ingested, the point-in-time (PIT) policy a backtest score must obey, how a brand's outcome ('launched' or not) is labelled at fixed horizons after filing, and how the precision/recall report is built. Nothing here changes a live score; the report suggests weight changes but never applies them. See docs/BACKTEST.md.",
+  "_comment": "Keys starting with '_' are comments.",
+
+  "probe": {
+    "_comment": "Historical availability probe (python -m src.pipeline backtest probe). One HEAD per candidate journal URL (a 1 KB ranged GET when HEAD is refused), binary search for the earliest journal still downloadable. Polite: at least min_delay_seconds between requests, a hard request cap, honest UKIPO_USER_AGENT.",
+    "filename": "jnl.xml",
+    "_filename_note": "The file name the IPO uses for the machine-readable journal (see src/ingest/ukipo_http.py XML_FILENAME_PATTERNS[0]). Only this pattern is probed: probing every historical pattern for every week would multiply requests for no gain.",
+    "min_delay_seconds": 2.5,
+    "timeout_seconds": 20,
+    "max_requests": 24,
+    "max_consecutive_misses": 6,
+    "max_consecutive_blocked": 3,
+    "default_lookback_years": 6,
+    "range_get_bytes": 1023,
+    "open_data_check": true
+  },
+
+  "ingest": {
+    "_comment": "backtest ingest: the normal pipeline with NO web search, NO LLM, and (by default) NO live domain layer -- a paid API is never used by a backtest, and the domain layer describes the present, which is not point-in-time safe.",
+    "default_source": "ukipo_http",
+    "max_journals_per_invocation": 10,
+    "_max_journals_note": "A cap per invocation so one command cannot mass-download. A full ~27-journal backfill is three invocations, or one with --max-journals 27 (see HUMAN_ACTIONS.md).",
+    "delay_seconds_between_journals": 15,
+    "_delay_note": "Pause between journals when the source downloads from ipo.gov.uk (ukipo_http). Each journal is ~150 MB before the embedded artwork is stripped.",
+    "domain_layer_default": false,
+    "output_subdir": "backtest_runs",
+    "_output_subdir_note": "Run artefacts (CSV, email, QA report) go to CACHE_DIR/<output_subdir>/<journal>, not reports/runs/: a backtest is not a deliverable week."
+  },
+
+  "pit": {
+    "_comment": "Point-in-time policy (src/backtest/pit.py). A backtest score for a filing may use only the stored trade mark record and observations that are point_in_time_safe with source_date <= filing_date + pit_window_days. Everything else is dropped or neutralised before the real LaunchTraceScorer runs.",
+    "pit_window_days": 0,
+    "_pit_window_note": "0 = strict: only facts true on or before the filing date. Raising it (e.g. to the ~6-8 week filing-to-publication lag) admits facts LaunchTrace could have known when the journal was published, such as a company incorporated just after filing.",
+    "allowed_signals": ["filing_date", "publication_date", "nice_classes", "incorporation_date", "domain_created"],
+    "_allowed_signals_note": "Only these registered PIT-safe signals may enter a backtest context, and only with source_date inside the cutoff. A signal must ALSO be point_in_time_safe on the observation row.",
+    "identity_link_signal": "company_match",
+    "_identity_link_note": "company_match is not PIT-safe (matching runs against today's register). It is used for ONE thing only: the company number and match confidence that link the applicant to a company whose PIT-safe incorporation_date is inside the cutoff. Without such an incorporation_date the backtest treats the applicant as unmatched. Status, SIC codes and accounts are never used (D-503).",
+    "not_evaluable_indicators": {
+      "early_stage_website": "web search (not PIT-safe)",
+      "no_major_retail_listings": "web search (not PIT-safe)",
+      "active_launch_signals": "web search (not PIT-safe)",
+      "mature_brand_footprint": "web search (not PIT-safe)",
+      "widely_distributed": "web search (not PIT-safe)",
+      "already_on_marketplace": "web search (not PIT-safe)",
+      "food_sic_code_match": "current Companies House SIC codes (not PIT-safe)",
+      "service_business_sic_only": "current Companies House SIC codes (not PIT-safe)",
+      "small_company_accounts": "current Companies House accounts category (not PIT-safe)",
+      "company_dormant": "current Companies House accounts category (not PIT-safe)",
+      "shop_platform_detected": "homepage fetch (describes the present)",
+      "holding_page_detected": "homepage fetch (describes the present)",
+      "has_mx_records": "DNS (describes the present)"
+    }
+  },
+
+  "outcomes": {
+    "_comment": "Outcome labeller (src/backtest/labeller.py). A brand is 'launched' at a horizon if ANY available criterion has positive evidence observed on or before filing_date + horizon. 'not_launched' only when no criterion is positive AND at least one criterion has a NEGATIVE check observed within negative_check_tolerance_days of the horizon end. Otherwise 'unknown' (horizon not elapsed, or no evidence). Absence of evidence is never 'not_launched'. Only stored observations are read; the labeller never searches or probes.",
+    "labeller_version": "1",
+    "horizons_months": [3, 6],
+    "negative_check_tolerance_days": 30,
+    "criteria": [
+      {
+        "key": "shop_live",
+        "description": "The brand's own domain was live with a shop (shop platform detected, or web presence stage live_store).",
+        "available": true,
+        "positive": [
+          {"signal": "site_platform", "field": "shop_platform", "equals": true},
+          {"signal": "web_presence_stage", "field": "stage", "in": ["live_store"]}
+        ],
+        "negative": [
+          {"signal": "web_presence_stage", "field": "stage", "in": ["no_dns", "parked", "holding_page", "site_no_store"]}
+        ]
+      },
+      {
+        "key": "ch_accounts_after_filing",
+        "description": "Companies House accounts made up to a date after the filing (a trading company).",
+        "available": false,
+        "unavailable_reason": "The Companies House data LaunchTrace holds (bulk index and stored matches) has the accounts CATEGORY only, not the made-up-to or filed date of any accounts, and today's company status is not evidence of trading at the horizon. Recorded as unavailable rather than approximated (D-506)."
+      },
+      {
+        "key": "retail_or_marketplace_listing",
+        "description": "A retailer or marketplace listing was found by a web search already stored (the labeller never runs a search: it is a paid API).",
+        "available": true,
+        "positive": [
+          {"signal": "marketplace_presence", "equals": true},
+          {"signal": "major_retailer_presence", "equals": true},
+          {"signal": "retail_presence", "in": ["marketplace", "independent_retail", "multiple_retail"]}
+        ],
+        "negative": [
+          {"signal": "retail_presence", "in": ["none_found"]}
+        ]
+      }
+    ]
+  },
+
+  "report": {
+    "_comment": "backtest report: precision/recall by PIT backtest score band and by indicator, per horizon, unknown labels excluded (and counted). Weight suggestions are advice for a human; nothing is applied.",
+    "out_dir": "reports/backtest",
+    "min_labelled_for_conclusions": 30,
+    "min_support_per_indicator": 10,
+    "wilson_z": 1.96,
+    "points_per_log_lift": 8,
+    "max_suggested_change": 8
+  }
+}

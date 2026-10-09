@@ -95,10 +95,17 @@ def _run_one(
     journal_number: str | None = None,
     write_db: bool = True,
     history: list[dict] | None = None,
+    *,
+    settings_overrides: dict[str, object] | None = None,
+    output_dir: Path | None = None,
 ) -> PipelineResult:
     settings = _fresh_settings(args)
+    if settings_overrides:
+        # Backtests switch paid search, the LLM and the live domain layer off.
+        settings = settings.model_copy(update=settings_overrides)  # type: ignore[attr-defined]
     source = get_source(settings=settings)  # type: ignore[arg-type]
-    pipeline = Pipeline(settings=settings, source=source)  # type: ignore[arg-type]
+    extra = {"output_dir": output_dir} if output_dir is not None else {}
+    pipeline = Pipeline(settings=settings, source=source, **extra)  # type: ignore[arg-type]
 
     # Resolved before the run so 'first trade mark for this applicant' is judged
     # against journals *before* this one. Judging it against everything stored
