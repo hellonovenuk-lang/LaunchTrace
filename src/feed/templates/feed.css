@@ -1,0 +1,33 @@
+:root{--ink:#1c1917;--muted:#57534e;--faint:#78716c;--line:#e7e5e4;--bg:#fafaf9;--card:#ffffff;--accent:#0f766e;--accent-dark:#115e59;--max:960px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+header.site{border-bottom:1px solid var(--line);background:var(--card)}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;min-height:64px;flex-wrap:wrap;gap:8px}
+.brand{font-weight:700;letter-spacing:-.02em;font-size:18px;color:var(--ink)}
+.brand span{color:var(--accent)}
+nav a{margin-left:16px;font-size:14px;color:var(--muted)}
+main{padding:32px 0 48px}
+h1{font-size:clamp(24px,4vw,34px);line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}
+p.lede{color:var(--muted);max-width:65ch;margin:0 0 24px}
+.weeks{list-style:none;padding:0;margin:0 0 32px}
+.weeks li{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:0 0 10px}
+.weeks .meta{color:var(--faint);font-size:14px}
+.entries{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:0 0 32px}
+.entry{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px}
+.entry h2{font-size:18px;margin:0 0 4px}
+.entry .company{color:var(--muted);font-size:14px;margin:0 0 10px}
+.entry dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:14px;margin:0 0 10px}
+.entry dt{color:var(--faint)}
+.entry dd{margin:0}
+.entry .reason{font-size:14px;margin:0 0 10px}
+.entry .links{font-size:13px}
+.cta{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;margin:0 0 32px}
+.btn{display:inline-block;padding:10px 18px;border-radius:6px;font-weight:600;font-size:15px;background:var(--accent);color:#fff}
+.btn:hover{background:var(--accent-dark);text-decoration:none}
+.formats{font-size:14px;color:var(--muted)}
+footer.site{border-top:1px solid var(--line);padding:32px 0;color:var(--faint);font-size:13px;background:var(--card)}
+footer.site a{color:var(--faint);text-decoration:underline}
+footer.site p{margin:0 0 8px;max-width:75ch}

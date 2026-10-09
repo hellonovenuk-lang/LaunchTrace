@@ -1,0 +1,22 @@
+{% extends "_layout.html.j2" %}
+{% block title %}Journal {{ week.journal_number }} · {{ config.site_title }}{% endblock %}
+{% block content %}
+    <h1>New food brands: journal {{ week.journal_number }}</h1>
+    <p class="lede">Trade marks published {{ week.publication_date.isoformat() }}. Showing {{ week.entries|length }} of {{ week.qualifying_count }} qualifying brands, highest LaunchTrace Score first. <a href="index.html">All weeks</a> · <a href="{{ week.slug }}.json">JSON</a></p>
+    <div class="entries">
+{% for e in week.entries %}
+      <article class="entry" id="c-{{ e.company_number }}">
+        <h2>{{ e.brand_name }}</h2>
+        <p class="company">{{ e.company_name }} · company {{ e.company_number }}</p>
+        <dl>
+{% if e.product_category %}          <dt>Category</dt><dd>{{ e.product_category }}</dd>
+{% endif %}          <dt>Stage</dt><dd>{{ e.launch_stage }}</dd>
+{% if e.filing_date %}          <dt>Filed</dt><dd>{{ e.filing_date }}</dd>
+{% endif %}{% if e.region %}          <dt>Region</dt><dd>{{ e.region }}</dd>
+{% endif %}        </dl>
+        <p class="reason">{{ e.reason }}</p>
+        <p class="links"><a href="{{ e.ukipo_url }}">UKIPO record {{ e.trademark_number }}</a> · <a href="{{ e.companies_house_url }}">Companies House</a></p>
+      </article>
+{% endfor %}
+    </div>
+{% endblock %}

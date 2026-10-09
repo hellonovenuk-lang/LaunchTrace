@@ -35,6 +35,7 @@ from src.db.tables import (
     PipelineRun,
     SampleRequest,
 )
+from src.feed.web import build_feed_router
 from src.logging_setup import configure_logging, get_logger
 from src.sales.feedback import FeedbackState
 from src.settings import REPORTS_DIR, get_settings, load_config
@@ -439,6 +440,8 @@ def create_app() -> FastAPI:
     # The JSON API a replacement front end builds against. Same functions as
     # the HTML routes above, so the two can never drift apart in behaviour.
     app.include_router(build_api_router(db_session))
+    # The public weekly feed (/feed/, /feed.xml, /feed.json): see src/feed/.
+    app.include_router(build_feed_router(db_session))
 
     @app.get("/admin/run/{journal_number}")
     def admin_run(request: Request, journal_number: str) -> JSONResponse:

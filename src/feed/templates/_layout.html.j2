@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ config.site_title }}{% endblock %}</title>
+<meta name="description" content="{{ config.site_description }}">
+<link rel="alternate" type="application/atom+xml" title="{{ config.site_title }} (Atom)" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="{{ config.site_title }} (RSS)" href="rss.xml">
+<link rel="alternate" type="application/json" title="{{ config.site_title }} (JSON)" href="feed.json">
+{% if links.inline_css %}<style>
+{{ css }}</style>{% else %}<link rel="stylesheet" href="feed.css">{% endif %}
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="{{ links.home }}">Launch<span>Trace</span></a>
+    <nav>
+      <a href="index.html">All weeks</a>
+      <a href="{{ links.cta }}">{{ config.cta_text }}</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="wrap">
+{% block content %}{% endblock %}
+    <div class="cta">
+      <p>This page shows a small, delayed sample. Subscribers get every qualifying lead each week, with the evidence behind it.</p>
+      <a class="btn" href="{{ links.cta }}">{{ config.cta_text }}</a>
+    </div>
+    <p class="formats">Also available as <a href="feed.xml">Atom</a>, <a href="rss.xml">RSS</a> and <a href="feed.json">JSON</a>.</p>
+  </div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p><strong>Data sources.</strong> Trade mark data is taken from the UK Intellectual Property
+    Office and company data from Companies House, both used under the
+    <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
+    LaunchTrace is not affiliated with, endorsed by, or connected to the Intellectual Property Office
+    or Companies House.</p>
+    <p>LaunchTrace is a commercial sales-intelligence feed. It is not trade mark legal advice, not a
+    trade mark watching service, and not a trade mark database. Scores are our own opportunity
+    signal, not a prediction that any company will make a purchase.</p>
+    <p>
+      <a href="{{ links.privacy }}">Privacy</a> ·
+      <a href="{{ links.terms }}">Terms</a> ·
+      <a href="{{ links.attribution }}">Data &amp; licensing</a> ·
+      <a href="{{ links.unsubscribe }}">Opt out</a>
+    </p>
+  </div>
+</footer>
+</body>
+</html>
