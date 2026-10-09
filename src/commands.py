@@ -20,9 +20,11 @@ from src.db.repository import (
     journal_already_processed,
     known_applicant_names,
     recent_run_counts,
+    record_search_calls,
     save_opportunities,
     save_run,
     save_trademark_records,
+    start_run_row,
     upsert_journal,
 )
 from src.db.tables import Customer, CustomerPreference, ErrorLog, OpportunityRow, PipelineRun
@@ -35,7 +37,7 @@ from src.ingest.cache import FileCache
 from src.ingest.discovery import previous_journal_dates
 from src.logging_setup import get_logger
 from src.models import JournalRef, PipelineResult, RunStatus
-from src.pipeline_core import Pipeline
+from src.pipeline_core import Pipeline, new_run_id
 from src.privacy import display_party
 from src.settings import DATA_DIR, REPORTS_DIR, Settings, get_settings, load_config
 
@@ -114,6 +116,8 @@ def _run_one(
 
     known: set[str] = set()
     budget: SearchBudget | None = None
+    run_id = new_run_id()
+    mode = getattr(args, "command", "weekly")
     if write_db:
         init_db()
         with session_scope() as session:
@@ -123,6 +127,12 @@ def _run_one(
             if history is None:
                 history = recent_run_counts(session)
             budget = search_budget_for_run(session, settings)  # type: ignore[arg-type]
+            # A 'running' row exists before any money is spent, and its
+            # search_calls follow every call, so a run killed half-way still
+            # counts against the rolling budget (D-703). save_run below
+            # completes this same row.
+            start_run_row(session, run_id, mode, ref.journal_number if ref else journal_number)
+        budget.on_call = _search_spend_recorder(run_id)
 
     result = pipeline.run(
         journal_number=journal_number,
@@ -131,7 +141,10 @@ def _run_one(
         known_applicants=known,
         history=history,
         search_budget=budget,
+        run_id=run_id,
     )
+    if budget is not None:
+        budget.on_call = None
 
     if write_db:
         with session_scope() as session:
@@ -153,8 +166,18 @@ def _run_one(
                 except Exception as exc:  # brand history must not lose the run record
                     log.warning("commands.sync_brands_failed", error=str(exc)[:200])
                     result.warnings.append(f"Brand history was not updated: {str(exc)[:200]}")
-            save_run(session, result, mode=getattr(args, "command", "weekly"))
+            save_run(session, result, mode=mode)
     return result
+
+
+def _search_spend_recorder(run_id: str):  # type: ignore[no-untyped-def]
+    """``SearchBudget.on_call`` hook: write the running total to the run's row."""
+
+    def record(calls: int) -> None:
+        with session_scope() as session:
+            record_search_calls(session, run_id, calls)
+
+    return record
 
 
 def prune_caches(settings: Settings) -> int:

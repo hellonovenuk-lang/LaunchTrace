@@ -7,6 +7,8 @@ ever needed.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -17,7 +19,9 @@ from src.logging_setup import get_logger
 log = get_logger(__name__)
 
 
-def _retrying_post(url: str, timeout: int, **kwargs):  # type: ignore[no-untyped-def]
+def _retrying_post(  # type: ignore[no-untyped-def]
+    url: str, timeout: int, before_attempt: Callable[[], None] | None = None, **kwargs
+):
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
@@ -25,6 +29,10 @@ def _retrying_post(url: str, timeout: int, **kwargs):  # type: ignore[no-untyped
         retry=retry_if_exception_type((RateLimitedError, httpx.TransportError, ProviderError)),
     )
     def _do():  # type: ignore[no-untyped-def]
+        if before_attempt is not None:
+            # Every attempt is billed, retries included (D-704). Raises
+            # SearchBudgetExhaustedError, which is not retried.
+            before_attempt()
         with httpx.Client(timeout=timeout) as client:
             resp = client.post(url, **kwargs)
         if resp.status_code == 429:
@@ -37,7 +45,9 @@ def _retrying_post(url: str, timeout: int, **kwargs):  # type: ignore[no-untyped
     return _do()
 
 
-def _retrying_get(url: str, timeout: int, **kwargs):  # type: ignore[no-untyped-def]
+def _retrying_get(  # type: ignore[no-untyped-def]
+    url: str, timeout: int, before_attempt: Callable[[], None] | None = None, **kwargs
+):
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
@@ -45,6 +55,10 @@ def _retrying_get(url: str, timeout: int, **kwargs):  # type: ignore[no-untyped-
         retry=retry_if_exception_type((RateLimitedError, httpx.TransportError, ProviderError)),
     )
     def _do():  # type: ignore[no-untyped-def]
+        if before_attempt is not None:
+            # Every attempt is billed, retries included (D-704). Raises
+            # SearchBudgetExhaustedError, which is not retried.
+            before_attempt()
         with httpx.Client(timeout=timeout) as client:
             resp = client.get(url, **kwargs)
         if resp.status_code == 429:
@@ -69,6 +83,7 @@ class TavilyProvider(SearchProvider):
         data = _retrying_post(
             "https://api.tavily.com/search",
             self.timeout,
+            before_attempt=self.before_attempt,
             json={"api_key": self.api_key, "query": query, "max_results": limit},
         )
         return [
@@ -89,6 +104,7 @@ class SerperProvider(SearchProvider):
         data = _retrying_post(
             "https://google.serper.dev/search",
             self.timeout,
+            before_attempt=self.before_attempt,
             headers={"X-API-KEY": self.api_key, "Content-Type": "application/json"},
             json={"q": query, "num": limit, "gl": "uk"},
         )
@@ -110,6 +126,7 @@ class BraveSearchProvider(SearchProvider):
         data = _retrying_get(
             "https://api.search.brave.com/res/v1/web/search",
             self.timeout,
+            before_attempt=self.before_attempt,
             headers={"X-Subscription-Token": self.api_key, "Accept": "application/json"},
             params={"q": query, "count": limit, "country": "GB"},
         )

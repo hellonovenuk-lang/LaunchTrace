@@ -25,7 +25,7 @@ from src.db.tables import (
     WebEnrichmentRow,
 )
 from src.logging_setup import get_logger
-from src.models import JournalArtifact, Opportunity, PipelineResult, TrademarkRecord
+from src.models import JournalArtifact, Opportunity, PipelineResult, RunStatus, TrademarkRecord
 
 log = get_logger(__name__)
 
@@ -264,11 +264,50 @@ def save_run(session: Session, result: PipelineResult, mode: str = "weekly") -> 
     return row
 
 
+# Runs whose volumes are comparable with a weekly journal run (D-703). Rescan,
+# backtest-ingest and unfinished ("running", killed) rows are not.
+VOLUME_HISTORY_MODES = ("weekly", "backfill")
+
+
 def recent_run_counts(session: Session, limit: int = 6) -> list[dict[str, Any]]:
+    """Funnel counts of the latest completed weekly/backfill runs (volume-anomaly history)."""
     rows = session.execute(
-        select(PipelineRun).order_by(PipelineRun.started_at.desc()).limit(limit)
+        select(PipelineRun)
+        .where(
+            PipelineRun.status == RunStatus.COMPLETED.value,
+            PipelineRun.mode.in_(VOLUME_HISTORY_MODES),
+        )
+        .order_by(PipelineRun.started_at.desc())
+        .limit(limit)
     ).scalars()
     return [r.counts or {} for r in rows]
+
+
+def start_run_row(
+    session: Session, run_id: str, mode: str, journal_number: str | None
+) -> PipelineRun:
+    """Record a run as 'running' before it spends anything (D-703)."""
+    row = PipelineRun(
+        run_id=run_id,
+        mode=mode,
+        journal_number=journal_number,
+        status="running",
+        started_at=datetime.now(UTC),
+        counts={"search_calls": 0},
+    )
+    session.add(row)
+    session.flush()
+    return row
+
+
+def record_search_calls(session: Session, run_id: str, calls: int) -> None:
+    """Update a running run's search_calls (the rolling budget reads it)."""
+    row = session.execute(
+        select(PipelineRun).where(PipelineRun.run_id == run_id)
+    ).scalar_one_or_none()
+    if row is not None:
+        row.counts = {**(row.counts or {}), "search_calls": int(calls)}
+        session.flush()
 
 
 def known_applicant_names(session: Session, before_journal: str | None = None) -> set[str]:

@@ -682,3 +682,39 @@ matching the cache, which is also saved by failed runs. LOW-6: workflow inputs
 (`journal`, `send`, `force`, `fresh_database`) now reach scripts only as
 environment variables, and the weekly arguments are a bash array, so a crafted
 input can neither run shell nor add arguments.
+
+**D-703 — Search spend is durable mid-run; the domain stage has a wall-clock
+budget; volume history holds only comparable runs.** A run's search calls were
+written only by the final `save_run`, so a killed run's spend vanished from
+the rolling monthly budget. `_run_one` now creates the run id up front
+(`pipeline_core.new_run_id`, passed to `Pipeline.run(run_id=...)`), inserts a
+`pipeline_runs` row with status `running` and `counts.search_calls = 0` before
+the pipeline starts (only when it writes to the database), and gives the
+`SearchBudget` an `on_call` hook that writes the running total to that row in
+its own short session after every counted call (at most a few hundred small
+updates a run; a failing update is logged and never breaks the run). The final
+`save_run` completes the same row, so a run is still one row.
+`search_budget_for_run` already sums every row in the window whatever its
+status, so a killed run's `running` row counts; it does not make the journal
+"processed" (that is the `journals` table). `recent_run_counts` -- the
+volume-anomaly history -- now reads only `completed` runs whose mode is
+`weekly` or `backfill`, so killed, blocked, `rescan` and `backtest-ingest` rows
+no longer pollute it (this also settles D-508 (c)). The stability snapshot is
+byte-identical. The weekly domain stage stops probing once
+`max_stage_seconds` (config/domain_layer.json, 600 s; 0 disables) of wall
+clock have passed: the remaining leads get no domain signals, as when the
+layer is off, and the run carries a warning; it never fails the run. A
+`running` row left by a killed process stays `running` (visible in the admin
+run list); nothing tidies it, deliberately, because it is the evidence of the
+spend.
+
+**D-704 — Every billed HTTP attempt counts, retries included.** The HTTP
+search providers retry up to three times (tenacity), but the budget counted
+one call per query, so the cap was not a ceiling on billed requests.
+`SearchProvider.before_attempt` now asks a per-search `attempt_guard` before
+every attempt; `WebEnricher._search` wires it to `SearchBudget.take_attempt`,
+which counts the attempt or, when the allowance is spent, refuses it (raising
+`SearchBudgetExhaustedError`, which tenacity does not retry, and marking the
+budget exhausted). A provider that makes no HTTP request (fixture, none) still
+counts one call per search, so fixture-based runs and the stability snapshot
+are unchanged.

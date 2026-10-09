@@ -3,6 +3,9 @@
   "description": "Enrichment layer 3: domain evidence (RDAP registration dates, DNS records, one homepage fetch, platform fingerprints) for a brand's VERIFIED website only. Every check is free, rate-limited, time-outed and fail-soft: a failure leaves the signal empty and records an error, it never blocks a run. Nothing here changes a score while the matching indicators in config/scoring.json have weight 0. Read by src/enrich/domain/.",
   "_comment": "Keys starting with '_' are comments. The master switch is the DOMAIN_LAYER_ENABLED setting; the per-check flags below switch individual checks off.",
 
+  "max_stage_seconds": 600,
+  "_max_stage_seconds_note": "Wall-clock budget for the whole domain stage of one weekly run. Once spent, the remaining leads get no domain signals and the run carries a warning; it never fails the run. 0 switches the budget off (D-703).",
+
   "enabled_checks": {
     "rdap": true,
     "dns": true,

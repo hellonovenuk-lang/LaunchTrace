@@ -9,15 +9,25 @@ The allowance for a run is the smaller of the per-run cap and what is left of
 the rolling monthly budget. Running out is never a failure: the records that
 were not searched are left ``attempted=False`` (exactly as when no search
 provider is configured), a warning goes on the run, and the run completes.
+
+What is counted is every *billed HTTP attempt*, retries included (D-704):
+an HTTP provider asks ``take_attempt`` before each try, and a retry the budget
+cannot cover is not made. ``on_call`` (optional) is told the running total
+after every counted call, so the caller can persist spend as it happens and a
+run killed half-way still counts against the rolling budget (D-703).
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from src.logging_setup import get_logger
 from src.settings import Settings, get_settings, load_config
+
+log = get_logger(__name__)
 
 PER_RUN_CAP = "per_run_cap"
 MONTHLY_BUDGET = "monthly_budget"
@@ -61,12 +71,18 @@ class SearchBudget:
     ``max_calls=None`` means unlimited (still counted).
     """
 
-    def __init__(self, max_calls: int | None = None, limited_by: str = PER_RUN_CAP) -> None:
+    def __init__(
+        self,
+        max_calls: int | None = None,
+        limited_by: str = PER_RUN_CAP,
+        on_call: Callable[[int], None] | None = None,
+    ) -> None:
         self.max_calls = max_calls
         self.limited_by = limited_by
         self.calls = 0
         self.records_skipped = 0
         self.exhausted = False
+        self.on_call = on_call
 
     @property
     def remaining(self) -> int | None:
@@ -94,6 +110,27 @@ class SearchBudget:
 
     def count(self, n: int = 1) -> None:
         self.calls += n
+        self._notify()
+
+    def take_attempt(self) -> bool:
+        """Count one billed HTTP attempt, or refuse it when nothing is left.
+
+        Called before every attempt, retries included, so ``calls`` never
+        exceeds ``max_calls``. A refusal also stops later records.
+        """
+        if self.max_calls is not None and self.calls >= self.max_calls:
+            self.exhausted = True
+            return False
+        self.count()
+        return True
+
+    def _notify(self) -> None:
+        if self.on_call is None:
+            return
+        try:
+            self.on_call(self.calls)
+        except Exception as exc:  # recording spend must never break a run
+            log.warning("budget.on_call_failed", error=str(exc)[:200])
 
     def warning(self) -> str | None:
         if not self.exhausted:

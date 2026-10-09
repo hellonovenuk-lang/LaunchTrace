@@ -14,8 +14,10 @@ whole-stage failures fail closed (the run is blocked and nothing is sent).
 
 from __future__ import annotations
 
+import time
 import uuid
 from collections import Counter
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -69,6 +71,11 @@ log = get_logger(__name__)
 DEAD_STATUSES = {"withdrawn", "refused", "dead", "cancelled", "removed"}
 
 
+def new_run_id() -> str:
+    """A fresh run id (``run_<UTC timestamp>_<6 hex>``)."""
+    return f"run_{datetime.now(UTC):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
+
+
 class Pipeline:
     def __init__(
         self,
@@ -89,6 +96,8 @@ class Pipeline:
         self.scorer = scorer or LaunchTraceScorer()
         # Enrichment layer 3. None -> chosen by DOMAIN_LAYER_ENABLED.
         self.domain = domain or get_domain_prober(self.settings)
+        # Monotonic clock for stage time budgets; tests replace it.
+        self.clock: Callable[[], float] = time.monotonic
         self.filter = self.classifier.filter
         self.commercial_assessor = get_commercial_mode_assessor()
         self.goods_analyser = get_goods_analyser()
@@ -111,6 +120,7 @@ class Pipeline:
         history: list[dict[str, Any]] | None = None,
         write_outputs: bool = True,
         search_budget: SearchBudget | None = None,
+        run_id: str | None = None,
     ) -> PipelineResult:
         """Process one journal.
 
@@ -119,7 +129,7 @@ class Pipeline:
         per-run cap from ``config/costs.json`` (or SEARCH_MAX_CALLS_PER_RUN)
         applies.
         """
-        run_id = f"run_{datetime.now(UTC):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:6]}"
+        run_id = run_id or new_run_id()
         budget = search_budget or SearchBudget(SearchGuard.load(self.settings).max_calls_per_run)
         self.web.budget = budget
 
@@ -540,7 +550,24 @@ class Pipeline:
             layer = DomainLayer(self.domain)
             if not layer.enabled:
                 return out
+            # A wall-clock budget for the whole stage (D-703): slow hosts must
+            # not hold a weekly run hostage. Leads after the cut-off simply get
+            # no domain signals, exactly as when the layer is off.
+            max_seconds = float(layer.cfg.get("max_stage_seconds", 600) or 0)
+            started = self.clock()
             for i, web in enumerate(webs):
+                if max_seconds > 0 and self.clock() - started > max_seconds:
+                    skipped = len(webs) - i
+                    log.warning(
+                        "pipeline.domain_stage_time_budget",
+                        max_stage_seconds=max_seconds,
+                        skipped=skipped,
+                    )
+                    result.warnings.append(
+                        f"Domain layer time budget reached ({max_seconds:g} s): "
+                        f"{skipped} lead(s) got no domain signals."
+                    )
+                    break
                 try:
                     out[i] = layer.signals_for(web)
                 except Exception as exc:  # pragma: no cover - signals_for is fail-soft
