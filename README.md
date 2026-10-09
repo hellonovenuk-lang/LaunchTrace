@@ -788,7 +788,7 @@ Per weekly run, with everything connected:
 | **Per run** | **under £0.10** |
 
 How many outside requests a week that adds up to, per service, is tabled in
-[`docs/OPERATIONS.md`](docs/OPERATIONS.md#weekly-external-call-budget).
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md#8-weekly-external-call-budget).
 
 Fixed monthly:
 
@@ -923,7 +923,7 @@ brand's three- and six-month window, which the weekly run and the rescan add
 from now on, so the backtest becomes useful over the coming months rather than
 today. Reports go to `reports/backtest/`; weight suggestions are advice only
 and never applied. **Before ingesting into your production database, read the
-caveat in [`docs/OPERATIONS.md`](docs/OPERATIONS.md#running-the-full-historical-backtest).**
+caveat in [`docs/OPERATIONS.md`](docs/OPERATIONS.md#5-running-the-full-historical-backtest).**
 Method: [`docs/BACKTEST.md`](docs/BACKTEST.md).
 
 ---
