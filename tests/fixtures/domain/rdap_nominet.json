@@ -1,0 +1,28 @@
+{
+  "objectClassName": "domain",
+  "handle": "EXAMPLEBRAND.CO.UK",
+  "ldhName": "examplebrand.co.uk",
+  "rdapConformance": ["rdap_level_0", "icann_rdap_response_profile_0", "icann_rdap_technical_implementation_guide_0", "nominet_rdap_extensions"],
+  "status": ["active"],
+  "events": [
+    {"eventAction": "registration", "eventDate": "2025-06-02T10:14:22Z"},
+    {"eventAction": "expiration", "eventDate": "2027-06-02T10:14:22Z"},
+    {"eventAction": "last changed", "eventDate": "2026-01-15T08:01:09Z"},
+    {"eventAction": "last update of RDAP database", "eventDate": "2026-10-09T06:00:00Z"}
+  ],
+  "entities": [
+    {
+      "objectClassName": "entity",
+      "handle": "EXAMPLE-TAG",
+      "roles": ["registrar"],
+      "vcardArray": ["vcard", [["version", {}, "text", "4.0"], ["fn", {}, "text", "Example Registrar Ltd t/a Example Hosting"]]],
+      "links": [{"value": "https://rdap.nominet.uk/uk/entity/EXAMPLE-TAG", "rel": "self", "href": "https://www.example.invalid/", "type": "text/html"}]
+    }
+  ],
+  "nameservers": [
+    {"objectClassName": "nameserver", "ldhName": "ns1.example-hosting.invalid"},
+    {"objectClassName": "nameserver", "ldhName": "ns2.example-hosting.invalid"}
+  ],
+  "secureDNS": {"delegationSigned": false},
+  "notices": [{"title": "Terms of Service", "description": ["Fixture modelled on a Nominet RDAP response."]}]
+}

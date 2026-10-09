@@ -353,6 +353,8 @@ def _facts(opp: Opportunity, result: PipelineResult) -> list[tuple[str, Any, dat
             ]
         )
 
+    facts.extend(domain_facts(opp))
+
     facts.append(
         (
             "launchtrace_score",
@@ -367,6 +369,71 @@ def _facts(opp: Opportunity, result: PipelineResult) -> list[tuple[str, Any, dat
     )
     facts.append(("launch_stage", opp.launch_stage.value, None))
     return facts
+
+
+def domain_facts(opp: Opportunity) -> list[tuple[str, Any, date | None]]:
+    """Domain-layer observations for one opportunity (only a domain actually probed).
+
+    The RDAP registration date is the only one with a ``source_date``; the
+    rest describe the domain as it was when we looked.
+    """
+    d = opp.domain
+    if d is None or not d.checked or not d.domain:
+        return []
+    name = d.domain
+    out: list[tuple[str, Any, date | None]] = []
+    if d.rdap_fetched:
+        if d.rdap_created:
+            out.append(
+                (
+                    "domain_created",
+                    {"domain": name, "created": _iso(d.rdap_created)},
+                    d.rdap_created,
+                )
+            )
+        if d.rdap_expires:
+            out.append(("domain_expires", {"domain": name, "expires": _iso(d.rdap_expires)}, None))
+        if d.rdap_registrar:
+            out.append(("domain_registrar", {"domain": name, "registrar": d.rdap_registrar}, None))
+    for signal, value in (
+        ("dns_has_a", d.has_a),
+        ("dns_has_mx", d.has_mx),
+        ("dns_has_ns", d.has_ns),
+    ):
+        if value is not None:
+            out.append((signal, {"domain": name, "value": value}, None))
+    if d.homepage_status is not None or d.robots_disallowed:
+        out.append(
+            (
+                "homepage_status",
+                {
+                    "domain": name,
+                    "status": d.homepage_status,
+                    "final_url": d.final_url,
+                    "redirect_target_kind": d.redirect_target_kind,
+                    "robots_disallowed": d.robots_disallowed,
+                },
+                None,
+            )
+        )
+    if d.homepage_fetched:
+        out.append(
+            (
+                "site_platform",
+                {"domain": name, "platform": d.platform, "shop_platform": d.shop_platform},
+                None,
+            )
+        )
+        out.append(
+            (
+                "holding_page",
+                {"domain": name, "holding": d.is_holding_page, "parked": d.is_parked},
+                None,
+            )
+        )
+    if d.web_presence_stage and d.web_presence_stage != "unknown":
+        out.append(("web_presence_stage", {"domain": name, "stage": d.web_presence_stage}, None))
+    return out
 
 
 # ---------------------------------------------------------------------------

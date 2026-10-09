@@ -1,0 +1,38 @@
+{
+  "_comment": "Canned domain-layer signals for FixtureDomainProber (smoke test and tests). Invented values for fixture brands; nothing here was fetched from the internet.",
+  "domains": {
+    "crumbledge.co.uk": {
+      "rdap_fetched": true,
+      "rdap_created": "2025-06-02",
+      "rdap_expires": "2027-06-02",
+      "rdap_registrar": "Example Registrar Ltd",
+      "has_dns": true, "has_a": true, "has_mx": true, "has_ns": true,
+      "homepage_fetched": true, "homepage_status": 200,
+      "final_url": "https://crumbledge.co.uk/",
+      "redirected_off_domain": false, "redirect_target_kind": "same_domain",
+      "platform": "shopify", "shop_platform": true, "store_detected": false,
+      "is_parked": false, "is_holding_page": true,
+      "web_presence_stage": "holding_page"
+    },
+    "brinehouse.co.uk": {
+      "rdap_fetched": true,
+      "rdap_created": "2019-03-14",
+      "has_dns": true, "has_a": true, "has_mx": false, "has_ns": true,
+      "homepage_fetched": true, "homepage_status": 200,
+      "final_url": "https://brinehouse.co.uk/",
+      "redirected_off_domain": false, "redirect_target_kind": "same_domain",
+      "platform": "woocommerce", "shop_platform": true, "store_detected": true,
+      "is_parked": false, "is_holding_page": false,
+      "web_presence_stage": "live_store"
+    }
+  },
+  "default": {
+    "rdap_fetched": false,
+    "has_dns": true, "has_a": true, "has_mx": true, "has_ns": true,
+    "homepage_fetched": true, "homepage_status": 200,
+    "platform": null, "shop_platform": false, "store_detected": false,
+    "is_parked": false, "is_holding_page": false,
+    "web_presence_stage": "site_no_store",
+    "errors": ["rdap_timeout"]
+  }
+}

@@ -175,3 +175,28 @@ and flagged by `render_draft` warnings).
   or its history. Decide whether to remove them (and whether history must be
   rewritten — a force-push this build will not do), or keep them as
   validation evidence and record why.
+
+## Phase 2 — domain-layer
+
+- **Decide whether to probe unverified candidate websites.** Off by default
+  (`config/domain_layer.json` → `domain_selection.use_candidate_website`,
+  DECISIONS D-201). Turning it on gives domain evidence for more leads but
+  risks attributing a stranger's domain (registration date, shop) to a brand.
+  Worth a manual look at a few weeks of `candidate_website` values first.
+- **Consider a contact address in the domain user agent.** The default is
+  `LaunchTrace/0.1 (+<SITE_URL>; domain check)`. Site owners and RDAP
+  operators find a contact email helpful; set the `DOMAIN_USER_AGENT`
+  repository variable/secret (e.g. `LaunchTrace/0.1 (+https://launchtrace.co.uk;
+  domain check; ops@launchtrace.co.uk)`) once you have a monitored mailbox, and
+  pass it into the weekly workflow environment.
+- **Switching the layer off** needs nothing but `DOMAIN_LAYER_ENABLED=false`
+  in the workflow environment. Each check can also be disabled in
+  `config/domain_layer.json` → `enabled_checks`.
+- **Before giving any domain indicator a weight** (`config/scoring.json` →
+  `domain_indicators`), run a backtest: only `domain_created` is
+  point-in-time safe (D-205), so the other indicators cannot be validated on
+  historical journals.
+- **Check RDAP terms if volume grows.** Nominet and Verisign RDAP are free and
+  unauthenticated; the per-run cap (60 domains) and 1 s spacing are well
+  inside their published limits. Revisit if `max_domains_per_run` is raised a
+  lot.

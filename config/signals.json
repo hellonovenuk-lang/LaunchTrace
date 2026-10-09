@@ -105,7 +105,57 @@
     }
   },
   "domain": {
-    "_comment": "Reserved for the domain layer (RDAP, DNS, homepage probes). Phase 2 domain-layer agent appends signals here, e.g. an RDAP registration date with point_in_time_safe true and source 'rdap'."
+    "_comment": "Enrichment layer 3 (src/enrich/domain): public RDAP, DNS and one homepage fetch of the brand's entity-verified website. Written by sync_brands only for a domain that was actually probed. Only the RDAP registration date describes the past (D-205): DNS, homepage and platform facts describe the domain as it is when we looked, so they are not point-in-time safe.",
+    "domain_created": {
+      "source": "rdap",
+      "point_in_time_safe": true,
+      "description": "RDAP 'registration' event of the brand's domain. Value: {domain, created}. source_date = registration date. Caveat: a domain that lapsed and was registered again shows the latest registration, so this can make a domain look younger than its first use, never older."
+    },
+    "domain_expires": {
+      "source": "rdap",
+      "point_in_time_safe": false,
+      "description": "RDAP 'expiration' event. Value: {domain, expires}. A future date that changes on every renewal; recorded with no source_date."
+    },
+    "domain_registrar": {
+      "source": "rdap",
+      "point_in_time_safe": false,
+      "description": "Registrar named by RDAP when observed. Value: {domain, registrar}. Domains move registrar."
+    },
+    "dns_has_a": {
+      "source": "dns",
+      "point_in_time_safe": false,
+      "description": "The domain has an A record (points at a web server) when observed. Value: {domain, value}."
+    },
+    "dns_has_mx": {
+      "source": "dns",
+      "point_in_time_safe": false,
+      "description": "The domain has MX records (can receive email) when observed. Value: {domain, value}."
+    },
+    "dns_has_ns": {
+      "source": "dns",
+      "point_in_time_safe": false,
+      "description": "The domain is delegated (NS records) when observed; false with NXDOMAIN. Value: {domain, value}."
+    },
+    "homepage_status": {
+      "source": "homepage",
+      "point_in_time_safe": false,
+      "description": "Result of one homepage fetch. Value: {domain, status, final_url, redirect_target_kind, robots_disallowed}."
+    },
+    "site_platform": {
+      "source": "homepage",
+      "point_in_time_safe": false,
+      "description": "Platform fingerprinted from the homepage (shopify, woocommerce, squarespace, wix, bigcartel, ecwid, wordpress) or null. Value: {domain, platform, shop_platform}."
+    },
+    "holding_page": {
+      "source": "homepage",
+      "point_in_time_safe": false,
+      "description": "The homepage is a holding / coming-soon / parked page. Value: {domain, holding, parked}."
+    },
+    "web_presence_stage": {
+      "source": "homepage",
+      "point_in_time_safe": false,
+      "description": "no_dns / parked / holding_page / site_no_store / live_store / unknown, derived from DNS and the homepage by the ordered rules in config/domain_layer.json. Value: {domain, stage}."
+    }
   },
   "rescan": {
     "_comment": "Reserved for the rescan job (Phase 3). Signals observed by later re-checks of a known brand go here, with source 'rescan' (or 'outcome' for labelled outcomes)."

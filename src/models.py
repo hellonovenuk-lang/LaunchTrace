@@ -252,6 +252,50 @@ class WebEnrichment(BaseModel):
         return self.attempted and bool(self.attributed_urls)
 
 
+class DomainSignals(BaseModel):
+    """Domain evidence for a brand's own website (enrichment layer 3).
+
+    Built by ``src.enrich.domain`` from public RDAP, DNS and one homepage fetch
+    of a domain we believe is the brand's (the entity-verified website). A
+    ``None`` field means "not established", never "false". Only the RDAP
+    registration date describes the past; everything else is the present.
+    """
+
+    domain: str | None = None
+    domain_source: str | None = None  # verified_website | candidate_website
+    checked: bool = False
+    prober: str = "none"
+
+    rdap_fetched: bool = False
+    rdap_created: date | None = None
+    rdap_expires: date | None = None
+    rdap_last_changed: date | None = None
+    rdap_registrar: str | None = None
+
+    has_dns: bool | None = None
+    has_a: bool | None = None
+    has_mx: bool | None = None
+    has_ns: bool | None = None
+
+    homepage_fetched: bool = False
+    homepage_status: int | None = None
+    final_url: str | None = None
+    redirected_off_domain: bool | None = None
+    redirect_target_kind: str | None = None  # same_domain | other_domain | parking | marketplace
+    robots_disallowed: bool = False
+    platform: str | None = None
+    shop_platform: bool | None = None
+    store_detected: bool | None = None
+    is_parked: bool | None = None
+    is_holding_page: bool | None = None
+    web_presence_stage: str = "unknown"
+
+    # Domain indicators (config/scoring.json -> domain_indicators) that fired.
+    indicators: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+    checked_at: datetime | None = None
+
+
 class ScoreReason(BaseModel):
     key: str
     text: str
@@ -352,6 +396,8 @@ class Opportunity(BaseModel):
     company_age_years_at_filing: float | None = None
 
     related_marks: list[RelatedMark] = Field(default_factory=list)
+    # Enrichment layer 3; None when the domain layer did not run for this lead.
+    domain: DomainSignals | None = None
 
     source_url: str | None = None
     evidence_urls: list[str] = Field(default_factory=list)

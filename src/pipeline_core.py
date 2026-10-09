@@ -29,6 +29,7 @@ from src.deliver.email_render import render_weekly_email, write_email_html
 from src.deliver.qa_report import build_qa_report, write_qa_report
 from src.enrich.budget import SearchBudget, SearchGuard
 from src.enrich.companies_house import CompanyRegistry, get_company_registry
+from src.enrich.domain import DomainLayer, DomainProber, get_domain_prober
 from src.enrich.entity_verification import EntityContext
 from src.enrich.web import WebEnricher, get_web_enricher
 from src.errors import (
@@ -46,6 +47,7 @@ from src.models import (
     ApplicantType,
     BrandMaturity,
     CompanyMatch,
+    DomainSignals,
     JournalArtifact,
     JournalRef,
     Opportunity,
@@ -77,6 +79,7 @@ class Pipeline:
         web: WebEnricher | None = None,
         scorer: LaunchTraceScorer | None = None,
         output_dir: Path | None = None,
+        domain: DomainProber | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.source = source or get_source(settings=self.settings)
@@ -84,6 +87,8 @@ class Pipeline:
         self.classifier = classifier or ProductClassifier(self.settings)
         self.web = web or get_web_enricher(self.settings)
         self.scorer = scorer or LaunchTraceScorer()
+        # Enrichment layer 3. None -> chosen by DOMAIN_LAYER_ENABLED.
+        self.domain = domain or get_domain_prober(self.settings)
         self.filter = self.classifier.filter
         self.commercial_assessor = get_commercial_mode_assessor()
         self.goods_analyser = get_goods_analyser()
@@ -476,10 +481,13 @@ class Pipeline:
             result.warnings.append(budget_warning)
             log.warning("pipeline.search_budget_exhausted", **self.web.budget.as_dict())
 
+        # Stage 6b: domain evidence for the verified website (free, fail-soft).
+        domain_signals = self._domain_stage(result, [entry[5] for entry in with_web])
+
         # Stage 7: score, map buying intent, build opportunities.
         seen: set[str] = set()
         scoring_failures = 0
-        for record, outcome, applicant_type, match, age, web in with_web:
+        for index, (record, outcome, applicant_type, match, age, web) in enumerate(with_web):
             try:
                 opportunity = self._build_opportunity(
                     record,
@@ -493,6 +501,7 @@ class Pipeline:
                     ),
                     first_trademark=(record.applicant_name or "").strip().lower()
                     not in known_applicants,
+                    domain=domain_signals[index],
                 )
             except Exception as exc:
                 scoring_failures += 1
@@ -521,6 +530,30 @@ class Pipeline:
 
         # Stage 8: decide what a customer actually receives.
         self._finalise(result)
+
+    def _domain_stage(
+        self, result: PipelineResult, webs: list[WebEnrichment]
+    ) -> list[DomainSignals | None]:
+        """Domain signals per lead, in order. Never raises and never blocks a run."""
+        out: list[DomainSignals | None] = [None] * len(webs)
+        try:
+            layer = DomainLayer(self.domain)
+            if not layer.enabled:
+                return out
+            for i, web in enumerate(webs):
+                try:
+                    out[i] = layer.signals_for(web)
+                except Exception as exc:  # pragma: no cover - signals_for is fail-soft
+                    log.warning("pipeline.domain_failed", error=str(exc)[:200])
+            if layer.cap_skipped:
+                result.warnings.append(
+                    f"Domain layer cap reached: {layer.cap_skipped} domain(s) not probed "
+                    f"(max_domains_per_run {layer.max_domains})."
+                )
+        except Exception as exc:
+            log.warning("pipeline.domain_stage_failed", error=str(exc)[:300])
+            result.warnings.append(f"Domain layer did not run: {type(exc).__name__}")
+        return out
 
     def _finalise(self, result: PipelineResult) -> None:
         """Suppress, consolidate, and count what a subscriber would really see.
@@ -677,6 +710,7 @@ class Pipeline:
         web: WebEnrichment,
         applicant_journal_mark_count: int,
         first_trademark: bool,
+        domain: DomainSignals | None = None,
     ) -> Opportunity:
         product = outcome.assessment
         if not product.product_category:
@@ -712,8 +746,13 @@ class Pipeline:
             company_age_years=age,
             food_sic_summary=sic_summary,
             service_business_sic_only=self._service_business_only(match),
+            domain=domain,
         )
         score = self.scorer.score(ctx)
+        if domain is not None:
+            domain = domain.model_copy(
+                update={"indicators": self.scorer.domain_indicator_keys(ctx)[0]}
+            )
 
         return Opportunity(
             dedupe_key=record.dedupe_key,
@@ -744,6 +783,7 @@ class Pipeline:
             brand_maturity=brand_maturity,
             brand_maturity_evidence=maturity_evidence,
             company_age_years_at_filing=age,
+            domain=domain,
             source_url=record.source_url,
             evidence_urls=(web.evidence_urls or [])[:8],
             enriched_at=datetime.now(UTC),

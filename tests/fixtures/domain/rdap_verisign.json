@@ -1,0 +1,31 @@
+{
+  "objectClassName": "domain",
+  "handle": "2911188431_DOMAIN_COM-VRSN",
+  "ldhName": "EXAMPLEBRAND.COM",
+  "links": [{"value": "https://rdap.verisign.com/com/v1/domain/EXAMPLEBRAND.COM", "rel": "self", "href": "https://rdap.verisign.com/com/v1/domain/EXAMPLEBRAND.COM", "type": "application/rdap+json"}],
+  "status": ["client transfer prohibited"],
+  "entities": [
+    {
+      "objectClassName": "entity",
+      "handle": "1068",
+      "roles": ["registrar"],
+      "publicIds": [{"type": "IANA Registrar ID", "identifier": "1068"}],
+      "vcardArray": ["vcard", [["version", {}, "text", "4.0"], ["fn", {}, "text", "NameCheap, Inc."]]],
+      "entities": [
+        {"objectClassName": "entity", "roles": ["abuse"], "vcardArray": ["vcard", [["version", {}, "text", "4.0"], ["fn", {}, "text", ""], ["tel", {"type": "voice"}, "uri", "tel:+1.0000000000"]]]}
+      ]
+    }
+  ],
+  "events": [
+    {"eventAction": "registration", "eventDate": "2024-11-20T17:03:41Z"},
+    {"eventAction": "expiration", "eventDate": "2026-11-20T17:03:41Z"},
+    {"eventAction": "last changed", "eventDate": "2025-10-22T09:12:00Z"},
+    {"eventAction": "last update of RDAP database", "eventDate": "2026-10-09T12:00:00Z"}
+  ],
+  "secureDNS": {"delegationSigned": false},
+  "nameservers": [
+    {"objectClassName": "nameserver", "ldhName": "DNS1.REGISTRAR-SERVERS.COM"},
+    {"objectClassName": "nameserver", "ldhName": "DNS2.REGISTRAR-SERVERS.COM"}
+  ],
+  "rdapConformance": ["rdap_level_0", "icann_rdap_technical_implementation_guide_1", "icann_rdap_response_profile_1"]
+}

@@ -55,6 +55,12 @@ CSV_COLUMNS: list[str] = [
     "other_brand_names",
     "source_url",
     "evidence_urls",
+    # Enrichment layer 3 (domain evidence for the verified website). Blank when
+    # the domain was not checked. Appended last so existing column positions hold.
+    "domain_created",
+    "web_presence_stage",
+    "shop_platform",
+    "has_mx",
 ]
 
 _HUMAN_STAGE = {
@@ -84,6 +90,36 @@ _HUMAN_RETAIL = {
     "multiple_retail": "Multiple retailers",
     "unknown": "Unknown",
 }
+
+
+_HUMAN_PRESENCE = {
+    "no_domain": "No website found",
+    "no_dns": "Domain does not resolve",
+    "parked": "Parked domain",
+    "holding_page": "Holding / coming-soon page",
+    "site_no_store": "Website, no online shop",
+    "live_store": "Online shop live",
+    "unknown": "Unknown",
+}
+
+
+def _yes_no(value: bool | None) -> str:
+    return "" if value is None else ("yes" if value else "no")
+
+
+def _domain_columns(opp: Opportunity) -> dict[str, str]:
+    d = opp.domain
+    if d is None:
+        return {"domain_created": "", "web_presence_stage": "", "shop_platform": "", "has_mx": ""}
+    checked = d.checked
+    return {
+        "domain_created": d.rdap_created.isoformat() if d.rdap_created else "",
+        "web_presence_stage": _HUMAN_PRESENCE.get(d.web_presence_stage, d.web_presence_stage)
+        if (checked or d.web_presence_stage == "no_domain")
+        else "",
+        "shop_platform": (d.platform or "") if checked else "",
+        "has_mx": _yes_no(d.has_mx) if checked else "",
+    }
 
 
 def opportunity_to_row(opp: Opportunity) -> dict[str, str]:
@@ -125,6 +161,7 @@ def opportunity_to_row(opp: Opportunity) -> dict[str, str]:
         "other_brand_names": " | ".join(m.brand_name for m in opp.related_marks if m.brand_name),
         "source_url": opp.source_url or "",
         "evidence_urls": " ".join(opp.evidence_urls[:5]),
+        **_domain_columns(opp),
     }
 
 

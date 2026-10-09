@@ -112,6 +112,12 @@ class Settings(BaseSettings):
     # cap above.
     search_max_calls_per_run: int | None = Field(default=None, alias="SEARCH_MAX_CALLS_PER_RUN")
 
+    # --- domain layer (RDAP / DNS / homepage, enrichment layer 3) ----------
+    # Free public lookups of a brand's verified website. Off -> no probe at all.
+    domain_layer_enabled: bool = Field(default=True, alias="DOMAIN_LAYER_ENABLED")
+    # Blank -> "LaunchTrace/0.1 (+<SITE_URL>; domain check)".
+    domain_user_agent: str = Field(default="", alias="DOMAIN_USER_AGENT")
+
     # --- email -------------------------------------------------------------
     resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
     email_from: str = Field(default="LaunchTrace <feed@launchtrace.co.uk>", alias="EMAIL_FROM")
@@ -147,6 +153,12 @@ class Settings(BaseSettings):
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")
+
+    @property
+    def resolved_domain_user_agent(self) -> str:
+        """The honest user agent sent with every domain-layer request."""
+        site = self.site_url.strip() or "https://launchtrace.co.uk"
+        return self.domain_user_agent.strip() or f"LaunchTrace/0.1 (+{site}; domain check)"
 
     @property
     def llm_enabled(self) -> bool:

@@ -129,6 +129,10 @@ jobs:
           JOURNAL_SOURCE: ${{ github.event.inputs.source || 'ukipo_http' }}
           # Optional repository variable; blank means config/costs.json decides.
           SEARCH_MAX_CALLS_PER_RUN: ${{ vars.SEARCH_MAX_CALLS_PER_RUN }}
+          # Domain layer (free RDAP / DNS / homepage checks). Optional variables;
+          # blank DOMAIN_USER_AGENT uses the default built from SITE_URL.
+          DOMAIN_LAYER_ENABLED: ${{ vars.DOMAIN_LAYER_ENABLED || 'true' }}
+          DOMAIN_USER_AGENT: ${{ vars.DOMAIN_USER_AGENT }}
         run: |
           set -o pipefail
           # Say what this run actually has before it runs, so a degraded result

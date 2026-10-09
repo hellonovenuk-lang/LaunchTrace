@@ -55,7 +55,36 @@ def _isolate(workdir: Path) -> None:
     os.environ["COMPANIES_HOUSE_API_KEY"] = ""
     os.environ["RESEND_API_KEY"] = ""
     os.environ["LOG_LEVEL"] = "WARNING"
+    # Live domain probes would make the snapshot depend on today's internet;
+    # the harness injects a fixture prober instead (see RICH_DOMAIN_SIGNALS).
+    os.environ["DOMAIN_LAYER_ENABLED"] = "false"
     os.environ.pop("JOURNAL_LOCAL_DIR", None)
+
+
+# Every lead with a verified website gets these domain signals, chosen so that
+# every domain indicator in config/scoring.json fires. With their weights at 0,
+# the snapshot must still be identical to the baseline: that is the proof that
+# the domain layer moves no score and adds no reason.
+RICH_DOMAIN_SIGNALS: dict[str, Any] = {
+    "rdap_fetched": True,
+    "rdap_created": "2099-01-01",
+    "rdap_expires": "2100-01-01",
+    "rdap_registrar": "Stability Harness Registrar",
+    "has_dns": True,
+    "has_a": True,
+    "has_mx": True,
+    "has_ns": True,
+    "homepage_fetched": True,
+    "homepage_status": 200,
+    "redirected_off_domain": False,
+    "redirect_target_kind": "same_domain",
+    "platform": "shopify",
+    "shop_platform": True,
+    "store_detected": True,
+    "is_parked": False,
+    "is_holding_page": True,
+    "web_presence_stage": "live_store",
+}
 
 
 def _snapshot_result(result: Any) -> dict[str, Any]:
@@ -96,6 +125,7 @@ def build_snapshot(workdir: Path) -> dict[str, Any]:
     import src.commands as commands
     from src.classify.pipeline import ProductClassifier
     from src.enrich.companies_house import FixtureCompanyRegistry
+    from src.enrich.domain import FixtureDomainProber
     from src.enrich.providers import FixtureSearchProvider
     from src.enrich.web import WebEnricher
 
@@ -115,6 +145,7 @@ def build_snapshot(workdir: Path) -> dict[str, Any]:
                 classifier=ProductClassifier(settings, llm_provider=None),
                 web=WebEnricher(provider=_provider, settings=settings),
                 output_dir=workdir / "runs",
+                domain=FixtureDomainProber(default=RICH_DOMAIN_SIGNALS),
             )
 
         commands.Pipeline = factory  # type: ignore[assignment,misc]

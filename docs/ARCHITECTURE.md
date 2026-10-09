@@ -122,6 +122,8 @@ What `sync_brands` records each run:
 | companies_house (matched only) | `company_match`, `company_status`, `sic_codes`, `accounts_category` | — | no |
 | web_search (only if a search ran) | `website`, `website_maturity`, `retail_presence`, `marketplace_presence`, `major_retailer_presence`, `social_presence`, `products_on_sale`, `launch_evidence` | — | no |
 | score | `launchtrace_score`, `launch_stage` | — | no |
+| rdap (probed domain only) | `domain_created` | RDAP registration date | yes (see D-205) |
+| rdap / dns / homepage (probed domain only) | `domain_expires`, `domain_registrar`, `dns_has_a`, `dns_has_mx`, `dns_has_ns`, `homepage_status`, `site_platform`, `holding_page`, `web_presence_stage` | — | no |
 
 Re-running a journal appends a fresh set of observations with a new
 `observed_at`; that is intended (it records that we looked again). Within one
@@ -151,8 +153,8 @@ own score (it depends on today's code and on non-PIT inputs).
 ### The signals registry
 
 `config/signals.json` groups signals by source (`trademark`, `companies_house`,
-`web_search`, `score`, and the empty `domain` and `rescan` groups reserved for
-later work). Each signal declares `source`, `point_in_time_safe` and
+`web_search`, `score`, `domain` (enrichment layer 3, `src/enrich/domain/`), and
+the empty `rescan` group reserved for later work). Each signal declares `source`, `point_in_time_safe` and
 `description`. Names are unique across groups (a test enforces it).
 
 ## Weekly run: idempotency and cost
