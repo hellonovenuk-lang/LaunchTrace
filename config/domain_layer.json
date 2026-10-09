@@ -1,0 +1,165 @@
+{
+  "$schema_version": "1.0",
+  "description": "Enrichment layer 3: domain evidence (RDAP registration dates, DNS records, one homepage fetch, platform fingerprints) for a brand's VERIFIED website only. Every check is free, rate-limited, time-outed and fail-soft: a failure leaves the signal empty and records an error, it never blocks a run. Nothing here changes a score while the matching indicators in config/scoring.json have weight 0. Read by src/enrich/domain/.",
+  "_comment": "Keys starting with '_' are comments. The master switch is the DOMAIN_LAYER_ENABLED setting; the per-check flags below switch individual checks off.",
+
+  "enabled_checks": {
+    "rdap": true,
+    "dns": true,
+    "homepage": true
+  },
+
+  "domain_selection": {
+    "_comment": "Which domain to probe. Only a domain we have reason to believe is the brand's: the entity-verified website first. Unverified candidate websites are off by default (D-201): probing a stranger's domain would attribute their registration date and shop to this brand. Domains are never guessed from brand names.",
+    "use_verified_website": true,
+    "use_candidate_website": false,
+    "max_domains_per_run": 60,
+    "_max_domains_per_run_note": "A cap on distinct domains probed per run. Each probe is at most: 1 RDAP request (+1 bootstrap refresh per refresh_days), 3 DNS queries, 1 robots.txt and 1-2 homepage requests (plus redirects).",
+    "skip_hosts": [
+      "amazon.co.uk", "amazon.com", "etsy.com", "ebay.co.uk", "ebay.com", "notonthehighstreet.com",
+      "facebook.com", "instagram.com", "tiktok.com", "twitter.com", "x.com", "linkedin.com",
+      "youtube.com", "pinterest.com", "linktr.ee", "wikipedia.org", "google.com", "sites.google.com",
+      "tesco.com", "sainsburys.co.uk", "waitrose.com", "ocado.com", "asda.com", "morrisons.com",
+      "deliveroo.co.uk", "ubereats.com", "just-eat.co.uk", "find-and-update.company-information.service.gov.uk",
+      "companieshouse.gov.uk", "gov.uk", "shopify.com", "myshopify.com", "wixsite.com", "squarespace.com",
+      "bigcartel.com", "wordpress.com", "blogspot.com", "github.io", "crowdfunder.co.uk", "kickstarter.com"
+    ],
+    "_skip_hosts_note": "A website on one of these hosts (or a subdomain of one) is a marketplace, social, retailer or shared-platform page, not the brand's own domain. Its RDAP date and DNS describe the platform, so it is never probed.",
+    "multi_label_suffixes": [
+      "co.uk", "org.uk", "me.uk", "ltd.uk", "plc.uk", "net.uk", "sch.uk", "ac.uk", "gov.uk",
+      "com.au", "net.au", "org.au", "co.nz", "co.za", "com.br", "co.jp", "com.cn", "co.in"
+    ],
+    "_multi_label_suffixes_note": "Public suffixes with two labels, used to reduce a host to its registrable domain (shop.brand.co.uk -> brand.co.uk). Not the full Public Suffix List; an unlisted suffix falls back to the last two labels."
+  },
+
+  "rdap": {
+    "bootstrap_url": "https://data.iana.org/rdap/dns.json",
+    "bootstrap_refresh_days": 7,
+    "_bootstrap_note": "The IANA bootstrap file maps each TLD to its RDAP server. Cached on disk under CACHE_DIR/rdap/dns.json and refreshed after bootstrap_refresh_days. If it cannot be fetched, the fallback_bases below are used.",
+    "fallback_bases": {
+      "uk": "https://rdap.nominet.uk/uk/",
+      "com": "https://rdap.verisign.com/com/v1/",
+      "net": "https://rdap.verisign.com/net/v1/"
+    },
+    "timeout_seconds": 8,
+    "max_retries": 1,
+    "min_interval_seconds_per_host": 1.0,
+    "_min_interval_note": "Minimum spacing between two requests to the same RDAP server. Nominet and Verisign publish rate limits; one request a second stays well inside them.",
+    "backoff_on_429_seconds": 30,
+    "_backoff_on_429_note": "After a 429 the server is not asked again for this many seconds; the domains it would have answered are recorded as not fetched (error rdap_rate_limited)."
+  },
+
+  "dns": {
+    "lifetime_seconds": 3.0,
+    "record_types": ["A", "MX", "NS"]
+  },
+
+  "homepage": {
+    "timeout_seconds": 8,
+    "max_bytes": 524288,
+    "_max_bytes_note": "The body is streamed and reading stops at this size (512 KB). Enough for fingerprints, which sit in the <head> and the first screen.",
+    "max_redirects": 5,
+    "try_http_fallback": true,
+    "check_robots_txt": true,
+    "robots_max_bytes": 65536,
+    "min_interval_seconds_per_host": 1.0
+  },
+
+  "platforms": {
+    "_comment": "Fingerprints: a platform is detected when any html marker (case-insensitive substring of the body) or header marker (header name present, or name:value-substring) matches. Checked in order; first match wins, so specific shop platforms come before generic WordPress.",
+    "rules": [
+      {
+        "key": "shopify",
+        "is_shop_platform": true,
+        "html": ["cdn.shopify.com", "shopify.theme", "myshopify.com", "shopify-section", "shopify.shop"],
+        "headers": ["x-shopid", "x-shopify-stage", "powered-by:shopify"]
+      },
+      {
+        "key": "woocommerce",
+        "is_shop_platform": true,
+        "html": ["wp-content/plugins/woocommerce", "woocommerce-page", "class=\"woocommerce", "wc-block-"],
+        "headers": []
+      },
+      {
+        "key": "squarespace",
+        "is_shop_platform": false,
+        "html": ["static1.squarespace.com", "squarespace.com/universal", "<!-- this is squarespace. -->", "squarespace-commerce"],
+        "headers": ["server:squarespace"]
+      },
+      {
+        "key": "wix",
+        "is_shop_platform": false,
+        "html": ["static.wixstatic.com", "wix-warmup-data", "x-wix-", "_wixcssimports", "wixstores"],
+        "headers": ["x-wix-request-id"]
+      },
+      {
+        "key": "bigcartel",
+        "is_shop_platform": true,
+        "html": ["bigcartel.com", "big cartel"],
+        "headers": []
+      },
+      {
+        "key": "ecwid",
+        "is_shop_platform": true,
+        "html": ["app.ecwid.com", "ecwid-shopping"],
+        "headers": []
+      },
+      {
+        "key": "wordpress",
+        "is_shop_platform": false,
+        "html": ["wp-content/", "wp-includes/", "name=\"generator\" content=\"wordpress"],
+        "headers": ["link:wp-json"]
+      }
+    ]
+  },
+
+  "holding_page": {
+    "_comment": "A page that exists but is not a trading site yet: a registrar parking page, a 'coming soon' splash or a builder's default. A very short visible body with no store markers is also treated as a holding page.",
+    "phrases": [
+      "coming soon", "launching soon", "under construction", "website coming soon", "site coming soon",
+      "we're launching", "we are launching", "watch this space", "domain is parked", "this domain is for sale",
+      "buy this domain", "domain may be for sale", "parked free", "parked domain", "is for sale!",
+      "website is under construction", "opening soon", "sign up to be the first", "be the first to know",
+      "password protected", "enter store using password", "future home of"
+    ],
+    "parking_hosts": [
+      "sedo.com", "sedoparking.com", "dan.com", "afternic.com", "parkingcrew.net", "bodis.com",
+      "above.com", "undeveloped.com", "hugedomains.com", "godaddy.com", "parklogic.com",
+      "domainmarket.com", "atom.com", "squadhelp.com"
+    ],
+    "_parking_hosts_note": "A homepage that redirects to one of these, or whose HTML loads assets from one, is a parked domain. GoDaddy's own parking page is matched by redirect target only.",
+    "parking_html_markers": ["sedoparking", "parkingcrew", "bodis.com", "img1.wsimg.com/parking", "dan.com/", "afternic"],
+    "min_visible_text_chars": 200,
+    "_min_visible_text_chars_note": "Below this many characters of visible text (tags and scripts stripped), with no store markers, the page counts as a holding page."
+  },
+
+  "store_markers": {
+    "_comment": "Evidence the site sells online today. Any one marker counts.",
+    "html": [
+      "add to cart", "add to basket", "add to bag", "addtocart", "add-to-cart", "\"@type\":\"product\"",
+      "\"@type\": \"product\"", "/products/", "/product/", "/shop/", "shopify.checkout"
+    ]
+  },
+
+  "web_presence_stage": {
+    "_comment": "Ordered rules: the first whose conditions all hold sets web_presence_stage. Conditions are facts computed by src/enrich/domain/layer.py (stage_for): has_domain, has_dns, homepage_fetched, redirected_to_marketplace, is_parked, is_holding_page, store_detected, shop_platform. A fact that was not established (null) never satisfies a condition. A homepage that redirects to a marketplace or social host is 'unknown': the page fetched is not the brand's own. A shop platform (Shopify, WooCommerce, Big Cartel, Ecwid) that is not a holding page counts as a live store.",
+    "values": ["no_domain", "no_dns", "parked", "holding_page", "site_no_store", "live_store", "unknown"],
+    "rules": [
+      {"stage": "no_domain", "when": {"has_domain": false}},
+      {"stage": "no_dns", "when": {"has_dns": false}},
+      {"stage": "unknown", "when": {"homepage_fetched": false}},
+      {"stage": "parked", "when": {"is_parked": true}},
+      {"stage": "unknown", "when": {"redirected_to_marketplace": true}},
+      {"stage": "holding_page", "when": {"is_holding_page": true}},
+      {"stage": "live_store", "when": {"store_detected": true}},
+      {"stage": "live_store", "when": {"shop_platform": true}},
+      {"stage": "site_no_store", "when": {}}
+    ]
+  },
+
+  "scoring_features": {
+    "_comment": "Parameters for the domain indicators in config/scoring.json (all weight 0 today).",
+    "domain_registered_recently_days": 365,
+    "_domain_registered_recently_note": "domain_registered_recently fires when the RDAP registration date is no more than this many days before the trade mark filing date (or any time after it)."
+  }
+}
