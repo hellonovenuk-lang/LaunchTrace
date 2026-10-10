@@ -20,6 +20,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from src.classify.applicant_filter import ApplicantFilter
 from src.classify.commercial_mode import CommercialMode, get_commercial_mode_assessor
 from src.classify.goods_analysis import get_goods_analyser
 from src.classify.pipeline import ProductClassifier
@@ -76,6 +77,7 @@ class Pipeline:
         web: WebEnricher | None = None,
         scorer: LaunchTraceScorer | None = None,
         output_dir: Path | None = None,
+        applicant_filter: ApplicantFilter | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.source = source or get_source(settings=self.settings)
@@ -83,6 +85,7 @@ class Pipeline:
         self.classifier = classifier or ProductClassifier(self.settings)
         self.web = web or get_web_enricher(self.settings)
         self.scorer = scorer or LaunchTraceScorer()
+        self.applicant_filter = applicant_filter or ApplicantFilter()
         self.filter = self.classifier.filter
         self.commercial_assessor = get_commercial_mode_assessor()
         self.goods_analyser = get_goods_analyser()
@@ -94,6 +97,8 @@ class Pipeline:
         # without downloading and parsing the journal a second time.
         self.last_artifact: JournalArtifact | None = None
         self.last_records: list[TrademarkRecord] = []
+        # Applicants excluded at ingestion, by legal form. Counts only.
+        self.last_applicant_drops: dict[str, int] = {}
 
     # -- public -----------------------------------------------------------
     def run(
@@ -138,6 +143,7 @@ class Pipeline:
             records = self._ingest(ref, max_records)
             result.counts.raw_records = len(records)
             self._check_volume(result, history)
+            records = self._exclude_non_corporate(records)
             self._process(result, records, known_applicants or set())
             result.status = RunStatus.COMPLETED
         except FailClosedError as exc:
@@ -190,6 +196,7 @@ class Pipeline:
     def _ingest(self, ref: JournalRef, max_records: int | None) -> list[TrademarkRecord]:
         self.last_artifact = None
         self.last_records = []
+        self.last_applicant_drops = {}
         try:
             artifact = self.source.fetch(ref)
         except JournalRetrievalError:
@@ -205,6 +212,20 @@ class Pipeline:
         self.last_artifact = artifact
         self.last_records = records
         return records
+
+    def _exclude_non_corporate(self, records: list[TrademarkRecord]) -> list[TrademarkRecord]:
+        """Data minimisation: drop individuals, sole traders and partnerships.
+
+        Runs after the volume check, which must see the whole journal, and before
+        anything is enriched or persisted. The dropped records go no further:
+        not to Companies House, not to web search, not to the database.
+        """
+        kept, dropped = self.applicant_filter.apply(records)
+        self.last_records = kept
+        self.last_applicant_drops = dict(dropped)
+        if dropped:
+            log.info("pipeline.applicants_excluded", kept=len(kept), **self.last_applicant_drops)
+        return kept
 
     def _check_volume(self, result: PipelineResult, history: list[dict[str, Any]] | None) -> None:
         guard = load_config("validation_bands.json")["volume_guardrails"]

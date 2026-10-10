@@ -75,6 +75,23 @@ CREATE TABLE IF NOT EXISTS errors (
 CREATE INDEX IF NOT EXISTS ix_errors_run_id ON errors (run_id);
 CREATE INDEX IF NOT EXISTS ix_errors_stage ON errors (stage);
 
+CREATE TABLE IF NOT EXISTS ingestion_drop_counts (
+	id SERIAL NOT NULL, 
+	source_name VARCHAR(64) NOT NULL, 
+	journal_number VARCHAR(32) NOT NULL, 
+	publication_date DATE, 
+	reason VARCHAR(32) NOT NULL, 
+	count INTEGER NOT NULL, 
+	run_id VARCHAR(64), 
+	recorded_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_ingestion_drop_journal_reason UNIQUE (source_name, journal_number, reason)
+);
+
+CREATE INDEX IF NOT EXISTS ix_ingestion_drop_counts_journal_number ON ingestion_drop_counts (journal_number);
+CREATE INDEX IF NOT EXISTS ix_ingestion_drop_counts_publication_date ON ingestion_drop_counts (publication_date);
+CREATE INDEX IF NOT EXISTS ix_ingestion_drop_counts_reason ON ingestion_drop_counts (reason);
+
 CREATE TABLE IF NOT EXISTS journals (
 	id SERIAL NOT NULL, 
 	journal_number VARCHAR(32) NOT NULL, 

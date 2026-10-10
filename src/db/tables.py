@@ -308,6 +308,32 @@ class PipelineRun(Base):
     delivery_status: Mapped[str] = mapped_column(String(32), default="not_sent")
 
 
+class IngestionDropCount(Base):
+    """How many applicants the ingestion filter excluded, by journal and legal form.
+
+    Aggregate counts only, by design: the point of the filter is not to keep the
+    personal data it drops. One row per journal and reason; reprocessing a
+    journal replaces its rows rather than adding to them.
+    """
+
+    __tablename__ = "ingestion_drop_counts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_name: Mapped[str] = mapped_column(String(64), default="ukipo_journal_xml")
+    journal_number: Mapped[str] = mapped_column(String(32), index=True)
+    publication_date: Mapped[date | None] = mapped_column(Date, index=True)
+    reason: Mapped[str] = mapped_column(String(32), index=True)
+    count: Mapped[int] = mapped_column(Integer, default=0)
+    run_id: Mapped[str | None] = mapped_column(String(64))
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_name", "journal_number", "reason", name="uq_ingestion_drop_journal_reason"
+        ),
+    )
+
+
 class ErrorLog(Base):
     __tablename__ = "errors"
 

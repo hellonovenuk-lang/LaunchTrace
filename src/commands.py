@@ -15,9 +15,11 @@ from sqlalchemy import select
 from src.db import init_db, session_scope
 from src.db.repository import (
     add_suppression,
+    ingestion_drop_stats,
     journal_already_processed,
     known_applicant_names,
     recent_run_counts,
+    record_ingestion_drops,
     save_opportunities,
     save_run,
     save_trademark_records,
@@ -82,6 +84,8 @@ def _run_one(
                     if artifact is not None:
                         journal_row = upsert_journal(session, artifact, result.counts.raw_records)
                         save_trademark_records(session, pipeline.last_records, journal_row.id)
+                    if pipeline.applicant_filter.enabled:
+                        record_ingestion_drops(session, result, pipeline.last_applicant_drops)
                 except Exception as exc:  # persistence must not lose the run record
                     log.warning("commands.persist_source_failed", error=str(exc)[:200])
                 save_opportunities(session, result)
@@ -263,6 +267,51 @@ def cmd_status(args) -> int:  # type: ignore[no-untyped-def]
             f"{r.run_id:<32} {(r.journal_number or '-'):<10} {r.status:<10} "
             f"{counts.get('high', 0):>5} {counts.get('medium', 0):>5} "
             f"{('yes' if r.approved_at else 'no'):<10} {r.delivery_status}"
+        )
+    return 0
+
+
+def cmd_dropped_stats(args) -> int:  # type: ignore[no-untyped-def]
+    """Applicants excluded at ingestion, by reason. Counts only; no names exist."""
+    from src.pipeline import parse_date_arg
+
+    init_db()
+    with session_scope() as session:
+        rows = ingestion_drop_stats(
+            session,
+            date_from=parse_date_arg(getattr(args, "from_date", None)),
+            date_to=parse_date_arg(getattr(args, "to_date", None)),
+            journal_from=getattr(args, "from_journal", None),
+            journal_to=getattr(args, "to_journal", None),
+        )
+        entries = [
+            (r.journal_number, r.publication_date, r.reason, r.count, r.source_name) for r in rows
+        ]
+    if not entries:
+        print("No applicants have been excluded at ingestion in this range.")
+        return 0
+
+    reasons = sorted({reason for _, _, reason, _, _ in entries})
+    by_journal: dict[tuple[str, str, str], dict[str, int]] = {}
+    for journal, published, reason, count, source in entries:
+        key = (journal, published.isoformat() if published else "-", source)
+        by_journal.setdefault(key, {})[reason] = count
+
+    header = f"{'journal':<10} {'published':<11} " + " ".join(f"{r:>12}" for r in reasons)
+    print(header + f" {'total':>7}  source")
+    totals = dict.fromkeys(reasons, 0)
+    for (journal, published, source), counts in sorted(by_journal.items()):
+        for reason in reasons:
+            totals[reason] += counts.get(reason, 0)
+        cells = " ".join(f"{counts.get(r, 0):>12}" for r in reasons)
+        print(f"{journal:<10} {published:<11} {cells} {sum(counts.values()):>7}  {source}")
+    print("-" * len(header))
+    cells = " ".join(f"{totals[r]:>12}" for r in reasons)
+    print(f"{'TOTAL':<10} {'':<11} {cells} {sum(totals.values()):>7}")
+    if totals.get("unknown"):
+        print(
+            "\n'unknown' applicants had no legal form in the journal. Some may be real "
+            "companies; see drop_unknown in config/ingestion_filter.json."
         )
     return 0
 

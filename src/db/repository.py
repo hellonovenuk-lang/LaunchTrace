@@ -6,7 +6,7 @@ scheduled job is always safe to re-run.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -16,6 +16,7 @@ from src.db.tables import (
     CompanyMatchRow,
     Delivery,
     ErrorLog,
+    IngestionDropCount,
     Journal,
     OpportunityRow,
     PipelineRun,
@@ -113,6 +114,63 @@ def save_trademark_records(
         added += 1
     session.flush()
     return added
+
+
+def record_ingestion_drops(
+    session: Session, result: PipelineResult, dropped: dict[str, int]
+) -> int:
+    """Replace this journal's dropped-applicant counts. Returns the total dropped.
+
+    Replacing rather than adding keeps the log honest when a journal is
+    reprocessed, and clears a reason that no longer applies.
+    """
+    ref = result.journal
+    for row in session.execute(
+        select(IngestionDropCount).where(
+            IngestionDropCount.source_name == ref.source_name,
+            IngestionDropCount.journal_number == ref.journal_number,
+        )
+    ).scalars():
+        session.delete(row)
+    session.flush()
+    for reason, count in sorted(dropped.items()):
+        if count:
+            session.add(
+                IngestionDropCount(
+                    source_name=ref.source_name,
+                    journal_number=ref.journal_number,
+                    publication_date=ref.publication_date,
+                    reason=reason,
+                    count=count,
+                    run_id=result.run_id,
+                )
+            )
+    session.flush()
+    return sum(dropped.values())
+
+
+def ingestion_drop_stats(
+    session: Session,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    journal_from: str | None = None,
+    journal_to: str | None = None,
+) -> list[IngestionDropCount]:
+    """Dropped-applicant counts, oldest journal first, within an optional range.
+
+    Dates are journal publication dates. Journal numbers (YYYY-NNN) sort as text.
+    """
+    stmt = select(IngestionDropCount)
+    if date_from:
+        stmt = stmt.where(IngestionDropCount.publication_date >= date_from)
+    if date_to:
+        stmt = stmt.where(IngestionDropCount.publication_date <= date_to)
+    if journal_from:
+        stmt = stmt.where(IngestionDropCount.journal_number >= journal_from)
+    if journal_to:
+        stmt = stmt.where(IngestionDropCount.journal_number <= journal_to)
+    stmt = stmt.order_by(IngestionDropCount.journal_number, IngestionDropCount.reason)
+    return list(session.execute(stmt).scalars())
 
 
 # -- derived data ----------------------------------------------------------

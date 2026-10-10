@@ -26,6 +26,7 @@ class TestParser:
             ["add-customer", "--company", "X", "--email", "a@b.test"],
             ["suppress", "--type", "company", "--value", "X Ltd"],
             ["errors"],
+            ["dropped-stats", "--from-date", "2025-01-01", "--to-journal", "2025-052"],
             ["fetch-open-data", "--weeks", "4"],
             ["build-company-index", "--download"],
             ["init-db"],

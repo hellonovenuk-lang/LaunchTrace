@@ -68,6 +68,21 @@ class ApplicantType(str, Enum):
     UNKNOWN = "unknown"
 
 
+class ApplicantLegalForm(str, Enum):
+    """The applicant's legal form, as far as the ingestion filter can tell.
+
+    Finer than ``ApplicantType``: it decides what is stored at all, whereas
+    ``ApplicantType`` only feeds scoring.
+    """
+
+    LIMITED_COMPANY = "limited_company"
+    LLP = "llp"
+    SOLE_TRADER = "sole_trader"
+    PARTNERSHIP = "partnership"
+    INDIVIDUAL = "individual"
+    UNKNOWN = "unknown"
+
+
 class ReviewState(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"

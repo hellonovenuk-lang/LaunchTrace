@@ -92,6 +92,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("errors", help="Show recent pipeline errors")
 
+    dropped = sub.add_parser(
+        "dropped-stats",
+        help="Applicants excluded at ingestion (individuals, sole traders...), counts by reason",
+    )
+    dropped.add_argument("--from-date", help="First publication date, YYYY-MM-DD")
+    dropped.add_argument("--to-date", help="Last publication date, YYYY-MM-DD")
+    dropped.add_argument("--from-journal", help="First journal number, e.g. 2025-040")
+    dropped.add_argument("--to-journal", help="Last journal number, e.g. 2025-052")
+
     fetch_od = sub.add_parser(
         "fetch-open-data",
         help="Download the official IPO Open Data release and slice it into weeks",
@@ -125,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd_build_company_index,
         cmd_check_config,
         cmd_customers,
+        cmd_dropped_stats,
         cmd_errors,
         cmd_fetch_open_data,
         cmd_init_db,
@@ -153,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
         "add-customer": cmd_add_customer,
         "suppress": cmd_suppress,
         "errors": cmd_errors,
+        "dropped-stats": cmd_dropped_stats,
         "fetch-open-data": cmd_fetch_open_data,
         "build-company-index": cmd_build_company_index,
         "init-db": cmd_init_db,
