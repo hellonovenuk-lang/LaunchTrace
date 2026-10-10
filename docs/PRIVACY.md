@@ -28,7 +28,10 @@ short snippets.
 sole traders or individuals, whose names appear on the public register. We
 minimise this deliberately:
 
-- Natural-person applicants are **downranked** and are not the product's focus
+- Applicants that are individuals, sole traders or ordinary partnerships are
+  **excluded when the journal is read**: they are not stored, not looked up and
+  not scored. Only a count of how many were excluded is kept (see
+  `INGESTION_FILTER.md`)
 - We never collect officer records, persons with significant control, dates of
   birth, or **directors' home addresses**
 - We collect no personal phone numbers and no individuals' email addresses from

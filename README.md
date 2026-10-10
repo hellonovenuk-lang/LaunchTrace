@@ -117,6 +117,7 @@ edit the JSON. You do not need to touch Python.
 | --- | --- |
 | `config/food_taxonomy.json` | Which filings count as packaged food, and their categories |
 | `config/exclusions.json` | What gets thrown out, and the major-brand list |
+| `config/ingestion_filter.json` | Which applicants are stored at all: only limited companies and LLPs by default ([details](docs/INGESTION_FILTER.md)) |
 | `config/scoring.json` | The LaunchTrace Score weights and bands |
 | `config/buying_intent.json` | Which suppliers each product category needs |
 | `config/customer_plans.json` | Plans, prices and recipient limits |
@@ -295,6 +296,7 @@ Other useful commands:
 python -m src.pipeline regenerate-csv --journal 2026-036
 python -m src.pipeline suppress --type company --value "Some Company Ltd" --reason "asked to be removed"
 python -m src.pipeline errors
+python -m src.pipeline dropped-stats   # individuals/sole traders excluded at ingestion, counts only
 ```
 
 ## 8. Managing customers

@@ -31,6 +31,7 @@ Built, tested, and working right now with no external account of any kind.
 | **Email** | Weekly feed, welcome, sample and failure-alert templates, rendered independently of sending |
 | **QA report** | Full funnel, rejection reasons, major-brand detections, duplicate and volume checks, and cross-checks of the pipeline's own output |
 | **Fail-closed safety** | A run stops rather than delivering when retrieval fails, volume is implausible, enrichment broadly fails, scoring broadly fails, or the email will not render. One bad record is logged and skipped |
+| **Applicant filter** | Only limited companies and LLPs are stored. Individuals, sole traders and partnerships are dropped at ingestion, before any lookup, and only counted (`python -m src.pipeline dropped-stats`). Reversible with `enabled: false` in `config/ingestion_filter.json`. See [`docs/INGESTION_FILTER.md`](docs/INGESTION_FILTER.md) |
 | **Review mode** | `SEND_MODE=review` is the default. Nothing reaches a customer without explicit approval |
 | **Idempotency** | Journals are never processed twice, opportunities are updated rather than duplicated, and a delivery already made is never repeated |
 
@@ -462,6 +463,17 @@ these ordered by what each one unblocks.
 43. Switch Stripe out of Test mode and swap in the live keys.
 
 ---
+
+### Data-minimisation decisions (10 minutes)
+
+- **Confirm `drop_unknown`.** Applicants with no legal form are dropped by
+  default; a few may be real companies. After a few weekly runs, look at
+  `python -m src.pipeline dropped-stats` and decide (see
+  [`docs/INGESTION_FILTER.md`](docs/INGESTION_FILTER.md)).
+- **Purge older rows.** Records stored before the filter existed are not removed
+  automatically. If a database already holds live data, decide whether to
+  delete individual applicants' rows from `trademark_records`,
+  `opportunities` and `company_matches`.
 
 ## 5. Publishing state
 

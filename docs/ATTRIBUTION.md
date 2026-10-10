@@ -44,8 +44,9 @@ by the Intellectual Property Office."*
   the owner: email the IPO to confirm, and record their answer in this file.**
 - Trade mark records name applicants. Where an applicant is an individual
   rather than a company that name is personal data, which is why LaunchTrace
-  downranks natural-person applicants and does not build the product around
-  them (see the privacy notice).
+  excludes individual, sole-trader and partnership applicants when the journal
+  is read and does not store them (see the privacy notice and
+  `INGESTION_FILTER.md`).
 
 ## Companies House — company data
 

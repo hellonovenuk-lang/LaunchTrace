@@ -44,8 +44,10 @@ the filings.
 **Is there a less intrusive way?** We have taken the less intrusive options
 available:
 
-- We process **corporate** data by design. Natural-person applicants are
-  downranked rather than developed as leads.
+- We process **corporate** data by design. Individuals, sole traders and
+  ordinary partnerships are excluded when the journal is read and are never
+  stored or developed as leads; only an aggregate count is kept
+  (`INGESTION_FILTER.md`).
 - We never collect officer records, persons with significant control, dates of
   birth, or **directors' home addresses** — even though some are available.
 - We collect no individuals' phone numbers or personal email addresses.

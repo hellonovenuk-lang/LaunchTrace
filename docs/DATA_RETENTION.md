@@ -9,7 +9,8 @@ system enforces them.**
 | --- | --- | --- | --- |
 | Raw journal downloads | `data/cache/journals/` | 30 days, then pruned | Re-runs and debugging. There is no operational reason to keep large raw files longer. `KEEP_RAW_JOURNAL_FILES=false` deletes them sooner. |
 | Journal metadata (number, date, checksum, record count) | `journals` | Indefinite | Small, and it is what prevents duplicate processing. |
-| Parsed trade mark records | `trademark_records` | [24] months | The source layer the pipeline can be re-run against without re-downloading. |
+| Parsed trade mark records | `trademark_records` | [24] months | The source layer the pipeline can be re-run against without re-downloading. Limited companies and LLPs only; individuals, sole traders and partnerships are never stored (`config/ingestion_filter.json`). |
+| Ingestion drop counts | `ingestion_drop_counts` | Indefinite | Counts of excluded applicants by journal and reason. No names or identifiers, so not personal data. |
 | Company match results | `company_matches` | [24] months | Avoids repeating Companies House lookups; holds the match evidence. |
 | Web enrichment | `web_enrichment` | [12] months | Web evidence goes stale quickly; re-check rather than trust an old answer. |
 | Opportunities and scores | `opportunities`, `score_events` | [24] months | The delivered product, and the history needed to tune scoring. |
